@@ -12,7 +12,14 @@ export class IDBConnection {
         dbConstants.DB_VERSION,
         {
           upgrade(db) {
-            // create object store here
+            for (const store of Object.values(dbConstants.DB_STORES)) {
+              db.createObjectStore(
+                store as keyof typeof dbConstants.DB_STORES,
+                {
+                  keyPath: 'id',
+                }
+              );
+            }
           },
         }
       );
