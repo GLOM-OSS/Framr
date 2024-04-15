@@ -1,7 +1,4 @@
-export enum ToolEnum {
-  MWD = 'MWD',
-  LWD = 'LWD',
-}
+import { ToolEnum } from "./enums";
 
 export interface CreateTool {
   name: string;
