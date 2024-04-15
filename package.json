@@ -10,6 +10,7 @@
     "@emotion/styled": "^11.11.5",
     "@mui/material-nextjs": "^5.15.11",
     "@nx/next": "17.2.8",
+    "idb": "^8.0.0",
     "next": "13.4.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
