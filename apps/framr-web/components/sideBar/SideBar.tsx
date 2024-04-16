@@ -38,7 +38,7 @@ export default function SideBar() {
             icon: AppFolderIcon
         }
     ]
-    const handleOpenSlide = () => {
+    const handleCloseSlide = () => {
         setOpen(false)
     }
     return (
@@ -86,7 +86,7 @@ export default function SideBar() {
                         bgcolor: 'rgba(255, 255, 255, 1)',
                         display: open ? 'inherit' : 'none',
                     }}
-                        onClick={handleOpenSlide}
+                        onClick={handleCloseSlide}
                     >
                         <Icon icon={ChevronLeft} style={{ height: '15px', width: '15px' }} />
                     </IconButton>
