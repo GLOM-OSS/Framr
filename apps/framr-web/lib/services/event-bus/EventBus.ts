@@ -1,7 +1,6 @@
 import { EventEmitter } from 'eventemitter3';
-import { ToolManagementChannelEnum } from './EventBusChannel.enum';
-import { EventBusChannelPayload, EventBusHandler } from './EventBusChannel';
-
+import { EventBusChannelStatus } from './EventBus.enum';
+import { EventBusHandler, EventBusPayload } from './EventBus.d';
 /**
  * EventBus class represents a singleton event bus instance using EventEmitter3.
  * It provides a central communication channel for emitting and listening to events.
@@ -46,23 +45,23 @@ export class EventBus {
     }
   }
 
-  emit<Channel extends ToolManagementChannelEnum>(
-    channel: Channel,
-    payload: EventBusChannelPayload<Channel>
+  emit<Status extends EventBusChannelStatus>(
+    channel: string,
+    payload: EventBusPayload<Status>
   ) {
     EventBus.instance.emit(channel, payload);
   }
 
-  on<Channel extends ToolManagementChannelEnum>(
-    channel: Channel,
-    evenHandler: EventBusHandler
+  on<Status extends EventBusChannelStatus>(
+    channel: string,
+    evenHandler: EventBusHandler<Status>
   ) {
     EventBus.instance.on(channel, evenHandler);
   }
 
-  once<Channel extends ToolManagementChannelEnum>(
-    channel: Channel,
-    evenHandler: EventBusHandler
+  once<Status extends EventBusChannelStatus>(
+    channel: string,
+    evenHandler: EventBusHandler<Status>
   ) {
     EventBus.instance.once(channel, evenHandler);
   }
