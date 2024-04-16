@@ -4,14 +4,16 @@ import { sideBarNav } from "./SideBar";
 
 interface NavItemProps {
     sideBarNav: sideBarNav;
+    open: boolean;
 }
 
-export default function SideBarNavItem({ sideBarNav: { title, icon, item } }: NavItemProps) {
+export default function SideBarNavItem({ sideBarNav: { title, icon, item }, open }: NavItemProps) {
     return (
         <Box sx={{
             margin: '36px 0',
             display: 'grid',
-            rowGap: '12px'
+            rowGap: '12px',
+            justifyContent: !open ? 'center' : 'initial'
         }}>
             <Typography sx={{
                 fontFamily: 'inter',
@@ -19,7 +21,8 @@ export default function SideBarNavItem({ sideBarNav: { title, icon, item } }: Na
                 fontSize: '10px',
                 letterSpacing: '5%',
                 lineHeight: '10px',
-                color: 'rgba(110, 109, 122, 1)'
+                color: 'rgba(110, 109, 122, 1)',
+                display: open ? 'inherit' : 'none'
             }}>{title}</Typography>
             <Box sx={{
                 display: 'grid',
@@ -33,7 +36,8 @@ export default function SideBarNavItem({ sideBarNav: { title, icon, item } }: Na
                     fontWeight: 600,
                     fontSize: '14px',
                     lineHeight: '14px',
-                    color: 'rgba(110, 109, 122, 1)'
+                    color: 'rgba(110, 109, 122, 1)',
+                    display: open ? 'inherit' : 'none'
 
                 }}>{item}</Typography>
             </Box>
