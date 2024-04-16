@@ -1,9 +1,11 @@
+import { Box } from "@mui/material";
+import SideBar from "../components/sideBar/SideBar";
 
 export function Index() {
   return (
-    <div>
-      <h1>Hello i&apos;m here for showing all components!</h1>
-    </div>
+    <Box>
+      <SideBar />
+    </Box>
   );
 }
 
