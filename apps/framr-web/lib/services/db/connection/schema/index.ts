@@ -1,4 +1,4 @@
-import { DPoint, Rule, Service, Tool } from 'apps/framr-web/lib/types';
+import { DPoint, Rule, Service, Tool } from '../../../../types';
 import { DBSchema } from 'idb';
 
 export interface FramrDBSchema extends DBSchema {
