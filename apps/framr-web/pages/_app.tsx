@@ -1,8 +1,6 @@
 import { ThemeProvider } from '@mui/material';
 import { AppProps } from 'next/app';
 import Head from 'next/head';
-import { generateTheme } from '../lib/theme';
-import './styles.css';
 
 function CustomApp({ Component, pageProps }: AppProps) {
   return (
