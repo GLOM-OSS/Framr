@@ -13,10 +13,6 @@ export default class MyDocument extends Document {
           />
           <link rel="icon" type="image/x-icon" href="/favicon.png" />
           <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          />
-          <meta
             name="description"
             content="Framr is a tool that helps you to generate ordered frames for your well drillling projects. with rules management and a lot of features."
           />
