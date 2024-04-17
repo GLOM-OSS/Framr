@@ -3,13 +3,13 @@ import ChevronLeft from "@iconify-icons/fluent/chevron-left-32-regular";
 import TableIcon from "@iconify-icons/fluent/table-32-regular";
 import CommentIcon from "@iconify-icons/fluent/comment-20-regular";
 import { Icon, IconifyIcon } from '@iconify/react';
-import { Box, Divider, Drawer, IconButton, List, Typography, useTheme } from "@mui/material";
+import { Box, Divider, Drawer, IconButton, List, Typography } from "@mui/material";
 import Image from "next/image";
-import { useState } from "react";
 import FullLogoFramr from "../../public/asset/fullLogoFram.png";
 import ShortLogoFramr from "../../public/asset/shortLogoFrame.png";
 import { useRouter } from "next/router";
 import SideBarNavItem from "./SideBarNavIdem";
+import { layoutProps } from "../layout";
 
 
 export interface sideBarNav {
@@ -19,10 +19,8 @@ export interface sideBarNav {
     title: string;
 }
 
-export default function SideBar() {
-    const [open, setOpen] = useState<boolean>(true)
+export default function SideBar({ drawerWidth, setDrawerWidth, open, setOpen }: layoutProps) {
     const { push } = useRouter()
-    const theme = useTheme();
 
     const sideBarNav: sideBarNav[] = [
         {
@@ -39,6 +37,7 @@ export default function SideBar() {
         }
     ]
     const handleCloseSlide = () => {
+        setDrawerWidth(57)
         setOpen(false)
     }
     return (
@@ -46,14 +45,19 @@ export default function SideBar() {
             '.MuiPaper-root': {
                 bgcolor: 'rgba(250, 250, 253, 1)',
                 ...(open && {
-                    width: 240,
-                    overflowX: 'hidden',
-                }),
-                ...(!open && {
-                    width: `calc(${theme.spacing(7)} + 1px)`,
+                    width: drawerWidth,
                     overflowX: 'hidden',
                     transition: 'width 0.5s ease',
                 }),
+                ...(!open && {
+                    width: drawerWidth,
+                    overflowX: 'hidden',
+                    transition: 'width 0.5s ease',
+                }),
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                boxSizing: 'border-box',
+                border: 'none'
             }
         }}>
             <Box sx={{
