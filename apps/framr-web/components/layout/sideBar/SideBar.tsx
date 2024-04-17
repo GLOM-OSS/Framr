@@ -1,156 +1,157 @@
-import AppFolderIcon from '@iconify/icons-fluent/app-folder-32-regular';
-import ChevronLeft from '@iconify/icons-fluent/chevron-left-32-regular';
+import tools from '@iconify/icons-fluent/app-folder-32-regular';
+import left from '@iconify/icons-fluent/chevron-left-32-regular';
+import right from '@iconify/icons-fluent/chevron-right-32-regular';
 import CommentIcon from '@iconify/icons-fluent/comment-20-regular';
-import TableIcon from '@iconify/icons-fluent/table-32-regular';
+import grid from '@iconify/icons-fluent/table-32-regular';
 import { Icon, IconifyIcon } from '@iconify/react';
 import {
   Box,
+  Collapse,
   Divider,
-  Drawer,
   IconButton,
-  List,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { layoutProps } from '..';
-import SideBarNavItem from './SideBarNavIdem';
+import { useState } from 'react';
+import NavBarSection from './NavBarSection';
 
-export interface sideBarNav {
-  item: string;
-  route?: string;
-  icon: IconifyIcon;
+export interface SideBarItem {
   title: string;
+  route: string;
+  icon: IconifyIcon;
 }
 
-export default function SideBar({
-  drawerWidth,
-  setDrawerWidth,
-  open,
-  setOpen,
-}: layoutProps) {
-  const { push } = useRouter();
+export interface SideBarSection {
+  title: string;
+  navItems: SideBarItem[];
+}
 
-  const sideBarNav: sideBarNav[] = [
+export default function SideBar() {
+  const { push } = useRouter();
+  const [isSideBarOpen, setIsSideBarOpen] = useState<boolean>(true);
+
+  const navSections: SideBarSection[] = [
     {
-      title: 'GENERATOR',
-      item: 'Frame Generator',
-      route: '/frameGenerator',
-      icon: TableIcon,
+      title: 'Generator',
+      navItems: [
+        {
+          title: 'Frame Generator',
+          route: '/generator',
+          icon: grid,
+        },
+      ],
     },
     {
-      title: 'CONFIGURATION',
-      item: 'Tools',
-      route: '/tools',
-      icon: AppFolderIcon,
+      title: 'Tools',
+      navItems: [
+        {
+          title: 'Tools',
+          route: '/tools',
+          icon: tools,
+        },
+      ],
     },
   ];
-  const handleCloseSlide = () => {
-    setDrawerWidth(57);
-    setOpen(false);
-  };
+
   return (
-    <Drawer
-      variant="permanent"
+    <Box
       sx={{
-        '.MuiPaper-root': {
-          bgcolor: 'rgba(250, 250, 253, 1)',
-          ...(open && {
-            width: drawerWidth,
-            overflowX: 'hidden',
-            transition: 'width 0.5s ease',
-          }),
-          ...(!open && {
-            width: drawerWidth,
-            overflowX: 'hidden',
-            transition: 'width 0.5s ease',
-          }),
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-          boxSizing: 'border-box',
-          border: 'none',
-        },
+        padding: '8px 16px',
+        position: 'relative',
+        display: 'grid',
+        gridTemplateRows: 'auto auto 1fr auto',
+        rowGap: 2,
+        bgcolor: 'rgba(250, 250, 253, 1)',
+        width: isSideBarOpen ? '240px' : '57px',
+        height: '100%',
       }}
     >
+      {isSideBarOpen ? (
+        <Image
+          onClick={() => push('/')}
+          src="/assets/logo.png"
+          alt="Framr"
+          width={72}
+          height={34.63}
+          style={{ cursor: 'pointer' }}
+        />
+      ) : (
+        <Image
+          onClick={() => push('/')}
+          src="/assets/favicon.png"
+          alt="Framr favicon"
+          width={30}
+          height={32.63}
+          style={{ cursor: 'pointer' }}
+        />
+      )}
+      <Tooltip
+        arrow
+        title={`${isSideBarOpen ? 'Close' : 'Open'} sidebar`}
+        placement="right"
+      >
+        <IconButton
+          sx={{
+            boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
+            bgcolor: 'rgba(255, 255, 255, 1)',
+            position: 'absolute',
+            right: isSideBarOpen ? '16px' : '-16px',
+            top: '8px',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            },
+          }}
+          size="small"
+          onClick={() => setIsSideBarOpen((prev) => !prev)}
+        >
+          <Icon
+            icon={isSideBarOpen ? left : right}
+            style={{ height: '15px', width: '15px' }}
+          />
+        </IconButton>
+      </Tooltip>
+      <Divider />
       <Box
         sx={{
-          padding: open ? '10px 18px' : '10px',
-          position: 'relative',
           height: '100%',
+          display: 'grid',
+          rowGap: isSideBarOpen ? 4.5 : 0,
+          alignContent: 'start',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: open ? 'space-between' : 'center',
-            alignItems: 'center',
-            marginBottom: '15px',
-          }}
-        >
-          {open ? (
-            <Image
-              onClick={() => push('/')}
-              src="/assets/logo.png"
-              alt="Full Framr Logo"
-              width={72}
-              height={34.63}
-              style={{ cursor: 'pointer' }}
-            />
-          ) : (
-            <Image
-              onClick={() => push('/')}
-              src="/assets/favicon.png"
-              alt="Short Framr Logo"
-              width={30}
-              height={32.63}
-              style={{ cursor: 'pointer' }}
-            />
-          )}
-          <IconButton
-            sx={{
-              boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
-              bgcolor: 'rgba(255, 255, 255, 1)',
-              display: open ? 'inherit' : 'none',
-            }}
-            onClick={handleCloseSlide}
-          >
-            <Icon
-              icon={ChevronLeft}
-              style={{ height: '15px', width: '15px' }}
-            />
-          </IconButton>
-        </Box>
-        <Divider />
-        <List>
-          {sideBarNav.map((navElements, index) => (
-            <SideBarNavItem sideBarNav={navElements} open={open} key={index} />
-          ))}
-        </List>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: ' auto 1fr',
-            columnGap: '8px',
-            alignItems: 'center',
-            position: 'absolute',
-            bottom: 0,
-          }}
-        >
-          <Icon icon={CommentIcon} fontSize={24} />
-          <Typography
-            sx={{
-              fontFamily: 'inter',
-              fontWeight: 600,
-              fontSize: '14px',
-              lineHeight: '14px',
-              color: 'rgba(110, 109, 122, 1)',
-              display: open ? 'inherit' : 'none',
-            }}
-          >
-            Support
-          </Typography>
-        </Box>
+        {navSections.map(({ title, navItems }, index) => (
+          <NavBarSection
+            isOpen={isSideBarOpen}
+            navItems={navItems}
+            title={title}
+            key={index}
+          />
+        ))}
       </Box>
-    </Drawer>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: ' auto 1fr',
+          columnGap: '8px',
+          alignItems: 'center',
+        }}
+      >
+        <Icon icon={CommentIcon} fontSize={24} />
+        <Typography
+          component={Collapse}
+          in={isSideBarOpen}
+          orientation="horizontal"
+          sx={{
+            fontWeight: 600,
+            color: 'var(--body)',
+            //display: isSideBarOpen ? 'inherit' : 'none',
+          }}
+        >
+          Support
+        </Typography>
+      </Box>
+    </Box>
   );
 }
