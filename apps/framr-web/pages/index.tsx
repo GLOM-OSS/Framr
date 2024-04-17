@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import SideBar from "../components/sideBar/SideBar";
+import SideBar from "../components/layout/sideBar/SideBar";
 import Layout from "../components/layout";
 import { useState } from "react";
 

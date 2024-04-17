@@ -1,7 +1,7 @@
 import AppFolderIcon from '@iconify/icons-fluent/app-folder-32-regular';
 import ChevronLeft from '@iconify/icons-fluent/chevron-left-32-regular';
-import TableIcon from '@iconify/icons-fluent/table-32-regular';
 import CommentIcon from '@iconify/icons-fluent/comment-20-regular';
+import TableIcon from '@iconify/icons-fluent/table-32-regular';
 import { Icon, IconifyIcon } from '@iconify/react';
 import {
   Box,
@@ -12,11 +12,9 @@ import {
   Typography,
 } from '@mui/material';
 import Image from 'next/image';
-import FullLogoFramr from '../../public/asset/fullLogoFram.png';
-import ShortLogoFramr from '../../public/asset/shortLogoFrame.png';
 import { useRouter } from 'next/router';
+import { layoutProps } from '..';
 import SideBarNavItem from './SideBarNavIdem';
-import { layoutProps } from '../layout';
 
 export interface sideBarNav {
   item: string;
@@ -92,16 +90,20 @@ export default function SideBar({
           {open ? (
             <Image
               onClick={() => push('/')}
-              src={FullLogoFramr}
+              src="/assets/logo.png"
               alt="Full Framr Logo"
-              style={{ width: '72px', height: '34.63px', cursor: 'pointer' }}
+              width={72}
+              height={34.63}
+              style={{ cursor: 'pointer' }}
             />
           ) : (
             <Image
               onClick={() => push('/')}
-              src={ShortLogoFramr}
+              src="/assets/favicon.png"
               alt="Short Framr Logo"
-              style={{ width: '30px', height: '32.63px', cursor: 'pointer' }}
+              width={30}
+              height={32.63}
+              style={{ cursor: 'pointer' }}
             />
           )}
           <IconButton
