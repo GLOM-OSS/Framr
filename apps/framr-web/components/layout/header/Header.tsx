@@ -1,29 +1,17 @@
+import SearchIcon from '@iconify/icons-fluent/search-32-regular';
+import MoonIcon from '@iconify/icons-fluent/weather-moon-28-regular';
+import SunIcon from '@iconify/icons-fluent/weather-sunny-32-regular';
 import { Icon } from '@iconify/react';
 import {
   Autocomplete,
   Box,
-  IconButton,
   InputAdornment,
   Switch,
   TextField,
   Typography,
 } from '@mui/material';
-import ChevronRight from '@iconify/icons-fluent/chevron-right-32-regular';
-import SearchIcon from '@iconify/icons-fluent/search-32-regular';
-import MoonIcon from '@iconify/icons-fluent/weather-moon-28-regular';
-import SunIcon from '@iconify/icons-fluent/weather-sunny-32-regular';
-import { Dispatch, SetStateAction } from 'react';
 
-interface HeaderProps {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
-  setDrawerWidth: Dispatch<SetStateAction<number>>;
-}
-export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
-  const handleOpenSlice = () => {
-    setDrawerWidth(240);
-    setOpen(true);
-  };
+export default function Header() {
   return (
     <Box
       sx={{
@@ -36,19 +24,6 @@ export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
         height: 80,
       }}
     >
-      <IconButton
-        sx={{
-          boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
-          bgcolor: 'rgba(255, 255, 255, 1)',
-          position: 'absolute',
-          left: 0,
-          top: '21px',
-          display: open ? 'none' : 'inherit',
-        }}
-        onClick={handleOpenSlice}
-      >
-        <Icon icon={ChevronRight} style={{ height: '15px', width: '15px' }} />
-      </IconButton>
       <Box>
         <Typography
           sx={{
@@ -56,7 +31,7 @@ export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
             fontWeight: 500,
             fontSize: '12px',
             lineHeight: '16px',
-            paddingLeft: !open ? '40px' : '20px',
+            paddingLeft: '40px',
           }}
         >
           Configuration/tool/
