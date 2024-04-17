@@ -1,29 +1,23 @@
-import { Box } from "@mui/material";
-import SideBar from "../components/layout/sideBar/SideBar";
-import Layout from "../components/layout";
-import { useState } from "react";
+import { Box } from '@mui/material';
+import Footer from '../components/layout/footer/Footer';
+import Header from '../components/layout/header/Header';
+import SideBar from '../components/layout/sideBar/SideBar';
 
 export function Index() {
-  const [open, setOpen] = useState<boolean>(true)
-  const [drawerWidth, setDrawerWidth] = useState<number>(240)
-
   return (
-    <Box sx={{
-      display: "flex",
-    }}>
-      <Layout
-        drawerWidth={drawerWidth}
-        setDrawerWidth={setDrawerWidth}
-        open={open}
-        setOpen={setOpen}
-      >
-        hello
-      </Layout>
-      <SideBar
-        drawerWidth={drawerWidth}
-        setDrawerWidth={setDrawerWidth}
-        open={open}
-        setOpen={setOpen} />
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr',
+        height: '100svh',
+      }}
+    >
+      <SideBar />
+      <Box sx={{ display: 'grid', gridTemplateRows: 'auto 1fr auto' }}>
+        <Header />
+        <Box sx={{ bgcolor: 'black', height: '100%' }}>Hello</Box>
+        <Footer />
+      </Box>
     </Box>
   );
 }
