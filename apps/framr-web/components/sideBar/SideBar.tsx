@@ -37,7 +37,6 @@ export default function SideBar({ drawerWidth, setDrawerWidth, open, setOpen }: 
         }
     ]
     const handleSlide = (op: boolean) => {
-        // setDrawerWidth(80)
         setOpen(op)
     }
     return (
