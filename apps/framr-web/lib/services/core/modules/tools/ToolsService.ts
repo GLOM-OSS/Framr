@@ -1,12 +1,3 @@
-<<<<<<< HEAD:apps/framr-web/lib/services/tools/ToolsService.ts
-import { CreateLWDTool, CreateTool, LWDTool } from "../../types";
-import { ToolEnum } from "../../types/enums";
-import { IDBFactory } from "../db/IDBFactory";
-import { StoreRecord } from "../db/IDBFactory.types";
-import { IDBConnection } from "../db/connection/IDBConnection";
-import { FramrDBSchema } from "../db/connection/schema";
-import { EventBus, EventBusChannelStatus } from "../event-bus";
-=======
 import { CreateLWDTool, CreateTool, LWDTool } from "../../../../types";
 import { ToolEnum } from "../../../../types/enums";
 import { IDBConnection } from "../../db/IDBConnection";
@@ -14,7 +5,6 @@ import { FramrDBSchema } from "../../db/schema";
 import { EventBus, EventBusChannelStatus } from "../../../libs/event-bus";
 import { IDBFactory, StoreRecord } from "../../../libs/idb";
 
->>>>>>> 94f1ba5 (feat(app): 1 moving the tools service into the core module):apps/framr-web/lib/services/core/modules/tools/ToolsService.ts
 // import { EventBusPayload } from "../event-bus/EventBus";
 import { ToolInterface } from "./ToolInterface";
 
