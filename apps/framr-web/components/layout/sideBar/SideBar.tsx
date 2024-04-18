@@ -44,7 +44,7 @@ export default function SideBar() {
       ],
     },
     {
-      title: 'Tools',
+      title: 'Configuration',
       navItems: [
         {
           title: 'Tools',
