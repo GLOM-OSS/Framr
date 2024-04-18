@@ -1,10 +1,10 @@
 import { Icon } from "@iconify/react";
-import { Autocomplete, Box, IconButton, InputAdornment, Switch, TextField, Typography } from "@mui/material";
-import ChevronRight from "@iconify-icons/fluent/chevron-right-32-regular";
+import { Autocomplete, Box, InputAdornment, TextField, Typography } from "@mui/material";
 import SearchIcon from "@iconify-icons/fluent/search-32-regular";
 import MoonIcon from "@iconify-icons/fluent/weather-moon-28-regular";
 import SunIcon from "@iconify-icons/fluent/weather-sunny-32-regular";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
+import IosSwitch from "./IOSSwitch";
 
 interface HeaderProps {
     open: boolean,
@@ -12,11 +12,10 @@ interface HeaderProps {
     setDrawerWidth: Dispatch<SetStateAction<number>>;
 }
 export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
-
-    const handleOpenSlice = () => {
-        setDrawerWidth(240)
-        setOpen(true)
-    }
+    const [active, setActive] = useState<boolean>(false)
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setActive(event.target.checked);
+    };
     return (
         <Box sx={{
             position: 'relative',
@@ -25,34 +24,29 @@ export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
             width: '100%',
             justifyContent: 'space-between',
             alignItems: 'center',
-            height: 80,
+            height: 60,
+            marginLeft: '240px'
         }}>
 
-            <IconButton sx={{
-                boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
-                bgcolor: 'rgba(255, 255, 255, 1)',
-                position: 'absolute',
-                left: 0,
-                top: '21px',
-                display: open ? 'none' : 'inherit'
-            }}
-                onClick={handleOpenSlice}
-            >
-                <Icon icon={ChevronRight} style={{ height: '15px', width: '15px' }} />
-            </IconButton>
             <Box>
                 <Typography sx={{
                     fontFamily: 'inter',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
-                    paddingLeft: !open ? '40px' : '20px'
+                    paddingLeft: '20px',
                 }}>Configuration/tool/</Typography>
             </Box>
             <Autocomplete
                 options={[]}
                 sx={{
-                    width: 400,
+                    width: 487,
+                    '& .MuiInputBase-root': {
+                        height: 40
+                    },
+                    '& .MuiInputBase-input': {
+                        boxSizing: 'border-box'
+                    }
                 }}
                 renderInput={(params) => (
                     <TextField
@@ -64,7 +58,7 @@ export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
                             ...params.InputProps,
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <Icon icon={SearchIcon} />
+                                    <Icon icon={SearchIcon} style={{ height: '24px', width: '24px' }} />
                                 </InputAdornment>
                             ),
                         }}
@@ -72,13 +66,15 @@ export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
                 )}
             />
             <Box sx={{
-                display: 'flex',
+                display: 'grid',
+                gridAutoFlow: 'column',
+                columnGap: '3px',
                 alignItems: 'center',
-                paddingRight: '10px'
+                paddingRight: '20px'
             }}>
-                <Icon icon={MoonIcon} />
-                <Switch />
-                <Icon icon={SunIcon} />
+                <Icon icon={MoonIcon} color={active ? 'rgba(209, 213, 219, 1)' : 'initial'} />
+                <IosSwitch sx={{ m: 1 }} defaultChecked checked={active} onChange={handleChange} />
+                <Icon icon={SunIcon} color={!active ? 'rgba(209, 213, 219, 1)' : 'initial'} />
             </Box>
         </Box>
     );
