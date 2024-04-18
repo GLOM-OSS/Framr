@@ -42,6 +42,7 @@ export default function Header() {
         sx={{
           width: 400,
         }}
+        size="small"
         renderInput={(params) => (
           <TextField
             {...params}
