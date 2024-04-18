@@ -43,7 +43,12 @@ export default function NavItem({
               display: isOpen ? 'none' : 'initial',
             }}
           />
-          <Typography component={Collapse} in={isOpen} orientation="horizontal">
+          <Typography
+            component={Collapse}
+            in={isOpen}
+            orientation="horizontal"
+            sx={{ textWrap: 'nowrap', whiteSpace: 'nowrap' }}
+          >
             {title}
           </Typography>
         </Box>
