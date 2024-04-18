@@ -76,10 +76,7 @@ describe('IDBFactory', () => {
     await Promise.all([
       idbFactory.insert('inlineKeyStore', testData.inlineKeyStore),
       idbFactory.insert('testStore', testData.testStore),
-      idbFactory.insert(
-        'inlineAutoIncrement',
-        testData.inlineAutoIncrement
-      ),
+      idbFactory.insert('inlineAutoIncrement', testData.inlineAutoIncrement),
     ]);
   });
 
@@ -217,9 +214,7 @@ describe('IDBFactory', () => {
       ])
     ).resolves.not.toThrow();
 
-    await expect(
-      idbFactory.deleteMany(unknownValues.store)
-    ).rejects.toThrow();
+    await expect(idbFactory.deleteMany(unknownValues.store)).rejects.toThrow();
   });
 
   it('should retrieves the number of records matching the given query in a store', async () => {
@@ -231,9 +226,7 @@ describe('IDBFactory', () => {
     });
     expect(indexItemCount).toEqual(1);
 
-    const incrementItemCount = await idbFactory.count(
-      'inlineAutoIncrement'
-    );
+    const incrementItemCount = await idbFactory.count('inlineAutoIncrement');
     expect(incrementItemCount).toEqual(1);
   });
 

@@ -1,4 +1,4 @@
-import { ToolEnum } from "./enums";
+import { ToolEnum } from './enums';
 
 export interface CreateLWDTool {
   name: string;

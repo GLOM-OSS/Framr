@@ -1,1 +1,1 @@
-export * from './FramrServiceError'
+export * from './FramrServiceError';
