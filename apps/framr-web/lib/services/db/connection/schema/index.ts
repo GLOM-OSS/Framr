@@ -1,6 +1,8 @@
 import { DPoint, Rule, Service, Tool } from '../../../../types';
 import { DBSchema } from 'idb';
 
+export type * from './types'
+
 export interface FramrDBSchema extends DBSchema {
   tools: {
     key: string;
