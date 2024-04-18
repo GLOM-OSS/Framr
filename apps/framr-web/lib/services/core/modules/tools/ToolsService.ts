@@ -70,18 +70,19 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  async findAll(): Promise<void> {
-    let response = await this.database
+  findAll(): void {
+    let channel = ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL;
+    this.database
       .findAll('tools')
       .then((result) => {
-        this.eventBus.emit(ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL, {
+        this.eventBus.emit(channel, {
           data: { ...result },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
       .catch((error) => {
-        this.eventBus.emit(ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL, {
-          data: { name: 'error_get_tools', message: 'failure to get' },
+        this.eventBus.emit(channel, {
+          data: new FramrServiceError(error.message),
           status: EventBusChannelStatus.ERROR,
         });
       });
