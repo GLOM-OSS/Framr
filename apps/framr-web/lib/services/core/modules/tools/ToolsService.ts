@@ -88,21 +88,20 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  async update(index: number, createTool: CreateTool): Promise<void> {
-    let response = await this.database
+  update(index: number, createTool: CreateTool): void {
+    let channel = ToolsEventChannel.UPDATE_TOLLS_CHANNEL;
+
+    this.database
       .update('tools', index, createTool)
       .then((result) => {
-        this.eventBus.emit(ToolsEventChannel.UPDATE_TOLLS_CHANNEL, {
+        this.eventBus.emit(channel, {
           data: { result },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
       .catch((error) => {
-        this.eventBus.emit(ToolsEventChannel.UPDATE_TOLLS_CHANNEL, {
-          data: {
-            name: 'error_update_tools',
-            message: `fail to update tools ${{ ...createTool }}`,
-          },
+        this.eventBus.emit(channel, {
+          data: new FramrServiceError(error.message),
           status: EventBusChannelStatus.ERROR,
         });
       });
