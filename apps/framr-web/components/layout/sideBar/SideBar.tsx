@@ -38,7 +38,7 @@ export default function SideBar() {
       navItems: [
         {
           title: 'Frame Generator',
-          route: '/generator',
+          route: '/',
           icon: grid,
         },
       ],
