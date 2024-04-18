@@ -1,5 +1,6 @@
 import { CreateTool, MWDTool } from '../../../../types';
 import { ToolEnum } from '../../../../types/enums';
+import { FramrServiceError } from '../../../libs/errors';
 import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory, StoreRecord } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
@@ -42,29 +43,28 @@ export class ToolsService implements ToolInterface {
           status: EventBusChannelStatus.SUCCESS,
         });
       })
-      .catch(() => {
+      .catch((error) => {
         this.eventBus.emit(channel, {
-          data: {
-            name: 'error_creating_lwd_tools',
-            message: 'failure to create',
-          },
+          data: new FramrServiceError(error.message),
           status: EventBusChannelStatus.ERROR,
         });
       });
   }
 
-  async findOne(index: number): Promise<void> {
-    let response = await this.database
+  findOne(index: number): void {
+    let channel = ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL;
+
+    this.database
       .findOne('tools', index)
-      .then((result) => {
-        this.eventBus.emit(ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL, {
-          data: { ...result },
+      .then((response) => {
+        this.eventBus.emit(channel, {
+          data: { ...response },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
       .catch((error) => {
-        this.eventBus.emit(ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL, {
-          data: { name: 'error_find_tools', message: 'failure to find' },
+        this.eventBus.emit(channel, {
+          data: new FramrServiceError(error.message),
           status: EventBusChannelStatus.ERROR,
         });
       });

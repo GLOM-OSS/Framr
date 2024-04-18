@@ -9,7 +9,7 @@ export enum ToolsEventChannel {
 }
 export interface ToolInterface {
   create(createTool: CreateTool): void;
-  findOne(index: number): Promise<void>;
+  findOne(index: number): void;
   findAll(): Promise<void>;
   update(index: number, createTool: CreateTool): Promise<void>;
   delete(index: number): Promise<void>;
