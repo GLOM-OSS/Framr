@@ -27,8 +27,14 @@ export default function SideBarNavItem({ sideBarNav: { title, icon, item }, open
             <Box sx={{
                 display: 'grid',
                 gridTemplateColumns: ' auto 1fr',
-                columnGap: '8px',
-                alignItems: 'center'
+                columnGap: open ? '8px' : 0,
+                alignItems: 'center',
+                cursor: 'pointer',
+                p: 1,
+                borderRadius: '10px',
+                '&:hover': {
+                    bgcolor: 'rgba(235, 234, 237, 1)'
+                },
             }}>
                 <Icon icon={icon} fontSize={24} />
                 <Typography sx={{
