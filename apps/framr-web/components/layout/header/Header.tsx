@@ -3,8 +3,10 @@ import { Autocomplete, Box, InputAdornment, TextField, Typography } from "@mui/m
 import SearchIcon from "@iconify-icons/fluent/search-32-regular";
 import MoonIcon from "@iconify-icons/fluent/weather-moon-28-regular";
 import SunIcon from "@iconify-icons/fluent/weather-sunny-32-regular";
+import upDownIcon from "@iconify-icons/fluent/chevron-up-down-20-regular";
 import { useState } from "react";
 import IosSwitch from "./IOSSwitch";
+
 
 interface HeaderProps {
     open: boolean,
@@ -26,14 +28,22 @@ export default function Header({ open }: HeaderProps) {
             marginLeft: open ? '240px' : '80px'
         }}>
 
-            <Box>
+            <Box component={'span'} sx={{
+                alignItems: 'center',
+                display: 'inline-flex',
+                gap: '5px'
+            }}>
                 <Typography sx={{
                     fontFamily: 'inter',
                     fontWeight: 500,
                     fontSize: '12px',
                     lineHeight: '16px',
                     paddingLeft: '20px',
-                }}>Configuration/tool/</Typography>
+                }}>Configuration{' '}/
+
+                    tool
+                </Typography>
+                <Icon icon={upDownIcon} color="rgba(11, 119, 219, 1)" style={{ cursor: 'pointer' }} />
             </Box>
             <Autocomplete
                 options={[]}
