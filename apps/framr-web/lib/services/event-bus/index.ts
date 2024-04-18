@@ -1,2 +1,3 @@
-export * from './EventBus.enum'
-export * from './EventBus'
+export * from './EventBus';
+export type * from './EventBus.d';
+export * from './EventBus.enum';

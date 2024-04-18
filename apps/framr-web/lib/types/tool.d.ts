@@ -21,5 +21,7 @@ export interface CreateMWDTool extends CreateLWDTool {
 export interface MWDTool extends CreateMWDTool {
   id: string;
 }
+
 export type CreateTool = CreateLWDTool | CreateMWDTool;
+
 export type Tool = LWDTool | MWDTool;
