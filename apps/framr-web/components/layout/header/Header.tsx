@@ -1,6 +1,7 @@
 import SearchIcon from '@iconify/icons-fluent/search-32-regular';
 import MoonIcon from '@iconify/icons-fluent/weather-moon-28-filled';
 import SunIcon from '@iconify/icons-fluent/weather-sunny-32-filled';
+import chevrondown from '@iconify/icons-fluent/chevron-down-24-regular';
 import { Icon } from '@iconify/react';
 import {
   Box,
@@ -18,9 +19,9 @@ export default function Header() {
     <Box
       sx={{
         bgcolor: 'rgba(250, 250, 253, 1)',
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        justifyItems: 'center',
         alignItems: 'center',
         padding: '10px 20px',
       }}
@@ -37,7 +38,6 @@ export default function Header() {
         Configuration/tool/
       </Typography>
       <TextField
-        fullWidth
         variant="outlined"
         placeholder="Search Tools"
         size="small"
@@ -45,6 +45,13 @@ export default function Header() {
           startAdornment: (
             <InputAdornment position="start">
               <Icon icon={SearchIcon} />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton size="small">
+                <Icon icon={chevrondown} />
+              </IconButton>
             </InputAdornment>
           ),
         }}
