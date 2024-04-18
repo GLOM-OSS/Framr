@@ -1,1 +1,1 @@
-export * from "./tools/ToolsService"; 
+export * from './tools/ToolsService';
