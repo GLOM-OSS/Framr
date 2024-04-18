@@ -3,15 +3,13 @@ import { Autocomplete, Box, InputAdornment, TextField, Typography } from "@mui/m
 import SearchIcon from "@iconify-icons/fluent/search-32-regular";
 import MoonIcon from "@iconify-icons/fluent/weather-moon-28-regular";
 import SunIcon from "@iconify-icons/fluent/weather-sunny-32-regular";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useState } from "react";
 import IosSwitch from "./IOSSwitch";
 
 interface HeaderProps {
     open: boolean,
-    setOpen: Dispatch<SetStateAction<boolean>>;
-    setDrawerWidth: Dispatch<SetStateAction<number>>;
 }
-export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
+export default function Header({ open }: HeaderProps) {
     const [active, setActive] = useState<boolean>(false)
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setActive(event.target.checked);
@@ -25,7 +23,7 @@ export default function Header({ open, setOpen, setDrawerWidth }: HeaderProps) {
             justifyContent: 'space-between',
             alignItems: 'center',
             height: 60,
-            marginLeft: '240px'
+            marginLeft: open ? '240px' : '80px'
         }}>
 
             <Box>
