@@ -107,21 +107,20 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  async delete(index: number): Promise<void> {
-    await this.database
+  delete(index: number): void {
+    let channel = ToolsEventChannel.DELETE_TOLLS_CHANNEL;
+
+    this.database
       .delete('tools', index)
-      .then((result) => {
-        this.eventBus.emit(ToolsEventChannel.DELETE_TOLLS_CHANNEL, {
+      .then(() => {
+        this.eventBus.emit(channel, {
           data: { id: index },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
       .catch((error) => {
-        this.eventBus.emit(ToolsEventChannel.DELETE_TOLLS_CHANNEL, {
-          data: {
-            name: 'error_delete_tools',
-            message: `fail to delete tools ${index}`,
-          },
+        this.eventBus.emit(channel, {
+          data: new FramrServiceError(error.message),
           status: EventBusChannelStatus.ERROR,
         });
       });

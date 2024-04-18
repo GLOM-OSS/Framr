@@ -12,5 +12,5 @@ export interface ToolInterface {
   findOne(index: number): void;
   findAll(): void;
   update(index: number, createTool: CreateTool): void;
-  delete(index: number): Promise<void>;
+  delete(index: number): void;
 }
