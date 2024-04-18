@@ -1,1 +1,1 @@
-//import added modules here
+export * from "./tools/ToolsService"; 

@@ -1,4 +1,4 @@
-import { CreateLWDTool, CreateTool, LWDTool  } from "../../types";
+import { CreateLWDTool, CreateTool, LWDTool  } from "../../../../types";
 
 
 export interface ToolInterface {
