@@ -9,7 +9,7 @@ export function Index() {
       sx={{
         display: 'grid',
         gridTemplateColumns: 'auto 1fr',
-        height: '100svh',
+        height: '100%',
       }}
     >
       <SideBar />

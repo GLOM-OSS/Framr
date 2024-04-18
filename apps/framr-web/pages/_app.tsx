@@ -2,6 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { AppProps } from 'next/app';
 import Head from 'next/head';
 import { generateTheme } from '../lib/theme';
+import './style.css';
 
 function CustomApp({ Component, pageProps }: AppProps) {
   return (
@@ -9,7 +10,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>Framr</title>
       </Head>
-      <main className="app">
+      <main className="app" style={{ height: '100svh' }}>
         <Component {...pageProps} />
       </main>
     </ThemeProvider>
