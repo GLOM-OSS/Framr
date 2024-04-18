@@ -2,7 +2,9 @@
   "name": "@framr/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "format": "prettier --write \"**/*.ts\""
+  },
   "private": true,
   "dependencies": {
     "@emotion/cache": "^11.11.0",
