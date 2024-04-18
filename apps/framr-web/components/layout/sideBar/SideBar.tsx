@@ -75,7 +75,8 @@ export default function SideBar() {
       >
         <IconButton
           sx={{
-            boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
+            boxShadow:
+              '0px 6px 12px -6px rgba(24, 44, 75, 0.12), 0px 8px 24px -4px rgba(24, 44, 75, 0.08)',
             bgcolor: 'rgba(255, 255, 255, 1)',
             position: 'absolute',
             right: isSideBarOpen ? '16px' : '-2px',
