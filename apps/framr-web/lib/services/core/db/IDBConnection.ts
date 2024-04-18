@@ -1,5 +1,5 @@
-import { IDBFactory } from '../IDBFactory';
-import { dbConstants } from './constants';
+import { IDBFactory } from '../../libs/idb';
+import { dbConstants } from '../../constants';
 import { FramrDBSchema } from './schema';
 
 export class IDBConnection {
