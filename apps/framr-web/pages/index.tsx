@@ -11,14 +11,14 @@ export function Index() {
     <Box sx={{
       display: "flex",
     }}>
-      <Layout
+      {/* <Layout
         drawerWidth={drawerWidth}
         setDrawerWidth={setDrawerWidth}
         open={open}
         setOpen={setOpen}
       >
         hello
-      </Layout>
+      </Layout> */}
       <SideBar
         drawerWidth={drawerWidth}
         setDrawerWidth={setDrawerWidth}
