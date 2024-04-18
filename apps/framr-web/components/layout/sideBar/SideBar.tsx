@@ -64,10 +64,35 @@ export default function SideBar() {
         gridTemplateRows: 'auto auto 1fr auto',
         rowGap: 2,
         bgcolor: 'rgba(250, 250, 253, 1)',
-        width: isSideBarOpen ? '240px' : '57px',
+        width: isSideBarOpen ? '240px' : 'fit-content',
         height: '100%',
       }}
     >
+      <Tooltip
+        arrow
+        title={`${isSideBarOpen ? 'Close' : 'Open'} sidebar`}
+        placement="right"
+      >
+        <IconButton
+          sx={{
+            boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
+            bgcolor: 'rgba(255, 255, 255, 1)',
+            position: 'absolute',
+            right: isSideBarOpen ? '16px' : '-2px',
+            top: '8px',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+            },
+          }}
+          size="small"
+          onClick={() => setIsSideBarOpen((prev) => !prev)}
+        >
+          <Icon
+            icon={isSideBarOpen ? left : right}
+            style={{ height: '15px', width: '15px' }}
+          />
+        </IconButton>
+      </Tooltip>
       {isSideBarOpen ? (
         <Image
           onClick={() => push('/')}
@@ -87,31 +112,6 @@ export default function SideBar() {
           style={{ cursor: 'pointer' }}
         />
       )}
-      <Tooltip
-        arrow
-        title={`${isSideBarOpen ? 'Close' : 'Open'} sidebar`}
-        placement="right"
-      >
-        <IconButton
-          sx={{
-            boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
-            bgcolor: 'rgba(255, 255, 255, 1)',
-            position: 'absolute',
-            right: isSideBarOpen ? '16px' : '-16px',
-            top: '8px',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-            },
-          }}
-          size="small"
-          onClick={() => setIsSideBarOpen((prev) => !prev)}
-        >
-          <Icon
-            icon={isSideBarOpen ? left : right}
-            style={{ height: '15px', width: '15px' }}
-          />
-        </IconButton>
-      </Tooltip>
       <Divider />
       <Box
         sx={{
@@ -146,7 +146,6 @@ export default function SideBar() {
           sx={{
             fontWeight: 600,
             color: 'var(--body)',
-            //display: isSideBarOpen ? 'inherit' : 'none',
           }}
         >
           Support
