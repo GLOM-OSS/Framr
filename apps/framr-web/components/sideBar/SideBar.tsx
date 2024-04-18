@@ -36,38 +36,27 @@ export default function SideBar({ drawerWidth, setDrawerWidth, open, setOpen }: 
             icon: AppFolderIcon
         }
     ]
-    const handleCloseSlide = () => {
-        setDrawerWidth(57)
-        setOpen(false)
+    const handleSlide = (op: boolean) => {
+        // setDrawerWidth(80)
+        setOpen(op)
     }
     return (
         <Drawer variant="permanent" sx={{
             '.MuiPaper-root': {
                 bgcolor: 'rgba(250, 250, 253, 1)',
-                ...(open && {
-                    width: drawerWidth,
-                    overflowX: 'hidden',
-                    transition: 'width 0.5s ease',
-                }),
-                ...(!open && {
-                    width: drawerWidth,
-                    overflowX: 'hidden',
-                    transition: 'width 0.5s ease',
-                }),
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-                boxSizing: 'border-box',
+                zIndex: 0,
+                width: open ? drawerWidth : '80px',
+                overflow: 'hidden',
                 border: 'none'
             }
         }}>
             <Box sx={{
-                padding: open ? '10px 18px' : '10px',
+                padding: '10px 18px',
                 position: 'relative',
                 height: '100%',
             }}>
                 <Box sx={{
                     display: 'flex',
-                    justifyContent: open ? 'space-between' : 'center',
                     alignItems: 'center',
                     marginBottom: '15px',
                 }}>
@@ -88,11 +77,15 @@ export default function SideBar({ drawerWidth, setDrawerWidth, open, setOpen }: 
                     <IconButton sx={{
                         boxShadow: '0px 8px 24px 4px rgba(24, 44, 75, 0.08)',
                         bgcolor: 'rgba(255, 255, 255, 1)',
-                        display: open ? 'inherit' : 'none',
+                        width: 24,
+                        height: 24,
+                        padding: '4px',
+                        position: 'absolute',
+                        right: -1,
                     }}
-                        onClick={handleCloseSlide}
+                        onClick={() => handleSlide(!open)}
                     >
-                        <Icon icon={ChevronLeft} style={{ height: '15px', width: '15px' }} />
+                        <Icon icon={ChevronLeft} style={{ height: 20, width: 20, rotate: !open ? '180deg' : undefined }} />
                     </IconButton>
                 </Box>
                 <Divider />
