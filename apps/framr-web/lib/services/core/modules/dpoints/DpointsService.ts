@@ -1,6 +1,10 @@
 import { CreateDPoint } from 'apps/framr-web/lib/types';
 import { FramrServiceError } from '../../../libs/errors';
-import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
+import {
+  EventBus,
+  EventBusChannelStatus,
+  EventBusPayload,
+} from '../../../libs/event-bus';
 import { IDBFactory, StoreRecord } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { DPointRecord, FramrDBSchema } from '../../db/schema';
@@ -17,14 +21,13 @@ export class DpointsService implements DpointInterface {
   }
 
   create(createDpoint: CreateDPoint): void {
-    let newDpoint: DPointRecord = {
+    const channel = DpointsEventChannel.CREATE_DPOINT_CHANNEL;
+    const newDpoint: DPointRecord = {
       value: {
         id: crypto.randomUUID(),
         ...createDpoint,
       },
     };
-
-    let channel = DpointsEventChannel.CREATE_DPOINT_CHANNEL;
 
     this.database
       .insert(this.STORE_NAME, newDpoint)
@@ -43,20 +46,18 @@ export class DpointsService implements DpointInterface {
   }
 
   findOne(index: number): void {
-    let channel = DpointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
+    const channel = DpointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
 
     this.database
       .findOne(this.STORE_NAME, index)
-      .then((response: DPointRecord | null) => {
-        response
-          ? this.eventBus.emit(channel, {
-              data: { ...response },
-              status: EventBusChannelStatus.SUCCESS,
-            })
-          : this.eventBus.emit(channel, {
+      .then((response) => {
+        const payload: EventBusPayload<EventBusChannelStatus> = response
+          ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
+          : {
               data: new FramrServiceError('Dpoint not found'),
               status: EventBusChannelStatus.ERROR,
-            });
+            };
+        this.eventBus.emit(channel, payload);
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
