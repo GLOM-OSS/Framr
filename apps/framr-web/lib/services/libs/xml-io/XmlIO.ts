@@ -4,6 +4,7 @@ import {
   convertableToString as ConvertableToString,
 } from 'xml2js';
 import { FramrServiceError } from '../errors';
+import { normalize } from 'xml2js/lib/processors';
 
 export class XmlIO {
   private readonly _xmlParser: Parser;
@@ -17,7 +18,15 @@ export class XmlIO {
   }
 
   constructor() {
-    this._xmlParser = new Parser({});
+    this._xmlParser = new Parser({
+      normalize: true,
+      normalizeTags: true,
+      emptyTag: () => undefined,
+      explicitRoot: false,
+      mergeAttrs: true,
+      explicitArray: false,
+      attrNameProcessors: [normalize]
+    });
     this._xmlBuilder = new Builder({});
   }
 
