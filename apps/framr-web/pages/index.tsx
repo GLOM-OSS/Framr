@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import SideBar from "../components/sideBar/SideBar";
 import Layout from "../components/layout";
 import { useState } from "react";
+import ToolManagement from "../components/ToolManagement/ToolManagement";
 
 export function Index() {
   const [open, setOpen] = useState<boolean>(true)
@@ -17,7 +18,7 @@ export function Index() {
         open={open}
         setOpen={setOpen}
       >
-        hello
+        <ToolManagement />
       </Layout>
       <SideBar
         drawerWidth={drawerWidth}
