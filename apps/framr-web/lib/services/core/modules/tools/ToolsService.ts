@@ -19,10 +19,7 @@ export class ToolsService implements ToolInterface {
   }
 
   create(createTool: CreateTool): void {
-    let newTool: ToolRecord | null = null;
-    let channel = ToolsEventChannel.CREATE_TOOLS_CHANNEL;
-
-    newTool = {
+    let newTool: ToolRecord = {
       value: {
         id: crypto.randomUUID(),
         ...(createTool.type === ToolEnum.MWD
@@ -30,6 +27,8 @@ export class ToolsService implements ToolInterface {
           : { ...createTool, type: ToolEnum.LWD }),
       },
     };
+
+    let channel = ToolsEventChannel.CREATE_TOOLS_CHANNEL;
 
     this.database
       .insert(this.STORE_NAME, newTool)
@@ -52,11 +51,16 @@ export class ToolsService implements ToolInterface {
 
     this.database
       .findOne(this.STORE_NAME, index)
-      .then((response) => {
-        this.eventBus.emit(channel, {
-          data: { ...response },
-          status: EventBusChannelStatus.SUCCESS,
-        });
+      .then((response: ToolRecord | null) => {
+        response
+          ? this.eventBus.emit(channel, {
+              data: { ...response },
+              status: EventBusChannelStatus.SUCCESS,
+            })
+          : this.eventBus.emit(channel, {
+              data: new FramrServiceError('Tool not found'),
+              status: EventBusChannelStatus.ERROR,
+            });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -70,11 +74,21 @@ export class ToolsService implements ToolInterface {
     let channel = ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
-      .then((result) => {
-        this.eventBus.emit(channel, {
-          data: { result },
-          status: EventBusChannelStatus.SUCCESS,
-        });
+      .then((response) => {
+        if (
+          Array.isArray(response) &&
+          response.every((item) => 'id' in item.value)
+        ) {
+          this.eventBus.emit(channel, {
+            data: response,
+            status: EventBusChannelStatus.SUCCESS,
+          });
+        } else {
+          this.eventBus.emit(channel, {
+            data: new FramrServiceError('no tools found'),
+            status: EventBusChannelStatus.ERROR,
+          });
+        }
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -89,9 +103,9 @@ export class ToolsService implements ToolInterface {
 
     this.database
       .update(this.STORE_NAME, index, createTool)
-      .then((result) => {
+      .then(() => {
         this.eventBus.emit(channel, {
-          data: { result },
+          data: undefined,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
