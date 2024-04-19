@@ -2,15 +2,16 @@ import { CreateTool, MWDTool } from '../../../../types';
 import { ToolEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
-import { IDBFactory, StoreRecord } from '../../../libs/idb';
+import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
-import { FramrDBSchema } from '../../db/schema';
+import { FramrDBSchema, ToolRecord } from '../../db/schema';
 
 import { ToolInterface, ToolsEventChannel } from './ToolInterface';
 
 export class ToolsService implements ToolInterface {
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
+  private readonly STORE_NAME = 'tools';
 
   constructor() {
     this.database = IDBConnection.getDatabase();
@@ -18,25 +19,20 @@ export class ToolsService implements ToolInterface {
   }
 
   create(createTool: CreateTool): void {
-    let newTool: StoreRecord<FramrDBSchema, 'tools'> | null = null;
+    let newTool: ToolRecord | null = null;
     let channel = ToolsEventChannel.CREATE_TOOLS_CHANNEL;
 
-    if (createTool.type == ToolEnum.LWD) {
-      newTool = {
-        value: { ...createTool, id: crypto.randomUUID(), type: ToolEnum.LWD },
-      };
-    } else {
-      newTool = {
-        value: {
-          ...(createTool as MWDTool),
-          id: crypto.randomUUID(),
-          type: ToolEnum.MWD,
-        },
-      };
-    }
+    newTool = {
+      value: {
+        id: crypto.randomUUID(),
+        ...(createTool.type === ToolEnum.MWD
+          ? { ...(createTool as MWDTool), type: ToolEnum.MWD }
+          : { ...createTool, type: ToolEnum.LWD }),
+      },
+    };
 
     this.database
-      .insert('tools', newTool)
+      .insert(this.STORE_NAME, newTool)
       .then((response) => {
         this.eventBus.emit(channel, {
           data: { ...newTool!.value, id: response },
@@ -55,7 +51,7 @@ export class ToolsService implements ToolInterface {
     let channel = ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL;
 
     this.database
-      .findOne('tools', index)
+      .findOne(this.STORE_NAME, index)
       .then((response) => {
         this.eventBus.emit(channel, {
           data: { ...response },
@@ -73,10 +69,10 @@ export class ToolsService implements ToolInterface {
   findAll(): void {
     let channel = ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL;
     this.database
-      .findAll('tools')
+      .findAll(this.STORE_NAME)
       .then((result) => {
         this.eventBus.emit(channel, {
-          data: { ...result },
+          data: { result },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -92,7 +88,7 @@ export class ToolsService implements ToolInterface {
     let channel = ToolsEventChannel.UPDATE_TOLLS_CHANNEL;
 
     this.database
-      .update('tools', index, createTool)
+      .update(this.STORE_NAME, index, createTool)
       .then((result) => {
         this.eventBus.emit(channel, {
           data: { result },
@@ -111,7 +107,7 @@ export class ToolsService implements ToolInterface {
     let channel = ToolsEventChannel.DELETE_TOLLS_CHANNEL;
 
     this.database
-      .delete('tools', index)
+      .delete(this.STORE_NAME, index)
       .then(() => {
         this.eventBus.emit(channel, {
           data: { id: index },
