@@ -1,14 +1,29 @@
-import { Box } from '@mui/material';
+import { Box } from "@mui/material";
+import SideBar from "../components/sideBar/SideBar";
+import Layout from "../components/layout";
+import { useState } from "react";
 
 export function Index() {
-  /*
-   * Replace the elements below with your own.
-   *
-   * Note: The corresponding styles are in the ./index.css file.
-   */
-  return (
-    <Box p={3}>
+  const [open, setOpen] = useState<boolean>(true)
+  const [drawerWidth, setDrawerWidth] = useState<number>(240)
 
+  return (
+    <Box sx={{
+      display: "flex",
+    }}>
+      <Layout
+        drawerWidth={drawerWidth}
+        setDrawerWidth={setDrawerWidth}
+        open={open}
+        setOpen={setOpen}
+      >
+        hello
+      </Layout>
+      <SideBar
+        drawerWidth={drawerWidth}
+        setDrawerWidth={setDrawerWidth}
+        open={open}
+        setOpen={setOpen} />
     </Box>
   );
 }
