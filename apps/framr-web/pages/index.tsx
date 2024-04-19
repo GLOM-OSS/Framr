@@ -1,5 +1,4 @@
 import { Box } from '@mui/material';
-// import './style.css'
 
 export function Index() {
   /*
@@ -8,8 +7,8 @@ export function Index() {
    * Note: The corresponding styles are in the ./index.css file.
    */
   return (
-    <Box>
-      hello here
+    <Box p={3}>
+
     </Box>
   );
 }
