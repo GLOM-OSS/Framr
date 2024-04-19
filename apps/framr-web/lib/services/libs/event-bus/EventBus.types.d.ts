@@ -1,5 +1,5 @@
 import { FramrServiceError } from '../errors';
-import { EventBusChannelStatus } from './EventBus.enum';
+import { EventBusChannelStatus } from './EventBusEnum';
 
 type EventBusDataMap = {
   [EventBusChannelStatus.SUCCESS]: unknown;
