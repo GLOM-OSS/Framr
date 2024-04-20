@@ -25,7 +25,7 @@ export class XmlIO {
       explicitRoot: false,
       mergeAttrs: true,
       explicitArray: false,
-      attrNameProcessors: [normalize]
+      attrNameProcessors: [normalize],
     });
     this._xmlBuilder = new Builder({});
   }
@@ -35,10 +35,10 @@ export class XmlIO {
    * @param file
    * @returns
    */
-  async parseFromFile(file: File): Promise<object> {
+  async parseFromFile<T extends object>(file: File): Promise<T> {
     try {
       const xmlString = await this.readFileAsText(file);
-      return await this.parse(xmlString);
+      return (await this.parse(xmlString)) as T;
     } catch (error) {
       throw new FramrServiceError(
         `Error reading or parsing XML file: ${error}`
