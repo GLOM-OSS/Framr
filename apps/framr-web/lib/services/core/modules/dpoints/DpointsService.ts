@@ -68,24 +68,14 @@ export class DpointsService implements DpointInterface {
   }
 
   findAll(): void {
-    let channel = DpointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
+    const channel = DpointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
-        if (
-          Array.isArray(response) &&
-          response.every((item) => 'id' in item.value)
-        ) {
-          this.eventBus.emit(channel, {
-            data: response,
-            status: EventBusChannelStatus.SUCCESS,
-          });
-        } else {
-          this.eventBus.emit(channel, {
-            data: new FramrServiceError('no dpoints found'),
-            status: EventBusChannelStatus.ERROR,
-          });
-        }
+        this.eventBus.emit(channel, {
+          data: response.map((_) => _.value),
+          status: EventBusChannelStatus.ERROR,
+        });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -96,7 +86,7 @@ export class DpointsService implements DpointInterface {
   }
 
   update(index: number, createDpoint: CreateDPoint): void {
-    let channel = DpointsEventChannel.UPDATE_DPOINT_CHANNEL;
+    const channel = DpointsEventChannel.UPDATE_DPOINT_CHANNEL;
 
     this.database
       .update(this.STORE_NAME, index, createDpoint)
@@ -115,13 +105,13 @@ export class DpointsService implements DpointInterface {
   }
 
   delete(index: number): void {
-    let channel = DpointsEventChannel.DELETE_DPOINT_CHANNEL;
+    const channel = DpointsEventChannel.DELETE_DPOINT_CHANNEL;
 
     this.database
       .delete(this.STORE_NAME, index)
       .then(() => {
         this.eventBus.emit(channel, {
-          data: { id: index },
+          data: undefined,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
