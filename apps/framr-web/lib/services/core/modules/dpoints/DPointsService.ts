@@ -8,9 +8,9 @@ import {
 import { IDBFactory, StoreRecord } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { DPointRecord, FramrDBSchema } from '../../db/schema';
-import { DpointInterface, DpointsEventChannel } from './DpointInterface';
+import { DPointInterface, DPointsEventChannel } from './DPointInterface';
 
-export class DpointsService implements DpointInterface {
+export class DPointsService implements DPointInterface {
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
   private readonly STORE_NAME = 'dpoints';
@@ -21,7 +21,7 @@ export class DpointsService implements DpointInterface {
   }
 
   create(createDpoint: CreateDPoint): void {
-    const channel = DpointsEventChannel.CREATE_DPOINT_CHANNEL;
+    const channel = DPointsEventChannel.CREATE_DPOINT_CHANNEL;
     const newDpoint: DPointRecord = {
       value: {
         id: crypto.randomUUID(),
@@ -46,7 +46,7 @@ export class DpointsService implements DpointInterface {
   }
 
   findOne(index: number): void {
-    const channel = DpointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
+    const channel = DPointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
 
     this.database
       .findOne(this.STORE_NAME, index)
@@ -68,7 +68,7 @@ export class DpointsService implements DpointInterface {
   }
 
   findAll(): void {
-    const channel = DpointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
+    const channel = DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
@@ -86,7 +86,7 @@ export class DpointsService implements DpointInterface {
   }
 
   update(index: number, createDpoint: CreateDPoint): void {
-    const channel = DpointsEventChannel.UPDATE_DPOINT_CHANNEL;
+    const channel = DPointsEventChannel.UPDATE_DPOINT_CHANNEL;
 
     this.database
       .update(this.STORE_NAME, index, createDpoint)
@@ -105,7 +105,7 @@ export class DpointsService implements DpointInterface {
   }
 
   delete(index: number): void {
-    const channel = DpointsEventChannel.DELETE_DPOINT_CHANNEL;
+    const channel = DPointsEventChannel.DELETE_DPOINT_CHANNEL;
 
     this.database
       .delete(this.STORE_NAME, index)

@@ -1,2 +1,2 @@
 export * from './tools/ToolsService';
-export * from './dpoints/DpointsService';
+export * from './dpoints/DPointsService';
