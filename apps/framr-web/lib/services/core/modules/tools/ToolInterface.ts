@@ -6,6 +6,7 @@ export enum ToolsEventChannel {
   FIND_ALL_TOOLS_CHANNEL = 'FIND_ALL_TOOLS',
   UPDATE_TOLLS_CHANNEL = 'UPDATE_TOOLS',
   DELETE_TOLLS_CHANNEL = 'DELETE_TOOLS',
+  CREATE_FROM_TOOLS_CHANNEL = 'create-from-tools-channel'
 }
 export interface ToolInterface {
   create(createTool: CreateTool): void;
@@ -13,4 +14,5 @@ export interface ToolInterface {
   findAll(): void;
   update(index: number, createTool: CreateTool): void;
   delete(index: number): void;
+  createFrom(file: File): void;
 }
