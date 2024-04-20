@@ -1,3 +1,4 @@
+import { XmlIO } from '../../../../libs/xml-io';
 import {
   XmlDataPoint,
   XmlData,
@@ -8,7 +9,7 @@ import {
 } from '../../../../../types';
 import { FrameEnum, RuleEnum, ToolEnum } from '../../../../../types/enums';
 
-export type ProcessedXMLData = {
+export type FramrBulkData = {
   tools: LWDTool[];
   services: Service[];
   dpoints: DPoint[];
@@ -16,7 +17,14 @@ export type ProcessedXMLData = {
 };
 
 export class DataProcessor {
-  processXMLData(rawData: XmlData): ProcessedXMLData {
+  private readonly xmlIO: XmlIO;
+  constructor() {
+    this.xmlIO = new XmlIO();
+  }
+
+  async processXMLData(file: File): Promise<FramrBulkData> {
+    const { tool: xmlTools } = await this.xmlIO.parseFromFile<XmlData>(file);
+
     const tools: LWDTool[] = [];
     const services: Service[] = [];
     const dpoints: DPoint[] = [];
@@ -26,7 +34,7 @@ export class DataProcessor {
       mandatory: { dpoint: mandatoryDpoints },
       services: { service: toolServices },
       ...tool
-    } of rawData.tool) {
+    } of xmlTools) {
       const newTool: LWDTool = {
         ...tool,
         type: ToolEnum.LWD,
