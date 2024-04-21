@@ -1,7 +1,6 @@
-import { Box } from '@mui/material';
+import ToolManagement from "../components/ToolManagement/ToolManagement";
 
 export function Index() {
-  return <Box sx={{ height: '100%' }}>Hello Frame Generator</Box>;
+  return <ToolManagement />
 }
 
-export default Index;
