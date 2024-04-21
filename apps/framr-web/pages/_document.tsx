@@ -11,7 +11,7 @@ export default class MyDocument extends Document {
             href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
             rel="stylesheet"
           />
-          <link rel="icon" type="image/x-icon" href="/favicon.png" />
+          <link rel="icon" type="image/x-icon" href="/assets/favicon.png" />
           <meta
             name="description"
             content="Framr is a tool that helps you to generate ordered frames for your well drillling projects. with rules management and a lot of features."
