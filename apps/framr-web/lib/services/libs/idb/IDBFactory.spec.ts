@@ -264,22 +264,18 @@ describe('IDBFactory', () => {
         await idbFactory.delete('testStore', 'tx_key_1', transaction);
       });
 
-    await idbFactory.$transaction(
-      ['testStore'],
-      'readwrite',
-      transactionCallback
-    );
+    await idbFactory.$transaction(['testStore'], 'readwrite', [
+      transactionCallback,
+    ]);
     expect(transactionCallback).toHaveBeenCalled();
 
     await expect(
-      idbFactory.$transaction(
-        ['testStore'],
-        'readonly',
+      idbFactory.$transaction(['testStore'], 'readonly', [
         transactionCallback as unknown as TransactionCallback<
           TestDBSchema,
           'readonly'
-        >
-      )
+        >,
+      ])
     ).rejects.toThrow(
       'StorageError: The mutating operation was attempted in a "readonly" transaction.'
     );
