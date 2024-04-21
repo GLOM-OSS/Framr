@@ -1,4 +1,11 @@
-import { Box, Menu, MenuItem } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Menu,
+  MenuItem,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { useRouter } from 'next/router';
 import { Tool } from '../../../../lib/types';
 import { ToolEnum } from '../../../../lib/types/enums';
@@ -52,6 +59,35 @@ export default function ToolMenu({
           rowGap: 1,
         }}
       >
+        <Autocomplete
+          options={tools}
+          autoHighlight
+          getOptionLabel={(option) => option.name}
+          renderOption={(props, { id, name, version }) => {
+            return (
+              <Typography
+                {...props}
+                key={id}
+                component="li"
+              >{`${name} (${version})`}</Typography>
+            );
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Search Tool"
+              size="small"
+              inputProps={{
+                ...params.inputProps,
+                autoComplete: 'autocomplete',
+              }}
+            />
+          )}
+          onChange={(_, tool) => {
+            if (tool) changeTool(tool.id);
+          }}
+        />
+
         {tools.map(({ name, id, version }, index) => (
           <MenuItem
             disableGutters
