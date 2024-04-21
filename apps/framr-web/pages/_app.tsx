@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { AppProps } from 'next/app';
 import Head from 'next/head';
-import AppLayout from '../lib/layouts/layout';
+import AppLayout from '../lib/layouts/AppLayout';
 import { generateTheme } from '../lib/theme';
 import './style.css';
 
