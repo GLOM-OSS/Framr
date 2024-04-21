@@ -10,9 +10,10 @@ export default function Footer() {
         gridTemplateColumns: 'auto 1fr',
         alignItems: 'center',
         columnGap: 0.5,
+        padding: '2px 0px 0px 4px',
       }}
     >
-      <Typography>Powered by : </Typography>
+      <Typography variant="body2">Powered by : </Typography>
       <Box
         component="a"
         href="#"
@@ -24,7 +25,7 @@ export default function Footer() {
           alignItems: 'center',
         }}
       >
-        <Typography>GLOM</Typography>
+        <Typography variant="body2">GLOM</Typography>
         <Icon icon={ExternalLink} />
       </Box>
     </Box>
