@@ -10,9 +10,9 @@ import { Icon } from '@iconify/react';
 import { Box, Button, IconButton, Menu, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useState } from 'react';
-import { theme } from '../../lib/theme';
-import { LWDTool } from '../../lib/types';
-import { ToolEnum } from '../../lib/types/enums';
+import { theme } from '../../theme';
+import { LWDTool } from '../../types';
+import { ToolEnum } from '../../types/enums';
 import IconMenuTool, { iconMenuTool } from './IconMenuTool';
 
 const columns: GridColDef[] = [
