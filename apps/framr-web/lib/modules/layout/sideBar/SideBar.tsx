@@ -38,7 +38,7 @@ export default function SideBar() {
       navItems: [
         {
           title: 'Frame Generator',
-          route: '/',
+          route: '/?new=true',
           icon: grid,
         },
       ],
@@ -48,7 +48,7 @@ export default function SideBar() {
       navItems: [
         {
           title: 'Tools',
-          route: '/tools',
+          route: '/configuration/tools',
           icon: tools,
         },
       ],
