@@ -7,20 +7,12 @@ import { Box, IconButton, InputAdornment, TextField } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import IOSSwitch from '../../sharedComponents/iosSwitch';
-import ToolConfigMenu from './menus/ToolConfigMenu';
-import ToolMenu from './menus/ToolMenu';
 import BaseBreadcrumb from './breadcrumbs/BaseBreadcrumb';
 import ToolBreadcrump from './breadcrumbs/ToolBreadcrump';
 
 export default function Header() {
   const [isLightMode, setIsLightMode] = useState<boolean>(false);
-  const [anchorEl, setAnchorEl] = useState<HTMLAnchorElement | null>(null);
-  const [toolAnchorEl, setToolAnchorEl] = useState<HTMLAnchorElement | null>(
-    null
-  );
-
   const { pathname } = useRouter();
-  const toolRoute = '/configuration/tools';
 
   const baseToolBreadcrumb = [
     { href: '/configuration/tools', title: 'Configuration' },
@@ -48,71 +40,63 @@ export default function Header() {
   }
 
   return (
-    <>
-      {pathname.includes(toolRoute) && toolRoute.split.length >= 3 && (
-        <>
-          <ToolConfigMenu anchorEl={anchorEl} setAnchorEl={setAnchorEl} />
-          <ToolMenu anchorEl={toolAnchorEl} setAnchorEl={setToolAnchorEl} />
-        </>
-      )}
+    <Box
+      sx={{
+        bgcolor: 'rgba(250, 250, 253, 1)',
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        justifyItems: 'center',
+        alignItems: 'center',
+        padding: '10px 20px',
+      }}
+    >
+      {getCorrespondingBreadcrumb()}
+      <TextField
+        variant="outlined"
+        placeholder="Search Tools"
+        size="small"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Icon icon={SearchIcon} />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton size="small">
+                <Icon icon={chevrondown} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
       <Box
         sx={{
-          bgcolor: 'rgba(250, 250, 253, 1)',
           display: 'grid',
-          gridTemplateColumns: 'auto 1fr auto',
-          justifyItems: 'center',
           alignItems: 'center',
-          padding: '10px 20px',
+          gridAutoFlow: 'column',
+          columnGap: 1,
         }}
       >
-        {getCorrespondingBreadcrumb()}
-        <TextField
-          variant="outlined"
-          placeholder="Search Tools"
-          size="small"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Icon icon={SearchIcon} />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton size="small">
-                  <Icon icon={chevrondown} />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Box
-          sx={{
-            display: 'grid',
-            alignItems: 'center',
-            gridAutoFlow: 'column',
-            columnGap: 1,
-          }}
-        >
-          <IconButton size="small" onClick={() => setIsLightMode(false)}>
-            <Icon
-              icon={MoonIcon}
-              fontSize={24}
-              color={!isLightMode ? '#2F3A45' : '#D1D5DB'}
-            />
-          </IconButton>
-          <IOSSwitch
-            checked={isLightMode}
-            onChange={(event) => setIsLightMode(event.target.checked)}
+        <IconButton size="small" onClick={() => setIsLightMode(false)}>
+          <Icon
+            icon={MoonIcon}
+            fontSize={24}
+            color={!isLightMode ? '#2F3A45' : '#D1D5DB'}
           />
-          <IconButton size="small" onClick={() => setIsLightMode(true)}>
-            <Icon
-              icon={SunIcon}
-              fontSize={24}
-              color={isLightMode ? '#3B82F6' : '#D1D5DB'}
-            />
-          </IconButton>
-        </Box>
+        </IconButton>
+        <IOSSwitch
+          checked={isLightMode}
+          onChange={(event) => setIsLightMode(event.target.checked)}
+        />
+        <IconButton size="small" onClick={() => setIsLightMode(true)}>
+          <Icon
+            icon={SunIcon}
+            fontSize={24}
+            color={isLightMode ? '#3B82F6' : '#D1D5DB'}
+          />
+        </IconButton>
       </Box>
-    </>
+    </Box>
   );
 }
