@@ -9,7 +9,7 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import { LWDTool } from "apps/framr-web/lib/types";
 import { ToolEnum } from "apps/framr-web/lib/types/enums";
 import { useState } from "react";
-import IconMenuTool, { iconMenuToolProps } from "./IconMenuTool";
+import IconMenuTool, { iconMenuTool } from "./IconMenuTool";
 
 const columns: GridColDef[] = [
     { field: 'name', headerName: 'Tools Name', width: 300 },
@@ -41,13 +41,13 @@ export default function ToolManagement() {
         setOpen((open) => !open)
     }
 
-    const elementsMenu: iconMenuToolProps[] = [
+    const elementsMenu: iconMenuTool[] = [
         { text: 'Manage Rules', icon: AddIcon },
         { text: 'Manage Data Point', icon: AddIcon },
         { text: 'Manage Services', icon: AddIcon },
         { text: 'Edit', icon: AddIcon },
         { text: 'Details', icon: DotIcon },
-        { text: 'Delete', icon: DeleteIcon }
+        { text: 'Delete', icon: DeleteIcon, stateColor: 'red' }
     ]
     return (
         <Box p={3}>
@@ -150,8 +150,8 @@ export default function ToolManagement() {
                     onClose={handleClick}
 
                 >
-                    {elementsMenu.map(({ text, icon }, index) => (
-                        <IconMenuTool key={index} text={text} icon={icon} handleClick={handleClick} />
+                    {elementsMenu.map((elementMenu, index) => (
+                        <IconMenuTool key={index} handleClick={handleClick} elementMenu={elementMenu} />
                     ))}
                 </Menu>
             </Box>

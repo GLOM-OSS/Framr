@@ -1,22 +1,29 @@
 import { Icon, IconifyIcon } from "@iconify/react";
-import { ListItemIcon, ListItemText, MenuItem, MenuList, MenuProps } from "@mui/material";
+import { ListItemIcon, ListItemText, MenuItem, MenuList } from "@mui/material";
 
-export interface iconMenuToolProps {
+
+export interface iconMenuTool {
     icon: IconifyIcon
     text: string
-    props?: MenuProps
-    handleClick?: () => void
-    open?: boolean
+    stateColor?: string
 }
 
-export default function IconMenuTool({ icon, text, props, handleClick, open }: iconMenuToolProps) {
+interface iconMenuToolProps {
+    handleClick?: () => void
+    elementMenu: iconMenuTool
+}
+
+export default function IconMenuTool({ elementMenu: { icon, text, stateColor }, handleClick }: iconMenuToolProps) {
+    const colorItem = stateColor && 'red'
     return (
         <MenuList>
-            <MenuItem onClick={handleClick}>
+            <MenuItem onClick={handleClick} sx={{
+                color: colorItem
+            }}>
                 <ListItemIcon>
-                    <Icon icon={icon} />
+                    <Icon icon={icon} color={colorItem} />
                 </ListItemIcon>
-                <ListItemText>{text}</ListItemText>
+                <ListItemText >{text}</ListItemText>
             </MenuItem>
         </MenuList>
     );
