@@ -1,6 +1,6 @@
 import { EventEmitter } from 'eventemitter3';
-import { EventBusChannelStatus } from './EventBus.enum';
-import { EventBusHandler, EventBusPayload } from './EventBus.d';
+import { EventBusChannelStatus } from './EventBusEnum';
+import { EventBusHandler, EventBusPayload } from './EventBus.types';
 /**
  * EventBus class represents a singleton event bus instance using EventEmitter3.
  * It provides a central communication channel for emitting and listening to events.

@@ -41,7 +41,7 @@ interface TransactionCallback<
   M extends IDBTransactionMode,
   S extends StoreNames<T> = StoreNames<T>
 > {
-  (tx: IDBTransaction<T, S, M>): void | Promise<void>;
+  (tx: IDBTransaction<T, S, M>): unknown | Promise<unknown>;
 }
 
 type MethodNames = keyof IDBFactory<T>;
