@@ -1,19 +1,26 @@
 import AddIcon from '@iconify/icons-fluent/add-24-filled';
 import AttachIcon from '@iconify/icons-fluent/attach-24-filled';
 import DeleteIcon from '@iconify/icons-fluent/delete-24-regular';
-import DotIcon from '@iconify/icons-fluent/document-ts-16-filled';
 import EditIcon from '@iconify/icons-fluent/edit-20-regular';
+import more from '@iconify/icons-fluent/more-vertical-24-regular';
 import OrganizationIcon from '@iconify/icons-fluent/organization-24-regular';
 import SettingIcon from '@iconify/icons-fluent/settings-cog-multiple-24-regular';
 import RulesIcon from '@iconify/icons-fluent/textbox-settings-24-regular';
 import { Icon } from '@iconify/react';
-import { Box, Button, IconButton, Menu, Typography } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import {
+  Box,
+  Button,
+  IconButton,
+  Menu,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { theme } from '../../theme';
 import { LWDTool } from '../../types';
 import { ToolEnum } from '../../types/enums';
-import IconMenuTool, { iconMenuTool } from './IconMenuTool';
+import ToolMoreMenu, { iconMenuTool } from './ToolMoreMenu';
 
 const columns: GridColDef[] = [
   { field: 'name', headerName: 'Tools Name', width: 300 },
@@ -72,10 +79,12 @@ export default function ToolManagement() {
       field: 'action',
       headerName: '',
       width: 50,
-      renderCell: (param: GridRenderCellParams) => (
-        <IconButton onClick={handleClick} aria-haspopup aria-expanded>
-          <Icon icon={DotIcon} style={{ height: '14px', width: '14px' }} />
-        </IconButton>
+      renderCell: () => (
+        <Tooltip title="More">
+          <IconButton onClick={handleClick}>
+            <Icon icon={more} fontSize={20} />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
@@ -88,7 +97,7 @@ export default function ToolManagement() {
     { text: 'Manage Data Point', icon: OrganizationIcon },
     { text: 'Manage Services', icon: SettingIcon },
     { text: 'Edit', icon: EditIcon },
-    { text: 'Details', icon: DotIcon },
+    { text: 'Details', icon: more },
     { text: 'Delete', icon: DeleteIcon, stateColor: 'red' },
   ];
   return (
@@ -192,7 +201,7 @@ export default function ToolManagement() {
           onClose={handleClick}
         >
           {elementsMenu.map((elementMenu, index) => (
-            <IconMenuTool
+            <ToolMoreMenu
               key={index}
               handleClick={handleClick}
               elementMenu={elementMenu}
