@@ -4,6 +4,10 @@ import AttachIcon from "@iconify-icons/fluent/attach-20-regular";
 import AddIcon from "@iconify-icons/fluent/add-28-regular";
 import DotIcon from "@iconify-icons/mdi/dots-vertical";
 import DeleteIcon from "@iconify-icons/fluent/delete-24-regular";
+import EditIcon from "@iconify-icons/fluent/edit-20-regular";
+import SettingIcon from "@iconify-icons/fluent/settings-cog-multiple-24-regular";
+import OrganizationIcon from "@iconify-icons/fluent/organization-24-regular";
+import RulesIcon from "@iconify-icons/mdi/text-box-edit-outline";
 import { Icon } from "@iconify/react";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import { LWDTool } from "apps/framr-web/lib/types";
@@ -42,10 +46,10 @@ export default function ToolManagement() {
     }
 
     const elementsMenu: iconMenuTool[] = [
-        { text: 'Manage Rules', icon: AddIcon },
-        { text: 'Manage Data Point', icon: AddIcon },
-        { text: 'Manage Services', icon: AddIcon },
-        { text: 'Edit', icon: AddIcon },
+        { text: 'Manage Rules', icon: RulesIcon },
+        { text: 'Manage Data Point', icon: OrganizationIcon },
+        { text: 'Manage Services', icon: SettingIcon },
+        { text: 'Edit', icon: EditIcon },
         { text: 'Details', icon: DotIcon },
         { text: 'Delete', icon: DeleteIcon, stateColor: 'red' }
     ]
