@@ -1,8 +1,8 @@
 import { Box } from '@mui/material';
 import { PropsWithChildren } from 'react';
-import Footer from '../../components/layout/footer/Footer';
-import Header from '../../components/layout/header/Header';
-import SideBar from '../../components/layout/sideBar/SideBar';
+import Footer from '../modules/layout/footer/Footer';
+import Header from '../modules/layout/header/Header';
+import SideBar from '../modules/layout/sideBar/SideBar';
 
 interface AppLayoutProps extends PropsWithChildren {}
 export default function AppLayout({ children }: AppLayoutProps) {

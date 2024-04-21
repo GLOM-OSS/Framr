@@ -7,8 +7,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/router';
-import { Tool } from '../../../../lib/types';
-import { ToolEnum } from '../../../../lib/types/enums';
+import { Tool } from '../../../../../lib/types';
+import { ToolEnum } from '../../../../../lib/types/enums';
 
 export default function ToolMenu({
   anchorEl,

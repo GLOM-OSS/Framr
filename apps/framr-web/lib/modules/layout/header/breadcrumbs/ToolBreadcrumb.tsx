@@ -1,17 +1,17 @@
 import upDown from '@iconify/icons-fluent/chevron-up-down-24-regular';
 import { Icon } from '@iconify/react';
 import {
-    Box,
-    Breadcrumbs,
-    IconButton,
-    Link,
-    Tooltip,
-    Typography,
+  Box,
+  Breadcrumbs,
+  IconButton,
+  Link,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Tool } from '../../../../lib/types';
-import { ToolEnum } from '../../../../lib/types/enums';
+import { Tool } from '../../../../../lib/types';
+import { ToolEnum } from '../../../../../lib/types/enums';
 import ToolConfigMenu from '../menus/ToolConfigMenu';
 import ToolMenu from '../menus/ToolMenu';
 

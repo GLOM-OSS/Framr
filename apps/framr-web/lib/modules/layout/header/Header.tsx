@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 import { Box, IconButton, InputAdornment, TextField } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import IOSSwitch from '../../sharedComponents/iosSwitch';
+import IOSSwitch from '../../../../components/sharedComponents/iosSwitch';
 import BaseBreadcrumb from './breadcrumbs/BaseBreadcrumb';
 import ToolBreadcrumb from './breadcrumbs/ToolBreadcrumb';
 
