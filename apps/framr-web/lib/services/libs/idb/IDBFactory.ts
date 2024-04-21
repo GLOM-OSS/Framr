@@ -289,7 +289,7 @@ export class IDBFactory<T extends DBSchema> {
    *
    * @param storeNames Names of the store involved in the transaction
    * @param mode "readonly" | "readwrite"
-   * @param callback
+   * @param callbacks
    */
   async $transaction<M extends IDBTransactionMode, S extends StoreNames<T>>(
     storeNames: S[],
@@ -315,12 +315,14 @@ export class IDBFactory<T extends DBSchema> {
             );
           };
        */
-    callback: TransactionCallback<T, M, S>
+    callbacks: TransactionCallback<T, M, S>[]
   ) {
     try {
       if (!this.db) this.db = await this.#dbPromise;
-
-      await callback(this.db.transaction(storeNames, mode));
+      const transaction = this.db.transaction(storeNames, mode);
+      return await Promise.all(
+        callbacks.map((callback) => callback(transaction))
+      );
     } catch (error) {
       throw new IDBError((error as Error).message);
     }

@@ -4,6 +4,7 @@ import {
   convertableToString as ConvertableToString,
 } from 'xml2js';
 import { FramrServiceError } from '../errors';
+import { normalize } from 'xml2js/lib/processors';
 
 export class XmlIO {
   private readonly _xmlParser: Parser;
@@ -17,7 +18,15 @@ export class XmlIO {
   }
 
   constructor() {
-    this._xmlParser = new Parser({});
+    this._xmlParser = new Parser({
+      normalize: true,
+      normalizeTags: true,
+      emptyTag: () => undefined,
+      explicitRoot: false,
+      mergeAttrs: true,
+      explicitArray: false,
+      attrNameProcessors: [normalize],
+    });
     this._xmlBuilder = new Builder({});
   }
 
@@ -26,10 +35,10 @@ export class XmlIO {
    * @param file
    * @returns
    */
-  async parseFromFile(file: File): Promise<object> {
+  async parseFromFile<T extends object>(file: File): Promise<T> {
     try {
       const xmlString = await this.readFileAsText(file);
-      return await this.parse(xmlString);
+      return (await this.parse(xmlString)) as T;
     } catch (error) {
       throw new FramrServiceError(
         `Error reading or parsing XML file: ${error}`
