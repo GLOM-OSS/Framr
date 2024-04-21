@@ -161,7 +161,6 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
           fontSize: '24px',
           lineHeight: '32px',
           letterSpacing: '-0.42px',
-          paddingBottom: '10px',
         },
         h4: {
           fontWeight: 500,
@@ -217,24 +216,17 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
       },
       MuiButton: {
         defaultProps: {
-          size: 'small',
+          size: 'medium',
+          disableElevation: true,
         },
         styleOverrides: {
           root: ({ theme }) => ({
             borderRadius: '8px',
             textTransform: 'none',
             fontWeight: 'var(--semiBold)',
-            lineHeight: '14px',
-            '&.MuiButton-sizeSmall': {
-              fontSize: '12px',
-              lineHeight: '12px',
-              padding: '12px',
-            },
-            '&.MuiButton-sizeMedium': { padding: '12px 16px' },
-            '&.MuiButton-sizeLarge': { padding: '12px 20px' },
             '&.MuiButton-colorInherit.MuiButton-outlined ': {
               border: `1px solid ${theme.common.line}`,
-              color: theme.common.body,
+              fontWeight: '600',
             },
           }),
         },
