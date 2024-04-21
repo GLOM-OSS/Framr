@@ -1,6 +1,5 @@
-import ToolManagement from "../components/ToolManagement/ToolManagement";
+import ToolManagement from '../components/ToolManagement/ToolManagement';
 
-export function Index() {
-  return <ToolManagement />
+export default function Index() {
+  return <ToolManagement />;
 }
-
