@@ -47,7 +47,7 @@ export class RulesService implements RuleInterface {
       });
   }
 
-  findOne(index: number): void {
+  findOne(index: string): void {
     const channel = RulesEventChannel.FIND_ONE_RULES_CHANNEL;
 
     this.database
@@ -87,7 +87,7 @@ export class RulesService implements RuleInterface {
       });
   }
 
-  update(index: number, createRule: CreateRule): void {
+  update(index: string, createRule: CreateRule): void {
     const channel = RulesEventChannel.UPDATE_RULES_CHANNEL;
 
     this.database
@@ -106,7 +106,7 @@ export class RulesService implements RuleInterface {
       });
   }
 
-  delete(index: number): void {
+  delete(index: string): void {
     const channel = RulesEventChannel.DELETE_RULES_CHANNEL;
 
     this.database

@@ -48,7 +48,7 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  findOne(index: number): void {
+  findOne(index: string): void {
     const channel = ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL;
 
     this.database
@@ -88,7 +88,7 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  update(index: number, createTool: CreateTool): void {
+  update(index: string, createTool: CreateTool): void {
     const channel = ToolsEventChannel.UPDATE_TOLLS_CHANNEL;
 
     this.database
@@ -107,7 +107,7 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  delete(index: number): void {
+  delete(index: string): void {
     const channel = ToolsEventChannel.DELETE_TOLLS_CHANNEL;
 
     this.database

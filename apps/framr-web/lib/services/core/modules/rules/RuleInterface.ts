@@ -8,9 +8,9 @@ export enum RulesEventChannel {
   DELETE_RULES_CHANNEL = 'DELETE_RULES',
 }
 export interface RuleInterface {
-  create(RULES: CreateRule): void;
-  findOne(index: number): void;
+  create(rule: CreateRule): void;
+  findOne(index: string): void;
   findAll(): void;
-  update(index: number, RULES: CreateRule): void;
-  delete(index: number): void;
+  update(index: string, rule: CreateRule): void;
+  delete(index: string): void;
 }

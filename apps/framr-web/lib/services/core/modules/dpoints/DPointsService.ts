@@ -45,7 +45,7 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  findOne(index: number): void {
+  findOne(index: string): void {
     const channel = DPointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
 
     this.database
@@ -85,7 +85,7 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  update(index: number, createDpoint: CreateDPoint): void {
+  update(index: string, createDpoint: CreateDPoint): void {
     const channel = DPointsEventChannel.UPDATE_DPOINT_CHANNEL;
 
     this.database
@@ -104,7 +104,7 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  delete(index: number): void {
+  delete(index: string): void {
     const channel = DPointsEventChannel.DELETE_DPOINT_CHANNEL;
 
     this.database

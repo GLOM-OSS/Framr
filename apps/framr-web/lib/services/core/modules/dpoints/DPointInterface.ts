@@ -9,8 +9,8 @@ export enum DPointsEventChannel {
 }
 export interface DPointInterface {
   create(dpoint: CreateDPoint): void;
-  findOne(index: number): void;
+  findOne(index: string): void;
   findAll(): void;
-  update(index: number, dpoint: CreateDPoint): void;
-  delete(index: number): void;
+  update(index: string, dpoint: CreateDPoint): void;
+  delete(index: string): void;
 }
