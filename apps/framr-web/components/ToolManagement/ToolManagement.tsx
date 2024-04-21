@@ -1,18 +1,18 @@
-import AddIcon from '@iconify/icons-fluent/add-28-regular';
-import AttachIcon from '@iconify/icons-fluent/attach-20-regular';
+import AddIcon from '@iconify/icons-fluent/add-24-filled';
+import AttachIcon from '@iconify/icons-fluent/attach-24-filled';
 import DeleteIcon from '@iconify/icons-fluent/delete-24-regular';
 import DotIcon from '@iconify/icons-fluent/document-ts-16-filled';
 import EditIcon from '@iconify/icons-fluent/edit-20-regular';
-import FilterIcon from '@iconify/icons-fluent/filter-28-regular';
 import OrganizationIcon from '@iconify/icons-fluent/organization-24-regular';
 import SettingIcon from '@iconify/icons-fluent/settings-cog-multiple-24-regular';
 import RulesIcon from '@iconify/icons-fluent/textbox-settings-24-regular';
 import { Icon } from '@iconify/react';
 import { Box, Button, IconButton, Menu, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { LWDTool } from 'apps/framr-web/lib/types';
-import { ToolEnum } from 'apps/framr-web/lib/types/enums';
 import { useState } from 'react';
+import { theme } from '../../lib/theme';
+import { LWDTool } from '../../lib/types';
+import { ToolEnum } from '../../lib/types/enums';
 import IconMenuTool, { iconMenuTool } from './IconMenuTool';
 
 const columns: GridColDef[] = [
@@ -92,84 +92,51 @@ export default function ToolManagement() {
     { text: 'Delete', icon: DeleteIcon, stateColor: 'red' },
   ];
   return (
-    <Box p={3}>
-      <Typography
-        variant="h3"
-        sx={{
-          fontFamily: 'inter',
-          fontWeight: 600,
-          fontSize: '24px',
-          lineHeight: '32px',
-          paragraph: '10px',
-          letter: '-1.75px',
-        }}
-      >
-        Tool Management
-      </Typography>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'grid',
+        gridTemplateRows: 'auto 1fr',
+        rowGap: 1,
+      }}
+    >
       <Box
         sx={{
-          display: 'flex',
+          display: 'grid',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 0',
+          gridTemplateColumns: 'auto 1fr',
+          justifyItems: 'end',
+          columnGap: 1,
         }}
       >
         <Box
           sx={{
             display: 'grid',
             gridAutoFlow: 'column',
-            columnGap: '10px',
+            alignItems: 'center',
+            columnGap: 1,
           }}
         >
-          <Button
-            variant="contained"
-            disableElevation
-            sx={{
-              textTransform: 'none',
-              bgcolor: 'rgba(47, 58, 69, 1)',
-              minWidth: '45px',
-            }}
-          >
-            All
-          </Button>
-          <Button
-            variant="outlined"
-            disableElevation
-            startIcon={<Icon icon={FilterIcon} />}
-            sx={{
-              textTransform: 'none',
-              borderColor: 'rgba(55, 65, 81, 1)',
-              color: 'rgba(55, 65, 81, 1)',
-            }}
-          >
-            Filter
-          </Button>
+          <Typography variant="h3">Tools</Typography>
+          <Typography variant="h3" sx={{ color: theme.common.line }}>
+            {dataTableGrid.length}
+          </Typography>
         </Box>
         <Box
           sx={{
             display: 'grid',
             gridAutoFlow: 'column',
-            columnGap: '10px',
+            columnGap: 1,
           }}
         >
           <Button
             variant="outlined"
-            disableElevation
+            color="inherit"
             startIcon={<Icon icon={AttachIcon} />}
-            sx={{
-              textTransform: 'none',
-              borderColor: 'rgba(55, 65, 81, 1)',
-              color: 'rgba(55, 65, 81, 1)',
-            }}
           >
             Import Tool
           </Button>
-          <Button
-            variant="contained"
-            disableElevation
-            startIcon={<Icon icon={AddIcon} />}
-            sx={{ textTransform: 'none' }}
-          >
+          <Button variant="contained" startIcon={<Icon icon={AddIcon} />}>
             Create Tool
           </Button>
         </Box>
