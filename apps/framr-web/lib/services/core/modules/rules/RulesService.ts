@@ -1,39 +1,41 @@
-import { CreateDPoint } from 'apps/framr-web/lib/types';
+import { CreateRule } from 'apps/framr-web/lib/types';
 import { FramrServiceError } from '../../../libs/errors';
 import {
   EventBus,
   EventBusChannelStatus,
   EventBusPayload,
 } from '../../../libs/event-bus';
-import { IDBFactory, StoreRecord } from '../../../libs/idb';
+import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
-import { DPointRecord, FramrDBSchema } from '../../db/schema';
-import { DPointInterface, DPointsEventChannel } from './DPointInterface';
+import { FramrDBSchema, RuleRecord } from '../../db/schema';
+import { RuleInterface, RulesEventChannel } from './RuleInterface';
 
-export class DPointsService implements DPointInterface {
+
+export class RulesService implements RuleInterface {
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
-  private readonly STORE_NAME = 'dpoints';
+  private readonly STORE_NAME = 'rules';
 
   constructor() {
     this.database = IDBConnection.getDatabase();
     this.eventBus = new EventBus();
   }
 
-  create(createDpoint: CreateDPoint): void {
-    const channel = DPointsEventChannel.CREATE_DPOINT_CHANNEL;
-    const newDpoint: DPointRecord = {
+
+  create(createRule: CreateRule): void {
+    const channel = RulesEventChannel.CREATE_RULES_CHANNEL;
+    const newRule: RuleRecord = {
       value: {
         id: crypto.randomUUID(),
-        ...createDpoint,
+        ...createRule,
       },
     };
 
     this.database
-      .insert(this.STORE_NAME, newDpoint)
+      .insert(this.STORE_NAME, newRule)
       .then((response) => {
         this.eventBus.emit(channel, {
-          data: { ...newDpoint!.value, id: response },
+          data: { ...newRule!.value, id: response },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -46,7 +48,7 @@ export class DPointsService implements DPointInterface {
   }
 
   findOne(index: string): void {
-    const channel = DPointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
+    const channel = RulesEventChannel.FIND_ONE_RULES_CHANNEL;
 
     this.database
       .findOne(this.STORE_NAME, index)
@@ -54,7 +56,7 @@ export class DPointsService implements DPointInterface {
         const payload: EventBusPayload<EventBusChannelStatus> = response
           ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
           : {
-              data: new FramrServiceError('Dpoint not found'),
+              data: new FramrServiceError('Rule not found'),
               status: EventBusChannelStatus.ERROR,
             };
         this.eventBus.emit(channel, payload);
@@ -68,7 +70,7 @@ export class DPointsService implements DPointInterface {
   }
 
   findAll(): void {
-    const channel = DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
+    const channel = RulesEventChannel.FIND_ALL_RULES_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
@@ -85,11 +87,11 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  update(index: string, createDpoint: CreateDPoint): void {
-    const channel = DPointsEventChannel.UPDATE_DPOINT_CHANNEL;
+  update(index: string, createRule: CreateRule): void {
+    const channel = RulesEventChannel.UPDATE_RULES_CHANNEL;
 
     this.database
-      .update(this.STORE_NAME, index, createDpoint)
+      .update(this.STORE_NAME, index, createRule)
       .then(() => {
         this.eventBus.emit(channel, {
           data: undefined,
@@ -105,7 +107,7 @@ export class DPointsService implements DPointInterface {
   }
 
   delete(index: string): void {
-    const channel = DPointsEventChannel.DELETE_DPOINT_CHANNEL;
+    const channel = RulesEventChannel.DELETE_RULES_CHANNEL;
 
     this.database
       .delete(this.STORE_NAME, index)

@@ -10,9 +10,9 @@ export enum ToolsEventChannel {
 }
 export interface ToolInterface {
   create(createTool: CreateTool): void;
-  findOne(index: number): void;
+  findOne(index: string): void;
   findAll(): void;
-  update(index: number, createTool: CreateTool): void;
-  delete(index: number): void;
+  update(index: string, createTool: CreateTool): void;
+  delete(index: string): void;
   createFrom(file: File): void;
 }
