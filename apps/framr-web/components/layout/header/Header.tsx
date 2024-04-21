@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import IOSSwitch from '../../sharedComponents/iosSwitch';
 import BaseBreadcrumb from './breadcrumbs/BaseBreadcrumb';
-import ToolBreadcrumb from './breadcrumbs/ToolBreadcrump';
+import ToolBreadcrumb from './breadcrumbs/ToolBreadcrumb';
 
 export default function Header() {
   const [isLightMode, setIsLightMode] = useState<boolean>(false);
