@@ -2,20 +2,26 @@
   "name": "@framr/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "format": "prettier --write \"**/*.ts\""
+  },
   "private": true,
   "dependencies": {
-    "@emotion/cache": "^11.11.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@mui/material-nextjs": "^5.15.11",
+    "@iconify/icons-fluent": "^1.2.38",
+    "@iconify/react": "^4.1.1",
+    "@mui/material": "^5.15.15",
+    "@mui/x-data-grid": "^7.2.0",
+    "@emotion/cache": "^11.11.0",
     "@nx/next": "17.2.8",
     "eventemitter3": "^5.0.1",
     "idb": "^8.0.0",
-    "next": "13.4.4",
+    "next": "^13.5.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@nx/eslint": "17.2.8",
@@ -31,6 +37,7 @@
     "@types/node": "18.16.9",
     "@types/react": "18.2.33",
     "@types/react-dom": "18.2.14",
+    "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "babel-jest": "^29.4.1",

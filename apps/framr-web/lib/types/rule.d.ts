@@ -41,6 +41,12 @@ export interface RuleWithOccurenceConstraint
   id: string;
 }
 
+export type CreateRule =
+  | CreateStandAloneRule
+  | CreateRuleWithConstraint
+  | CreateRuleWithOccurenceConstraint
+  | CreateRuleWithOtherDPoint;
+
 export type Rule =
   | StandAloneRule
   | RuleWithConstraint
