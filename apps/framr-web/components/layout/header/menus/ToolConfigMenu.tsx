@@ -8,9 +8,11 @@ import { useRouter } from 'next/router';
 export default function ToolConfigMenu({
   anchorEl,
   setAnchorEl,
+  setActiveToolConfig,
 }: {
   anchorEl: HTMLAnchorElement | null;
   setAnchorEl: (anchor: HTMLAnchorElement | null) => void;
+  setActiveToolConfig: (tool: string) => void;
 }) {
   const { push } = useRouter();
   const menuItems: { title: string; icon: IconifyIcon; route: string }[] = [
@@ -26,6 +28,13 @@ export default function ToolConfigMenu({
       route: '/rules',
     },
   ];
+
+  function openConfig(route: string, title: string) {
+    push(route);
+    setAnchorEl(null);
+    setActiveToolConfig(title);
+  }
+
   return (
     <Menu
       anchorEl={anchorEl}
@@ -44,10 +53,7 @@ export default function ToolConfigMenu({
           <MenuItem
             disableGutters
             key={index}
-            onClick={() => {
-              push(route);
-              setAnchorEl(null);
-            }}
+            onClick={() => openConfig(route, title)}
             sx={{ padding: 1, minHeight: 'fit-content' }}
           >
             <Box
