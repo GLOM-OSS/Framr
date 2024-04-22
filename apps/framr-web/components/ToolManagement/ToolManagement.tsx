@@ -49,12 +49,19 @@ export default function ToolManagement() {
         setOpen((open) => !open)
     }
 
+    // const elementsMenu: iconMenuTool[] = [
+    //     { text: 'Manage Rules', icon: RulesIcon },
+    //     { text: 'Manage Data Point', icon: OrganizationIcon },
+    //     { text: 'Manage Services', icon: SettingIcon },
+    //     { text: 'Edit', icon: EditIcon },
+    //     { text: 'Details', icon: DotIcon },
+    //     { text: 'Delete', icon: DeleteIcon, stateColor: 'red' }
+    // ]
     const elementsMenu: iconMenuTool[] = [
-        { text: 'Manage Rules', icon: RulesIcon },
-        { text: 'Manage Data Point', icon: OrganizationIcon },
-        { text: 'Manage Services', icon: SettingIcon },
         { text: 'Edit', icon: EditIcon },
         { text: 'Details', icon: DotIcon },
+        { text: 'Services', icon: SettingIcon },
+        { text: 'Data Point', icon: OrganizationIcon },
         { text: 'Delete', icon: DeleteIcon, stateColor: 'red' }
     ]
     return (
@@ -144,9 +151,6 @@ export default function ToolManagement() {
                                 marginRight: '12px',
                             },
                         },
-                        '& .css-h4y409-MuiList-root': {
-                            padding: '4px 0'
-                        }
                     },
                 }}
                 open={open}
