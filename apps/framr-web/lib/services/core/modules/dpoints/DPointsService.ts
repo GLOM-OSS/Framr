@@ -5,7 +5,7 @@ import {
   EventBusChannelStatus,
   EventBusPayload,
 } from '../../../libs/event-bus';
-import { IDBFactory, StoreRecord } from '../../../libs/idb';
+import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { DPointRecord, FramrDBSchema } from '../../db/schema';
 import { DPointInterface, DPointsEventChannel } from './DPointInterface';
