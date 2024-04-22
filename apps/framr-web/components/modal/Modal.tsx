@@ -1,10 +1,25 @@
 import { PropsWithChildren } from "react";
-import { Modal as BaseModal } from '@mui/base/Modal';
+import { Dialog } from "@mui/material";
 
-export default function Modal({ children }: PropsWithChildren) {
+interface modalProps extends PropsWithChildren {
+    open: boolean;
+    setOpen: (attr: boolean) => void;
+}
+
+export default function Modal({ open, setOpen, children }: modalProps) {
+    const handleClose = () => {
+        setOpen(false);
+    }
     return (
-        <div>
-            general modal will setup here taken chold component
-        </div>
+        <Dialog open={open} onClose={handleClose} maxWidth={"desktop"} sx={{
+            '& .MuiPaper-root': {
+                borderRadius: '10px',
+                display: 'grid',
+                rowGap: '20px',
+                width: '25rem'
+            }
+        }}>
+            {children}
+        </Dialog>
     );
 }
