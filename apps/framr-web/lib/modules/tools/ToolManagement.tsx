@@ -1,11 +1,11 @@
-import AddIcon from '@iconify/icons-fluent/add-24-filled';
-import AttachIcon from '@iconify/icons-fluent/attach-24-filled';
-import DeleteIcon from '@iconify/icons-fluent/delete-24-regular';
-import EditIcon from '@iconify/icons-fluent/edit-20-regular';
-import more from '@iconify/icons-fluent/more-vertical-24-regular';
-import OrganizationIcon from '@iconify/icons-fluent/organization-24-regular';
-import SettingIcon from '@iconify/icons-fluent/settings-cog-multiple-24-regular';
-import RulesIcon from '@iconify/icons-fluent/textbox-settings-24-regular';
+import AddIcon from '@iconify-icons/fluent/add-24-filled';
+import AttachIcon from '@iconify-icons/fluent/attach-24-filled';
+import DeleteIcon from '@iconify-icons/fluent/delete-24-regular';
+import EditIcon from '@iconify-icons/fluent/edit-20-regular';
+import more from '@iconify-icons/fluent/more-vertical-24-regular';
+import OrganizationIcon from '@iconify-icons/fluent/organization-24-regular';
+import SettingIcon from '@iconify-icons/fluent/settings-cog-multiple-24-regular';
+import RulesIcon from '@iconify-icons/fluent/textbox-settings-24-regular';
 import { Icon } from '@iconify/react';
 import {
   Box,

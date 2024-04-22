@@ -1,8 +1,8 @@
-import tools from '@iconify/icons-fluent/app-folder-32-regular';
-import left from '@iconify/icons-fluent/chevron-left-32-regular';
-import right from '@iconify/icons-fluent/chevron-right-32-regular';
-import CommentIcon from '@iconify/icons-fluent/comment-20-regular';
-import grid from '@iconify/icons-fluent/table-32-regular';
+import tools from '@iconify-icons/fluent/app-folder-32-regular';
+import left from '@iconify-icons/fluent/chevron-left-32-regular';
+import right from '@iconify-icons/fluent/chevron-right-32-regular';
+import CommentIcon from '@iconify-icons/fluent/comment-20-regular';
+import grid from '@iconify-icons/fluent/table-32-regular';
 import { Icon, IconifyIcon } from '@iconify/react';
 import {
   Box,

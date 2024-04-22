@@ -1,7 +1,7 @@
-import chevrondown from '@iconify/icons-fluent/chevron-down-24-regular';
-import SearchIcon from '@iconify/icons-fluent/search-32-regular';
-import MoonIcon from '@iconify/icons-fluent/weather-moon-28-filled';
-import SunIcon from '@iconify/icons-fluent/weather-sunny-32-filled';
+import chevrondown from '@iconify-icons/fluent/chevron-down-24-regular';
+import SearchIcon from '@iconify-icons/fluent/search-32-regular';
+import MoonIcon from '@iconify-icons/fluent/weather-moon-28-filled';
+import SunIcon from '@iconify-icons/fluent/weather-sunny-32-filled';
 import { Icon } from '@iconify/react';
 import { Box, IconButton, InputAdornment, TextField } from '@mui/material';
 import { useRouter } from 'next/router';

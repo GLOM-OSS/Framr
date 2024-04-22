@@ -1,4 +1,4 @@
-import upDown from '@iconify/icons-fluent/chevron-up-down-24-regular';
+import upDown from '@iconify-icons/fluent/chevron-up-down-24-regular';
 import { Icon } from '@iconify/react';
 import {
   Box,

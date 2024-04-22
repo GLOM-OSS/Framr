@@ -1,4 +1,4 @@
-import ExternalLink from '@iconify/icons-fluent/open-32-regular';
+import ExternalLink from '@iconify-icons//fluent/open-32-regular';
 import { Icon } from '@iconify/react';
 import { Box, Typography } from '@mui/material';
 

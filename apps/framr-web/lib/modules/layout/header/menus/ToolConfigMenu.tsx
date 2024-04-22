@@ -1,8 +1,8 @@
 import { Icon, IconifyIcon } from '@iconify/react';
 import { Box, Menu, MenuItem } from '@mui/material';
-import dpointIcon from '@iconify/icons-fluent/organization-24-regular';
-import servicesIcon from '@iconify/icons-fluent/settings-cog-multiple-24-regular';
-import rulesIcon from '@iconify/icons-fluent/clipboard-text-edit-24-regular';
+import dpointIcon from '@iconify-icons/fluent/organization-24-regular';
+import servicesIcon from '@iconify-icons/fluent/settings-cog-multiple-24-regular';
+import rulesIcon from '@iconify-icons/fluent/clipboard-text-edit-24-regular';
 import { useRouter } from 'next/router';
 
 export default function ToolConfigMenu({
