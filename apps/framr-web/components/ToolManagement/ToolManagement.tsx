@@ -10,10 +10,12 @@ import OrganizationIcon from "@iconify-icons/fluent/organization-24-regular";
 import RulesIcon from "@iconify-icons/mdi/text-box-edit-outline";
 import { Icon } from "@iconify/react";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
-import { LWDTool } from "apps/framr-web/lib/types";
-import { ToolEnum } from "apps/framr-web/lib/types/enums";
+import { LWDTool } from "../../lib/types";
+import { ToolEnum } from "../../lib/types/enums";
 import { useState } from "react";
 import IconMenuTool, { iconMenuTool } from "./IconMenuTool";
+import Modal from "../modal/Modal";
+import ToolDialog from "./ToolPopup";
 
 const columns: GridColDef[] = [
     { field: 'name', headerName: 'Tools Name', width: 300 },
@@ -31,11 +33,13 @@ const dataTableGrid: LWDTool[] = [
 
 export default function ToolManagement() {
     const [open, setOpen] = useState<boolean>(false)
+    const [openDialog, setOpenDialog] = useState<boolean>(false)
+
     const actionColumns: GridColDef[] = [
         {
             field: 'action', headerName: '', width: 50,
             renderCell: (param: GridRenderCellParams) => (
-                <IconButton onClick={handleClick} aria-haspopup aria-expanded>
+                <IconButton onClick={handleClick}>
                     <Icon icon={DotIcon} style={{ height: '14px', width: '14px' }} />
                 </IconButton>
             )
@@ -83,9 +87,7 @@ export default function ToolManagement() {
                     <Button variant="outlined" disableElevation startIcon={<Icon icon={FilterIcon} />}
                         sx={{
                             textTransform: 'none',
-                            borderColor: 'rgba(55, 65, 81, 1)',
-                            color: 'rgba(55, 65, 81, 1)'
-                        }}>Filter</Button>
+                        }} color="inherit">Filter</Button>
                 </Box>
                 <Box sx={{
                     display: 'grid',
@@ -95,70 +97,69 @@ export default function ToolManagement() {
                     <Button variant="outlined" disableElevation startIcon={<Icon icon={AttachIcon} />}
                         sx={{
                             textTransform: 'none',
-                            borderColor: 'rgba(55, 65, 81, 1)',
-                            color: 'rgba(55, 65, 81, 1)'
-                        }}>Import Tool</Button>
+                        }} color="inherit">Import Tool</Button>
                     <Button variant="contained" disableElevation startIcon={<Icon icon={AddIcon} />}
-                        sx={{ textTransform: 'none' }} >Create Tool</Button>
+                        sx={{ textTransform: 'none' }} onClick={() => setOpenDialog(true)}>Create Tool</Button>
                 </Box>
             </Box>
-            <Box>
-                <DataGrid
-                    rows={dataTableGrid}
-                    columns={columns.concat(actionColumns)}
-                    autoHeight
-                    disableColumnMenu
-                    hideFooterSelectedRowCount
-                    sx={{
-                        '& .MuiDataGrid-container--top [role=row]': {
-                            bgcolor: 'rgba(229, 231, 235, 1)',
-                        },
-                        '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            lineHeight: '16px',
-                        },
-                    }}
-                />
+            <DataGrid
+                rows={dataTableGrid}
+                columns={columns.concat(actionColumns)}
+                autoHeight
+                disableColumnMenu
+                hideFooterSelectedRowCount
+                sx={{
+                    '& .MuiDataGrid-container--top [role=row]': {
+                        bgcolor: 'rgba(229, 231, 235, 1)',
+                    },
+                    '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        lineHeight: '16px',
+                    },
+                }}
+            />
 
-                <Menu
-                    elevation={0}
-                    anchorOrigin={{
-                        vertical: 'center',
-                        horizontal: 'right',
-                    }}
-                    sx={{
-                        '& .MuiPaper-root': {
-                            borderRadius: '10px',
-                            marginTop: '8px',
-                            minWidth: 180,
-                            color:
-                                'rgb(55, 65, 81)',
-                            boxShadow:
-                                'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-                            '& .MuiMenu-list': {
-                                padding: '4px 0',
-                            },
-                            '& .MuiMenuItem-root': {
-                                '& .MuiSvgIcon-root': {
-                                    fontSize: 18,
-                                    marginRight: '12px',
-                                },
-                            },
-                            '& .css-h4y409-MuiList-root': {
-                                padding: '4px 0'
-                            }
+            <Menu
+                elevation={0}
+                anchorOrigin={{
+                    vertical: 'center',
+                    horizontal: 'right',
+                }}
+                sx={{
+                    '& .MuiPaper-root': {
+                        borderRadius: '10px',
+                        marginTop: '8px',
+                        minWidth: 180,
+                        color:
+                            'rgb(55, 65, 81)',
+                        boxShadow:
+                            'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
+                        '& .MuiMenu-list': {
+                            padding: '4px 0',
                         },
-                    }}
-                    open={open}
-                    onClose={handleClick}
+                        '& .MuiMenuItem-root': {
+                            '& .MuiSvgIcon-root': {
+                                fontSize: 18,
+                                marginRight: '12px',
+                            },
+                        },
+                        '& .css-h4y409-MuiList-root': {
+                            padding: '4px 0'
+                        }
+                    },
+                }}
+                open={open}
+                onClose={handleClick}
 
-                >
-                    {elementsMenu.map((elementMenu, index) => (
-                        <IconMenuTool key={index} handleClick={handleClick} elementMenu={elementMenu} />
-                    ))}
-                </Menu>
-            </Box>
+            >
+                {elementsMenu.map((elementMenu, index) => (
+                    <IconMenuTool key={index} handleClick={handleClick} elementMenu={elementMenu} />
+                ))}
+            </Menu>
+            <Modal open={openDialog} setOpen={setOpenDialog}>
+                <ToolDialog />
+            </Modal>
         </Box>
     );
 }
