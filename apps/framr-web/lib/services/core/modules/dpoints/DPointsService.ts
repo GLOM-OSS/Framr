@@ -74,7 +74,7 @@ export class DPointsService implements DPointInterface {
       .then((response) => {
         this.eventBus.emit(channel, {
           data: response.map((_) => _.value),
-          status: EventBusChannelStatus.ERROR,
+          status: EventBusChannelStatus.SUCCESS,
         });
       })
       .catch((error) => {
