@@ -128,8 +128,8 @@ export class IDBFactory<T extends DBSchema> {
         (value, i) =>
           ({
             key: allKeys[i],
-            value: value as StoreRecord<T>['value'],
-          } satisfies StoreRecord<T>)
+            value: value as StoreRecord<T, S>['value'],
+          } satisfies StoreRecord<T, S>)
       );
     } catch (error) {
       throw new IDBError((error as Error).message, 'findAll');
