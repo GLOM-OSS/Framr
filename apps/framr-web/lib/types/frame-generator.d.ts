@@ -19,15 +19,18 @@ export interface CreateGeneratorConfig {
   jobName?: string;
   wellName?: string;
   MWDTool: MWDTool;
+  /** in bit per seconds */
   bitRate: number;
+  /** in meter per seconds */
   penetrationRate: number;
+  tools: LWDTool[];
+}
+
+export interface GeneratorConfig extends CreateGeneratorConfig {
   tools: GeneratorConfigTool[];
   framesets: {
     fsl: FSL[];
     utility: UtilityFrameset;
   };
-}
-
-export interface GeneratorConfig extends CreateGeneratorConfig {
   id: string;
 }
