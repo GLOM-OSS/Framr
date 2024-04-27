@@ -1,5 +1,5 @@
 import { DPoint } from './dpoint';
-import { FrameEnum, RuleEnum } from './enums';
+import { ConstraintEnum, FrameEnum, RuleEnum } from './enums';
 import { Tool } from './tool';
 
 export interface CreateStandAloneRule {

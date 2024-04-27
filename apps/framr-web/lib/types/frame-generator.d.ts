@@ -1,9 +1,10 @@
 import { UtilityFrameset } from './frame';
 import { FSL } from './fsl';
-import { Rule } from './rule';
+import { Rule, StandAloneRule } from './rule';
+import { Service } from './service';
 import { LWDTool, MWDTool } from './tool';
 
-interface GeneratorConfigRule extends Rule {
+interface GeneratorConfigRule extends StandAloneRule, Rule {
   /**
    * Used to distinguish db rules from added constraints in generator instance
    */
@@ -13,6 +14,7 @@ interface GeneratorConfigRule extends Rule {
 
 interface GeneratorConfigTool extends LWDTool {
   rules: GeneratorConfigRule[];
+  services: Service[];
 }
 
 export interface CreateGeneratorConfig {
