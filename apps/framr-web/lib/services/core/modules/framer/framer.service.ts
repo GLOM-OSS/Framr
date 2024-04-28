@@ -3,7 +3,8 @@ import {
   DPoint,
   FramesetDpoint,
   GeneratorConfig,
-  GeneratorConfigRule
+  GeneratorConfigRule,
+  GeneratorConfigTool,
 } from '../../../../../lib/types';
 import { FrameEnum, RuleEnum } from '../../../../../lib/types/enums';
 import { FramrServiceError } from '../../../libs/errors';
@@ -76,7 +77,7 @@ export class FramerService {
     } else throw new FramrServiceError('Service was already initialized');
   }
 
-  async updateFslFramesets(fslNumber: number, newDpoints: DPoint[]) {
+  updateFslFramesets(fslNumber: number, tool: GeneratorConfigTool) {
     if (!this.generatorConfig) {
       throw new FramrServiceError('Service was not initialized');
     }
@@ -85,22 +86,26 @@ export class FramerService {
       throw new FramrServiceError('Incorrect Fsl number');
     }
 
-    const rules = await this.database.findAll('rules');
+    const { rules, services } = tool;
+    const dpoints = services.reduce<DPoint[]>(
+      (dpoints, service) => [...service.dpoints, ...dpoints],
+      []
+    );
+
     const fslInstances = this.generatorConfig.framesets.fsl;
     const currentFSL = fslInstances.find((_) => _.number === fslNumber);
     if (!currentFSL) {
       throw new FramrServiceError('Could not find Fsl instance');
     }
 
-    for (const dpoint of newDpoints) {
+    for (const dpoint of dpoints) {
       const dpointRule = rules.find(
         (_) =>
-          _.value.concernedDpoint.id === dpoint.id &&
-          _.value.description === RuleEnum.SHOULD_BE_PRESENT
+          _.concernedDpoint.id === dpoint.id &&
+          _.description === RuleEnum.SHOULD_BE_PRESENT
       );
       if (dpointRule) {
-        const { framesets } = dpointRule.value;
-        for (const frame of framesets) {
+        for (const frame of dpointRule.framesets) {
           if (
             frame === FrameEnum.MTF ||
             frame === FrameEnum.ROT ||
