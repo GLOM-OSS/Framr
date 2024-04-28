@@ -1,10 +1,11 @@
 import {
   CreateGeneratorConfig,
   DPoint,
+  FSLFrameEnum,
+  FSLFrameset,
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  GeneratorConfigTool,
 } from '../../../../../lib/types';
 import { FrameEnum, RuleEnum } from '../../../../../lib/types/enums';
 import { FramrServiceError } from '../../../libs/errors';
@@ -77,26 +78,15 @@ export class FramerService {
     } else throw new FramrServiceError('Service was already initialized');
   }
 
-  updateFslFramesets(fslNumber: number, tool: GeneratorConfigTool) {
-    if (!this.generatorConfig) {
-      throw new FramrServiceError('Service was not initialized');
+  addAndDispatchDPoints(fslNumber: number, toolId: string, dpoints: DPoint[]) {
+    const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
+
+    const rules = generatorConfig.tools.find((_) => _.id === toolId)?.rules;
+    if (!rules) {
+      throw new FramrServiceError('Unknown tool id');
     }
 
-    if (fslNumber > this.generatorConfig.framesets.fsl.length) {
-      throw new FramrServiceError('Incorrect Fsl number');
-    }
-
-    const { rules, services } = tool;
-    const dpoints = services.reduce<DPoint[]>(
-      (dpoints, service) => [...service.dpoints, ...dpoints],
-      []
-    );
-
-    const fslInstances = this.generatorConfig.framesets.fsl;
-    const currentFSL = fslInstances.find((_) => _.number === fslNumber);
-    if (!currentFSL) {
-      throw new FramrServiceError('Could not find Fsl instance');
-    }
+    const currentFSL = this.getCurrentFSL(generatorConfig, fslNumber);
 
     for (const dpoint of dpoints) {
       const dpointRule = rules.find(
@@ -120,7 +110,7 @@ export class FramerService {
               ],
             };
           } else if (frame === FrameEnum.UTIL) {
-            this.generatorConfig.framesets.utility.dpoints.push({
+            generatorConfig.framesets.utility.dpoints.push({
               ...dpoint,
               isBaseInstance: true,
             });
@@ -129,9 +119,70 @@ export class FramerService {
       }
     }
 
-    const isFSLPresent = fslInstances.some((_) => _.number === fslNumber);
-    this.generatorConfig.framesets.fsl = isFSLPresent
-      ? fslInstances.map((fsl) => (fsl.number === fslNumber ? currentFSL : fsl))
-      : [currentFSL];
+    this.generatorConfig = {
+      ...generatorConfig,
+      framesets: {
+        ...generatorConfig.framesets,
+        fsl: (this.generatorConfig as GeneratorConfig).framesets.fsl.map(
+          (fsl) => (fsl.number === fslNumber ? currentFSL : fsl)
+        ),
+      },
+    };
+  }
+
+  removeDPoints(fslNumber: number, dpointIds: string[]) {
+    const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
+
+    const currentFSL = this.getCurrentFSL(generatorConfig, fslNumber);
+
+    const updatedFramesets = Object.fromEntries(
+      Object.entries(currentFSL.framesets).map(([key, { dpoints, frame }]) => [
+        key as FSLFrameEnum,
+        {
+          dpoints: dpoints.filter((dpoint) => dpointIds.includes(dpoint.id)),
+          frame,
+        },
+      ])
+    );
+
+    this.generatorConfig = {
+      ...generatorConfig,
+      framesets: {
+        ...generatorConfig.framesets,
+        fsl: (this.generatorConfig as GeneratorConfig).framesets.fsl.map(
+          (fsl) =>
+            fsl.number === fslNumber
+              ? {
+                  ...fsl,
+                  framesets: updatedFramesets as Record<
+                    FSLFrameEnum,
+                    FSLFrameset
+                  >,
+                }
+              : fsl
+        ),
+      },
+    };
+  }
+
+  private getCurrentFSL(generatorConfig: GeneratorConfig, fslNumber: number) {
+    const fslInstances = generatorConfig.framesets.fsl;
+    const currentFSL = fslInstances.find((fsl) => fsl.number === fslNumber);
+    if (!currentFSL) {
+      throw new FramrServiceError('Could not find Fsl instance');
+    }
+    return currentFSL;
+  }
+
+  private retrieveGeneratorConfig(fslNumber: number) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
+    if (fslNumber > this.generatorConfig.framesets.fsl.length) {
+      throw new FramrServiceError('Incorrect Fsl number');
+    }
+
+    return this.generatorConfig;
   }
 }
