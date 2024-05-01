@@ -104,11 +104,7 @@ export class FramerService {
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
 
     for (const dpoint of dpoints) {
-      const dpointRule = rules.find(
-        (_) =>
-          _.concernedDpoint.id === dpoint.id &&
-          _.description === RuleEnum.SHOULD_BE_PRESENT
-      );
+      const dpointRule = rules.find((_) => _.concernedDpoint.id === dpoint.id);
       if (dpointRule) {
         for (const frame of dpointRule.framesets) {
           if (
