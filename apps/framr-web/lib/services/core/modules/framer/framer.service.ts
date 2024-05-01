@@ -1,11 +1,12 @@
 import {
   CreateGeneratorConfig,
   DPoint,
-  FSLFrameEnum,
+  FSLFrameType,
   FSLFrameset,
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
+  RuleWithOtherDPoint,
 } from '../../../../../lib/types';
 import { FrameEnum, RuleEnum } from '../../../../../lib/types/enums';
 import { FramrServiceError } from '../../../libs/errors';
@@ -18,75 +19,89 @@ export class FramerService {
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
 
+  private _generatorConfig: GeneratorConfig | null = null;
+
   constructor() {
     this.eventBus = new EventBus();
     this.database = IDBConnection.getDatabase();
   }
 
-  private generatorConfig: GeneratorConfig | null = null;
+  public get generatorConfig(): GeneratorConfig | null {
+    return this._generatorConfig;
+  }
+  public set generatorConfig(value: GeneratorConfig) {
+    this._generatorConfig = value;
+  }
 
   async initialize(config: CreateGeneratorConfig) {
-    if (!this.generatorConfig) {
-      const dpoints = await this.database.findAll('dpoints');
-      const rules = await this.database.findAll('rules');
-      const services = await this.database.findAll('services');
+    if (this.generatorConfig) {
+      throw new FramrServiceError('Service was already initialized');
+    }
 
-      const utilRules = rules.filter((_) =>
-        _.value.framesets.includes(FrameEnum.UTIL)
-      );
-      this.generatorConfig = {
-        ...config,
-        id: crypto.randomUUID(),
-        framesets: {
-          fsl: [...new Array(6)].map((_, i) => ({
-            framesets: {
-              [FrameEnum.GTF]: { dpoints: [], frame: FrameEnum.GTF },
-              [FrameEnum.MTF]: { dpoints: [], frame: FrameEnum.GTF },
-              [FrameEnum.ROT]: { dpoints: [], frame: FrameEnum.GTF },
-            },
-            number: i + 1,
-          })),
-          utility: {
-            frame: FrameEnum.UTIL,
-            dpoints: dpoints
-              .filter((dpoint) =>
-                utilRules.some(
-                  ({ value: rule }) =>
-                    rule.concernedDpoint.id === dpoint.value.id
-                )
-              )
-              .map<FramesetDpoint>((_) => ({
-                isBaseInstance: true,
-                ..._.value,
-              })),
-          },
-        },
-        tools: config.tools.map((tool) => ({
-          ...tool,
-          services: services
-            .filter((_) => _.value.tool.id === tool.id)
-            .map((_) => _.value),
-          rules: rules
-            .filter(({ value: rule }) => rule.tool.id === tool.id)
-            .map<GeneratorConfigRule>((_) => ({
-              ..._.value,
-              isGeneric: true,
-              isActive: false,
-            })),
-        })),
+    const rules = await this.database.findAll('rules');
+
+    const initializeToolRules = (toolId: string) => {
+      return rules
+        .filter(({ value: rule }) => rule.tool.id === toolId)
+        .map<GeneratorConfigRule>((_) => ({
+          ..._.value,
+          isGeneric: true,
+          isActive: true,
+        }));
+    };
+
+    const mwdRules = initializeToolRules(config.MWDTool.id);
+
+    const initializeFramesets = (frameType: FSLFrameType | FrameEnum.UTIL) => {
+      return {
+        frame: frameType,
+        dpoints: mwdRules
+          .filter(
+            (rule) =>
+              rule.description === RuleEnum.SHOULD_BE_PRESENT &&
+              rule.framesets.includes(frameType)
+          )
+          .reduce<FramesetDpoint[]>((dps, rule) => {
+            const dpointsToAdd = [
+              rule.concernedDpoint,
+              ...((rule as RuleWithOtherDPoint).otherDpoints ?? []),
+            ].map((dpoint) => ({ isBaseInstance: true, ...dpoint }));
+            return [...dps, ...dpointsToAdd];
+          }, []),
       };
-    } else throw new FramrServiceError('Service was already initialized');
+    };
+
+    const mwdFramesets = {
+      fsl: [...new Array(6)].map((_, i) => ({
+        framesets: {
+          [FrameEnum.GTF]: initializeFramesets(FrameEnum.GTF),
+          [FrameEnum.MTF]: initializeFramesets(FrameEnum.MTF),
+          [FrameEnum.ROT]: initializeFramesets(FrameEnum.ROT),
+        },
+        number: i + 1,
+      })),
+      utility: initializeFramesets(FrameEnum.UTIL),
+    } as GeneratorConfig['framesets'];
+
+    this.generatorConfig = {
+      ...config,
+      id: crypto.randomUUID(),
+      MWDTool: {
+        ...config.MWDTool,
+        rules: mwdRules,
+      },
+      tools: config.tools.map((tool) => ({
+        ...tool,
+        rules: initializeToolRules(tool.id),
+      })),
+      framesets: mwdFramesets,
+    };
   }
 
   addAndDispatchDPoints(fslNumber: number, toolId: string, dpoints: DPoint[]) {
+    const rules = this.getRules(toolId);
+    const currentFSL = this.getCurrentFSL(fslNumber);
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
-
-    const rules = generatorConfig.tools.find((_) => _.id === toolId)?.rules;
-    if (!rules) {
-      throw new FramrServiceError('Unknown tool id');
-    }
-
-    const currentFSL = this.getCurrentFSL(generatorConfig, fslNumber);
 
     for (const dpoint of dpoints) {
       const dpointRule = rules.find(
@@ -132,12 +147,11 @@ export class FramerService {
 
   removeDPoints(fslNumber: number, dpointIds: string[]) {
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
-
-    const currentFSL = this.getCurrentFSL(generatorConfig, fslNumber);
+    const currentFSL = this.getCurrentFSL(fslNumber);
 
     const updatedFramesets = Object.fromEntries(
       Object.entries(currentFSL.framesets).map(([key, { dpoints, frame }]) => [
-        key as FSLFrameEnum,
+        key as FSLFrameType,
         {
           dpoints: dpoints.filter((dpoint) => dpointIds.includes(dpoint.id)),
           frame,
@@ -149,25 +163,43 @@ export class FramerService {
       ...generatorConfig,
       framesets: {
         ...generatorConfig.framesets,
-        fsl: (this.generatorConfig as GeneratorConfig).framesets.fsl.map(
-          (fsl) =>
-            fsl.number === fslNumber
-              ? {
-                  ...fsl,
-                  framesets: updatedFramesets as Record<
-                    FSLFrameEnum,
-                    FSLFrameset
-                  >,
-                }
-              : fsl
+        fsl: generatorConfig.framesets.fsl.map((fsl) =>
+          fsl.number === fslNumber
+            ? {
+                ...fsl,
+                framesets: updatedFramesets as Record<
+                  FSLFrameType,
+                  FSLFrameset
+                >,
+              }
+            : fsl
         ),
       },
     };
   }
 
-  private getCurrentFSL(generatorConfig: GeneratorConfig, fslNumber: number) {
-    const fslInstances = generatorConfig.framesets.fsl;
-    const currentFSL = fslInstances.find((fsl) => fsl.number === fslNumber);
+  private getRules(toolId?: string) {
+    const rules: GeneratorConfigRule[] = [];
+    if (toolId) {
+      const toolRules = this.generatorConfig?.tools.find(
+        (_) => _.id === toolId
+      )?.rules;
+      if (!toolRules) {
+        throw new FramrServiceError('Unknown tool id');
+      }
+      rules.push(...toolRules);
+    } else {
+      for (const tool of this.generatorConfig?.tools ?? []) {
+        rules.push(...tool.rules);
+      }
+    }
+    return rules;
+  }
+
+  private getCurrentFSL(fslNumber: number) {
+    const currentFSL = this.generatorConfig?.framesets.fsl.find(
+      (fsl) => fsl.number === fslNumber
+    );
     if (!currentFSL) {
       throw new FramrServiceError('Could not find Fsl instance');
     }
