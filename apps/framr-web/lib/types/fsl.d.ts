@@ -1,6 +1,6 @@
-import { FSLFrameEnum, FSLFrameset } from './frame';
+import { FSLFrameType, FSLFrameset } from './frame';
 
 export interface FSL {
   number: number;
-  framesets: Record<FSLFrameEnum, FSLFrameset>;
+  framesets: Record<FSLFrameType, FSLFrameset>;
 }

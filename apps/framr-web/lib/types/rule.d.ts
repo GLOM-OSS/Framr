@@ -1,5 +1,11 @@
 import { DPoint } from './dpoint';
-import { ConstraintEnum, FrameEnum, RuleEnum } from './enums';
+import {
+  ConstraintEnum,
+  FrameEnum,
+  WithOtherDPointRuleEnum,
+  RuleEnum,
+  WithConstraintRuleEnum,
+} from './enums';
 import { Tool } from './tool';
 
 export interface CreateStandAloneRule {
@@ -15,6 +21,7 @@ export interface StandAloneRule extends CreateStandAloneRule {
 }
 
 export interface CreateRuleWithOtherDPoint extends CreateStandAloneRule {
+  description: WithOtherDPointRuleEnum;
   otherDpoints: DPoint[];
 }
 
@@ -25,6 +32,7 @@ export interface RuleWithOtherDPoint extends CreateRuleWithOtherDPoint {
 export interface CreateRuleWithConstraint extends CreateStandAloneRule {
   interval: number;
   type: ConstraintEnum;
+  description: WithConstraintRuleEnum;
 }
 
 export interface RuleWithConstraint extends CreateRuleWithConstraint {
