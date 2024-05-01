@@ -3,7 +3,7 @@ import {
   ConstraintEnum,
   FrameEnum,
   WithOtherDPointRuleEnum,
-  RuleEnum,
+  StandAloneRuleEnum,
   WithConstraintRuleEnum,
 } from './enums';
 import { Tool } from './tool';
@@ -12,7 +12,7 @@ export interface CreateStandAloneRule {
   name?: string;
   tool: Tool;
   concernedDpoint: DPoint;
-  description: RuleEnum;
+  description: StandAloneRuleEnum;
   framesets: FrameEnum[];
 }
 
