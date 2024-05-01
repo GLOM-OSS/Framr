@@ -1,13 +1,17 @@
-import { XmlIO } from '../../../../libs/xml-io';
 import {
-  XmlDataPoint,
-  XmlData,
   DPoint,
   LWDTool,
   Rule,
   Service,
+  XmlData,
+  XmlDataPoint,
 } from '../../../../../types';
-import { FrameEnum, RuleEnum, ToolEnum } from '../../../../../types/enums';
+import {
+  FrameEnum,
+  StandAloneRuleEnum,
+  ToolEnum,
+} from '../../../../../types/enums';
+import { XmlIO } from '../../../../libs/xml-io';
 
 export type FramrBulkData = {
   tools: LWDTool[];
@@ -45,7 +49,6 @@ export class DataProcessor {
       for (const { name, ...rest } of mandatoryDpoints) {
         const newDPoint: DPoint = {
           name,
-          //FIXME: where do I get this value
           bits: 0,
           tool: newTool,
           id: crypto.randomUUID(),
@@ -54,7 +57,7 @@ export class DataProcessor {
           tool: newTool,
           id: crypto.randomUUID(),
           concernedDpoint: newDPoint,
-          description: RuleEnum.SHOULD_BE_PRESENT,
+          description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
           framesets: this.getDpointFrames(rest),
         });
         dpoints.push(newDPoint);
