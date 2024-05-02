@@ -19,6 +19,8 @@ import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema } from '../../db/schema';
 
+export const BITS_LIMIT = 80;
+
 export class FramerService {
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
@@ -203,6 +205,16 @@ export class FramerService {
       ...this.handleFirstDPoints(firstDPoints, rules),
     ];
 
+    let mwdDPointSpreadingIndex = 0;
+    let lastMWDSpreadingIndex = -1;
+    let mwdDPoints = generatorConfig.MWDTool.rules
+      .filter(
+        (_) =>
+          _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
+          _.framesets.includes(frame)
+      )
+      .map((_) => _.concernedDpoint)
+      .sort((a, b) => b.bits - a.bits);
     // Process remaining data points and apply rules
     for (const dpoint of remainingDPoints.filter(
       (remainingDPoint) =>
@@ -212,6 +224,36 @@ export class FramerService {
             rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
         )
     )) {
+      const bitsCount = orderedDPoints.reduce(
+        (bitsCount, _) => bitsCount + _.bits,
+        0
+      );
+      const closestBitLimitMultiple =
+        Math.floor(bitsCount / BITS_LIMIT) * BITS_LIMIT;
+      if (closestBitLimitMultiple <= bitsCount) {
+        const index = orderedDPoints.findIndex(
+          (_, index) =>
+            _.tool.id === generatorConfig.MWDTool.id &&
+            index > lastMWDSpreadingIndex
+        );
+        if (index !== -1) {
+          mwdDPoints = mwdDPoints.filter(
+            (_) => _.id !== orderedDPoints[index].id
+          );
+        } else {
+          const mwdDPointIndex =
+            mwdDPointSpreadingIndex % (mwdDPoints.length - 1);
+          orderedDPoints.push({
+            ...mwdDPoints[mwdDPointIndex],
+            isBaseInstance:
+              Math.floor(mwdDPointSpreadingIndex / (mwdDPoints.length - 1)) <=
+              1,
+          });
+          lastMWDSpreadingIndex = orderedDPoints.length - 1;
+          mwdDPointSpreadingIndex++;
+        }
+      }
+
       const precededByRule = rules.find(
         (rule) =>
           rule.concernedDpoint.id === dpoint.id &&
@@ -320,14 +362,14 @@ export class FramerService {
             shouldBeSetOnly as RuleWithOtherDPoint
           ).otherDpoints.filter(
             (otherDPoint) =>
-              !(precededByRule as RuleWithOtherDPoint).otherDpoints.some(
+              !(precededByRule as RuleWithOtherDPoint)?.otherDpoints.some(
                 (_) => _.id === otherDPoint.id
               )
           );
           const [followedByRuleCommonDPoints, otherDPoints2] = partition(
             (shouldBeSetOnly as RuleWithOtherDPoint).otherDpoints,
             (otherDPoint) =>
-              (followedByRule as RuleWithOtherDPoint).otherDpoints.some(
+              (followedByRule as RuleWithOtherDPoint)?.otherDpoints.some(
                 (_) => _.id === otherDPoint.id
               )
           );
