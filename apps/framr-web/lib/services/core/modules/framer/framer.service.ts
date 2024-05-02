@@ -6,12 +6,12 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  RuleWithOtherDPoint,
+  RuleWithOtherDPoint
 } from '../../../../../lib/types';
 import {
   FrameEnum,
   StandAloneRuleEnum,
-  WithOtherDPointRuleEnum,
+  WithOtherDPointRuleEnum
 } from '../../../../../lib/types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus } from '../../../libs/event-bus';
@@ -261,7 +261,7 @@ export class FramerService {
             WithOtherDPointRuleEnum.SHOULD_BE_PRECEDED_BY_OTHER ||
             rule.description ===
               WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_PRECEDED_BY_OTHER)
-      );
+      ) as RuleWithOtherDPoint | undefined;
       const followedByRule = rules.find(
         (rule) =>
           rule.concernedDpoint.id === dpoint.id &&
@@ -269,16 +269,13 @@ export class FramerService {
             WithOtherDPointRuleEnum.SHOULD_BE_FOLLOWED_BY_OTHER ||
             rule.description ===
               WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_FOLLOWED_BY_OTHER)
-      );
+      ) as RuleWithOtherDPoint | undefined;
 
       if (
         precededByRule &&
         followedByRule &&
-        (precededByRule as RuleWithOtherDPoint).otherDpoints.some(
-          (otherDPoint) =>
-            (followedByRule as RuleWithOtherDPoint).otherDpoints.some(
-              (_) => _.id === otherDPoint.id
-            )
+        precededByRule.otherDpoints.some((otherDPoint) =>
+          followedByRule.otherDpoints.some((_) => _.id === otherDPoint.id)
         )
       ) {
         // If both preceded by and followed by rules exist, mark the data point with an error
@@ -304,7 +301,7 @@ export class FramerService {
               rule.description ===
                 WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER) &&
             orderedDPoints.some((orderedDpoint, index) =>
-              (rule as RuleWithOtherDPoint)?.otherDpoints.some(
+              (rule as RuleWithOtherDPoint).otherDpoints.some(
                 (otherDPoint) =>
                   otherDPoint.id === orderedDpoint.id && index < dpointPosition
               )
@@ -318,7 +315,7 @@ export class FramerService {
               rule.description ===
                 WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER) &&
             orderedDPoints.some((orderedDPoint, index) =>
-              (rule as RuleWithOtherDPoint)?.otherDpoints.some(
+              (rule as RuleWithOtherDPoint).otherDpoints.some(
                 (otherDPoint) =>
                   otherDPoint.id === orderedDPoint.id && index > dpointPosition
               )
@@ -337,16 +334,18 @@ export class FramerService {
         }
 
         if (followedByRule) {
-          const otherDPoints = (
-            followedByRule as RuleWithOtherDPoint
-          ).otherDpoints.map((dp) => ({ ...dp, isBaseInstance: true }));
+          const otherDPoints = followedByRule.otherDpoints.map((dp) => ({
+            ...dp,
+            isBaseInstance: true,
+          }));
           orderedDPoints.splice(dpointPosition + 1, 0, ...otherDPoints);
         }
 
         if (precededByRule) {
-          const otherDPoints = (
-            precededByRule as RuleWithOtherDPoint
-          ).otherDpoints.map((dp) => ({ ...dp, isBaseInstance: true }));
+          const otherDPoints = precededByRule.otherDpoints.map((dp) => ({
+            ...dp,
+            isBaseInstance: true,
+          }));
           orderedDPoints.splice(dpointPosition, 0, ...otherDPoints);
         }
 
@@ -355,31 +354,31 @@ export class FramerService {
             rule.concernedDpoint.id === dpoint.id &&
             rule.description ===
               WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
-        );
+        ) as RuleWithOtherDPoint | undefined;
 
         if (shouldBeSetOnly) {
           const [precededByRuleCommonDPoints, otherDPoints] = partition(
-            (shouldBeSetOnly as RuleWithOtherDPoint).otherDpoints,
+            shouldBeSetOnly.otherDpoints,
             (otherDPoint) =>
-              (precededByRule as RuleWithOtherDPoint)?.otherDpoints.some(
+              !!precededByRule?.otherDpoints.some(
                 (_) => _.id === otherDPoint.id
               )
           );
           const [followedByRuleCommonDPoints, otherDPoints2] = partition(
-            (shouldBeSetOnly as RuleWithOtherDPoint).otherDpoints,
+            shouldBeSetOnly.otherDpoints,
             (otherDPoint) =>
-              (followedByRule as RuleWithOtherDPoint)?.otherDpoints.some(
+              !!followedByRule?.otherDpoints.some(
                 (_) => _.id === otherDPoint.id
               )
           );
           const shouldInsertAfter =
             followedByRuleCommonDPoints.length === 0 ||
             followedByRuleCommonDPoints.length ===
-              (followedByRule as RuleWithOtherDPoint).otherDpoints.length;
+              followedByRule?.otherDpoints.length;
           const shouldInsertBefore =
             precededByRuleCommonDPoints.length === 0 ||
             precededByRuleCommonDPoints.length ===
-              (precededByRule as RuleWithOtherDPoint).otherDpoints.length;
+              precededByRule?.otherDpoints.length;
 
           if (shouldInsertAfter || shouldInsertBefore) {
             orderedDPoints.splice(
