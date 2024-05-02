@@ -358,11 +358,10 @@ export class FramerService {
         );
 
         if (shouldBeSetOnly) {
-          const otherDPoints = (
-            shouldBeSetOnly as RuleWithOtherDPoint
-          ).otherDpoints.filter(
+          const [precededByRuleCommonDPoints, otherDPoints] = partition(
+            (shouldBeSetOnly as RuleWithOtherDPoint).otherDpoints,
             (otherDPoint) =>
-              !(precededByRule as RuleWithOtherDPoint)?.otherDpoints.some(
+              (precededByRule as RuleWithOtherDPoint)?.otherDpoints.some(
                 (_) => _.id === otherDPoint.id
               )
           );
@@ -373,13 +372,21 @@ export class FramerService {
                 (_) => _.id === otherDPoint.id
               )
           );
-          if (
+          const shouldInsertAfter =
             followedByRuleCommonDPoints.length === 0 ||
             followedByRuleCommonDPoints.length ===
-              (followedByRule as RuleWithOtherDPoint).otherDpoints.length
-          ) {
+              (followedByRule as RuleWithOtherDPoint).otherDpoints.length;
+          const shouldInsertBefore =
+            precededByRuleCommonDPoints.length === 0 ||
+            precededByRuleCommonDPoints.length ===
+              (precededByRule as RuleWithOtherDPoint).otherDpoints.length;
+
+          if (shouldInsertAfter || shouldInsertBefore) {
             orderedDPoints.splice(
-              dpointPosition + followedByRuleCommonDPoints.length + 1,
+              dpointPosition +
+                (shouldInsertAfter
+                  ? followedByRuleCommonDPoints.length + 1
+                  : -precededByRuleCommonDPoints.length),
               0,
               ...[...otherDPoints, ...otherDPoints2].map((dpoint) => ({
                 ...dpoint,
@@ -390,7 +397,7 @@ export class FramerService {
             orderedDPoints.splice(dpointPosition, 1, {
               ...dpoint,
               error:
-                "Other DPoints should follow concerned DPoint but aren't part of the DPoint set",
+                'DPoints following or preceding DPoint are conflicting with DPoint set',
             });
             continue;
           }
