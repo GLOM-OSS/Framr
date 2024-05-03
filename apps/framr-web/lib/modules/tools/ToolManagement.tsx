@@ -11,6 +11,7 @@ import { CreateTool, ITool, Tool } from '../../types';
 import { ToolEnum } from '../../types/enums';
 import ManageToolDialog from './ManageToolDialog';
 import MoreMenu from './MoreMenu';
+import ToolDetailDialog from './ToolDetailsDialog';
 
 export default function ToolManagement() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -143,6 +144,15 @@ export default function ToolManagement() {
             danger
             closeOnConfirm
           />
+          <ToolDetailDialog
+            isDialogOpen={isDetailsDialogOpen}
+            closeDialog={() => setIsDetailsDialogOpen(false)}
+            handleEdit={() => {
+              setIsDetailsDialogOpen(false);
+              setIsEditDialogOpen(true);
+            }}
+            data={activeTool}
+          />
         </>
       )}
       <Box
@@ -201,7 +211,6 @@ export default function ToolManagement() {
         <DataGrid
           rows={tools}
           columns={toolColumns}
-          autoHeight
           hideFooter
           autoPageSize
           disableColumnMenu
