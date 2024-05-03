@@ -114,7 +114,7 @@ export default function ManageDPointDialog({
             >
               <FormLabel>Number of bits</FormLabel>
               <OutlinedInput
-                placeholder="Enter tool bits"
+                placeholder="Enter dpoint number of bits"
                 {...formik.getFieldProps('bits')}
                 disabled={isSubmitting}
                 size="small"
