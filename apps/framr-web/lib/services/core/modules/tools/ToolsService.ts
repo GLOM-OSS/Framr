@@ -77,12 +77,17 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  findAll(): void {
+  findAll(index?: string): void {
     const channel = ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
-        this.eventBus.emit(channel, {
+        response.find((item) => item.key === index)
+        ? this.eventBus.emit(channel, {
+          data: response.find((item) => item.key === index)?.value,
+          status: EventBusChannelStatus.SUCCESS
+        })
+        : this.eventBus.emit(channel, {
           data: response.map((_) => _.value),
           status: EventBusChannelStatus.SUCCESS,
         });

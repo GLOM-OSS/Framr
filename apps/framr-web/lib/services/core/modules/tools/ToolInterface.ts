@@ -11,7 +11,7 @@ export enum ToolsEventChannel {
 export interface ToolInterface {
   create(createTool: CreateTool): void;
   findOne(index: string): void;
-  findAll(): void;
+  findAll(index?: string): void;
   update(index: string, createTool: CreateTool): void;
   delete(index: string): void;
   createFrom(file: File): void;
