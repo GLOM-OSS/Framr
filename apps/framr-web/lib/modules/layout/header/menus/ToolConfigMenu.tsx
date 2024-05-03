@@ -16,16 +16,16 @@ export default function ToolConfigMenu({
 }) {
   const { push } = useRouter();
   const menuItems: { title: string; icon: IconifyIcon; route: string }[] = [
-    { title: 'Services', icon: servicesIcon, route: '/services' },
+    { title: 'Services', icon: servicesIcon, route: 'services' },
     {
       title: 'DPoint',
       icon: dpointIcon,
-      route: '/dpoint',
+      route: 'dpoint',
     },
     {
       title: 'Rules',
       icon: rulesIcon,
-      route: '/rules',
+      route: 'rules',
     },
   ];
 
