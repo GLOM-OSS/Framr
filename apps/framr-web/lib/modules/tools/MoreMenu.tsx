@@ -1,13 +1,13 @@
 import DeleteIcon from '@iconify/icons-fluent/delete-24-regular';
 import EditIcon from '@iconify/icons-fluent/edit-20-regular';
-import more from '@iconify/icons-fluent/more-vertical-24-regular';
+import info from '@iconify/icons-fluent/info-24-regular';
 import OrganizationIcon from '@iconify/icons-fluent/organization-24-regular';
 import SettingIcon from '@iconify/icons-fluent/settings-cog-multiple-24-regular';
 import RulesIcon from '@iconify/icons-fluent/textbox-settings-24-regular';
 import { Icon } from '@iconify/react';
 import { ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
-import { Tool } from '../../types';
 import { useRouter } from 'next/router';
+import { Tool } from '../../types';
 
 interface MoreMenuProps {
   isMenuOpen: boolean;
@@ -45,7 +45,7 @@ export default function MoreMenu({
       action: () => push(`${pathname}/${id}/services`),
     },
     { text: 'Edit', icon: EditIcon, action: handleEdit },
-    { text: 'Details', icon: more, action: handleDetails },
+    { text: 'Details', icon: info, action: handleDetails },
     {
       text: 'Delete',
       icon: DeleteIcon,
