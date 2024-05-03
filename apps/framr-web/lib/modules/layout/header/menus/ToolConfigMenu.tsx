@@ -25,9 +25,9 @@ export default function ToolConfigMenu({
       () => [
         { title: 'Services', icon: servicesIcon, route: 'services' },
         {
-          title: 'DPoint',
+          title: 'DPoints',
           icon: dpointIcon,
-          route: 'dpoint',
+          route: 'dpoints',
         },
         {
           title: 'Rules',
