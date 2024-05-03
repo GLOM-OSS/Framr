@@ -6,12 +6,14 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  RuleWithOtherDPoint
+  RuleWithConstraint,
+  RuleWithOtherDPoint,
 } from '../../../../../lib/types';
 import {
   FrameEnum,
   StandAloneRuleEnum,
-  WithOtherDPointRuleEnum
+  WithConstraintRuleEnum,
+  WithOtherDPointRuleEnum,
 } from '../../../../../lib/types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus } from '../../../libs/event-bus';
@@ -215,15 +217,74 @@ export class FramerService {
       )
       .map((_) => _.concernedDpoint)
       .sort((a, b) => b.bits - a.bits);
-    // Process remaining data points and apply rules
-    for (const dpoint of remainingDPoints.filter(
+
+    const remainingValidDPoints = remainingDPoints.filter(
       (remainingDPoint) =>
         !rules.some(
           (rule) =>
             rule.concernedDpoint.id === remainingDPoint.id &&
             rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
         )
-    )) {
+    );
+    const [constraintDPoints, nonConstraintDPoints] = partition(
+      remainingValidDPoints,
+      (remainingDPoint) =>
+        rules.some(
+          (rule) =>
+            rule.concernedDpoint.id === remainingDPoint.id &&
+            (rule.description ===
+              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+              rule.description ===
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
+        )
+    );
+    const bitConstraintDPoints = constraintDPoints.map<{
+      lastCount: number;
+      bitInterval: number;
+      dpoint: FramesetDpoint;
+    }>((cdp) => {
+      let bitInterval = 0;
+      const densityConstraintRule = rules.find(
+        (rule) =>
+          cdp.id === rule.concernedDpoint.id &&
+          rule.description ===
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+      ) as RuleWithConstraint | undefined;
+
+      if (densityConstraintRule) {
+        bitInterval =
+          (densityConstraintRule.interval * generatorConfig.bitRate) /
+          generatorConfig.penetrationRate;
+      }
+
+      const updateRateConstraintRule = rules.find(
+        (rule) =>
+          rule.concernedDpoint.id === cdp.id &&
+          rule.description ===
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+      ) as RuleWithConstraint | undefined;
+
+      if (updateRateConstraintRule) {
+        bitInterval =
+          updateRateConstraintRule.interval * generatorConfig.bitRate;
+      }
+
+      return {
+        lastCount: -1,
+        bitInterval,
+        dpoint: {
+          ...cdp,
+          error:
+            bitInterval === 0
+              ? 'Invalid interval constraint'
+              : densityConstraintRule && updateRateConstraintRule
+              ? 'Update rate and density rate should not complementary'
+              : undefined,
+        },
+      };
+    });
+    // Process remaining data points and apply rules
+    for (const dpoint of nonConstraintDPoints) {
       const bitsCount = orderedDPoints.reduce(
         (bitsCount, _) => bitsCount + _.bits,
         0
@@ -253,6 +314,22 @@ export class FramerService {
           mwdDPointSpreadingIndex++;
         }
       }
+
+      bitConstraintDPoints
+        .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
+        .forEach((cdp) => {
+          const originalIndex = bitConstraintDPoints.findIndex(
+            (_) => _.dpoint.id === cdp.dpoint.id
+          );
+          orderedDPoints.push(cdp.dpoint);
+          bitConstraintDPoints[originalIndex] = {
+            ...cdp,
+            lastCount: orderedDPoints.reduce(
+              (bitsCount, _) => bitsCount + _.bits,
+              0
+            ),
+          };
+        });
 
       const precededByRule = rules.find(
         (rule) =>
