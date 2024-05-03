@@ -10,7 +10,7 @@ export enum RulesEventChannel {
 export interface RuleInterface {
   create(rule: CreateRule): void;
   findOne(index: string): void;
-  findAll(): void;
+  findAll(index?: string): void;
   update(index: string, rule: CreateRule): void;
   delete(index: string): void;
 }
