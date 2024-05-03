@@ -96,17 +96,20 @@ export default function ToolManagement() {
   function handleCreateTool(val: CreateTool) {
     //TODO: CALL API HERE TO CREATE NEW TOOL
     console.log(val);
+    setActiveTool(undefined);
   }
 
   function handleEditTool(val: ITool) {
     //TODO: CALL API HERE TO EDIT NEW TOOL
     console.log(val);
+    setActiveTool(undefined);
   }
 
   function handleDeleteTool(tool: Tool) {
     //TODO: CALL API HERE TO DELETE
     alert('delete tool');
     setIsDeleteDialogOpen(false);
+    setActiveTool(undefined);
   }
 
   return (
@@ -136,7 +139,10 @@ export default function ToolManagement() {
           />
           <ConfirmDialog
             isDialogOpen={isDeleteDialogOpen}
-            closeDialog={() => setIsDeleteDialogOpen(false)}
+            closeDialog={() => {
+              setActiveTool(undefined);
+              setIsDeleteDialogOpen(false);
+            }}
             confirm={() => handleDeleteTool(activeTool)}
             dialogMessage="This action will delete the selected tool. You won't be able to recover it."
             dialogTitle="Are you sure?"
@@ -146,7 +152,10 @@ export default function ToolManagement() {
           />
           <ToolDetailDialog
             isDialogOpen={isDetailsDialogOpen}
-            closeDialog={() => setIsDetailsDialogOpen(false)}
+            closeDialog={() => {
+              setActiveTool(undefined);
+              setIsDetailsDialogOpen(false);
+            }}
             handleEdit={() => {
               setIsDetailsDialogOpen(false);
               setIsEditDialogOpen(true);

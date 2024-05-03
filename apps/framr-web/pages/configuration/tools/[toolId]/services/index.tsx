@@ -12,11 +12,7 @@ import ManageServiceDialog from '../../../../../lib/modules/services/ManageServi
 import MoreMenu from '../../../../../lib/modules/services/MoreMenu';
 import ServiceDetailDialog from '../../../../../lib/modules/services/ServiceDetailDialog';
 import { theme } from '../../../../../lib/theme';
-import {
-  CreateService,
-  Service,
-  Tool
-} from '../../../../../lib/types';
+import { CreateService, Service, Tool } from '../../../../../lib/types';
 import { ToolEnum } from '../../../../../lib/types/enums';
 
 export default function ToolManagement() {
@@ -87,17 +83,20 @@ export default function ToolManagement() {
   function handleCreate(val: CreateService) {
     //TODO: CALL API HERE TO CREATE NEW Service
     console.log(val);
+    setActiveService(undefined);
   }
 
   function handleEdit(val: Service) {
     //TODO: CALL API HERE TO edit tool
     console.log(val);
+    setActiveService(undefined);
   }
 
   function handleDelete(val: Service) {
     //TODO: CALL API HERE TO DELETE
     console.log('delete service', val);
     setIsDeleteDialogOpen(false);
+    setActiveService(undefined);
   }
 
   return (
@@ -114,7 +113,10 @@ export default function ToolManagement() {
           />
           <ConfirmDialog
             isDialogOpen={isDeleteDialogOpen}
-            closeDialog={() => setIsDeleteDialogOpen(false)}
+            closeDialog={() => {
+              setActiveService(undefined);
+              setIsDeleteDialogOpen(false);
+            }}
             confirm={() => handleDelete(activeService)}
             dialogMessage={`This action will delete the selected service (${activeService.name}). You won't be able to recover it.`}
             dialogTitle="Are you sure?"
@@ -125,7 +127,10 @@ export default function ToolManagement() {
           <ServiceDetailDialog
             data={activeService}
             isDialogOpen={isDetailsDialogOpen}
-            closeDialog={() => setIsDetailsDialogOpen(false)}
+            closeDialog={() => {
+              setActiveService(undefined);
+              setIsDetailsDialogOpen(false);
+            }}
             handleEdit={() => {
               setIsDetailsDialogOpen(false);
               setIsEditDialogOpen(true);

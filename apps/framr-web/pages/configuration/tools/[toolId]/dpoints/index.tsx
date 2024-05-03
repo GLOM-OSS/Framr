@@ -75,17 +75,20 @@ export default function ToolManagement() {
   function handleCreateTool(val: CreateDPoint) {
     //TODO: CALL API HERE TO CREATE NEW DPoint
     console.log(val);
+    setActiveDpoint(undefined);
   }
 
   function handleEditTool(val: DPoint) {
     //TODO: CALL API HERE TO EDIT dpoint
     console.log(val);
+    setActiveDpoint(undefined);
   }
 
   function handleDelete(val: DPoint) {
     //TODO: CALL API HERE TO DELETE dpoint
     console.log('delete dpoint', val);
     setIsDeleteDialogOpen(false);
+    setActiveDpoint(undefined);
   }
 
   return (
@@ -101,7 +104,10 @@ export default function ToolManagement() {
           />
           <ConfirmDialog
             isDialogOpen={isDeleteDialogOpen}
-            closeDialog={() => setIsDeleteDialogOpen(false)}
+            closeDialog={() => {
+              setActiveDpoint(undefined);
+              setIsDeleteDialogOpen(false);
+            }}
             confirm={() => handleDelete(activeDPoint)}
             dialogMessage="This action will delete the selected dpoint. You won't be able to recover it."
             dialogTitle="Are you sure?"
