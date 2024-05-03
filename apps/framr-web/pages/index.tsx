@@ -1,5 +1,5 @@
-import ToolManagement from '../lib/modules/tools/ToolManagement';
+import React from 'react';
 
-export default function Index() {
-  return <ToolManagement />;
+export default function index() {
+  return <div>Framr Generator</div>;
 }
