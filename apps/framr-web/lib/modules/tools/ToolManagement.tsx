@@ -102,6 +102,12 @@ export default function ToolManagement() {
     console.log(val);
   }
 
+  function handleDeleteTool(tool: Tool) {
+    //TODO: CALL API HERE TO DELETE
+    alert('delete tool');
+    setIsDeleteDialogOpen(false);
+  }
+
   return (
     <>
       <ManageToolDialog
@@ -130,11 +136,7 @@ export default function ToolManagement() {
           <ConfirmDialog
             isDialogOpen={isDeleteDialogOpen}
             closeDialog={() => setIsDeleteDialogOpen(false)}
-            confirm={() => {
-              //TODO: CALL API HERE TO DELETE
-              alert('delete tool');
-              setIsDeleteDialogOpen(false);
-            }}
+            confirm={() => handleDeleteTool(activeTool)}
             dialogMessage="This action will delete the selected tool. You won't be able to recover it."
             dialogTitle="Are you sure?"
             confirmButton="Yes, delete tool"
