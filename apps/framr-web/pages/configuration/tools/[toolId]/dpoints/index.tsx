@@ -45,7 +45,7 @@ export default function ToolManagement() {
 
   const [activeDPoint, setActiveDpoint] = useState<DPoint>();
 
-  const toolColumns: GridColDef<DPoint>[] = [
+  const dPointColumns: GridColDef<DPoint>[] = [
     { field: 'name', headerName: 'DPoint Name', flex: 1 },
     { field: 'bits', headerName: 'Number of Bits', flex: 1 },
     {
@@ -84,7 +84,7 @@ export default function ToolManagement() {
 
   function handleDelete(val: DPoint) {
     //TODO: CALL API HERE TO DELETE dpoint
-    alert('delete tool');
+    console.log('delete dpoint', val);
     setIsDeleteDialogOpen(false);
   }
 
@@ -189,7 +189,7 @@ export default function ToolManagement() {
         </Box>
         <DataGrid
           rows={dPoints}
-          columns={toolColumns}
+          columns={dPointColumns}
           hideFooter
           autoPageSize
           disableColumnMenu
