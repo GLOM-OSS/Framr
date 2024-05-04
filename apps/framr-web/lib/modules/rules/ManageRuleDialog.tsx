@@ -2,18 +2,18 @@ import up from '@iconify/icons-fluent/arrow-sort-up-24-regular';
 import watch from '@iconify/icons-fluent/timer-24-regular';
 import { Icon } from '@iconify/react';
 import {
-  Autocomplete,
-  Box,
-  Button,
-  CircularProgress,
-  Collapse,
-  Dialog,
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  OutlinedInput,
-  TextField,
-  Typography,
+    Autocomplete,
+    Box,
+    Button,
+    CircularProgress,
+    Collapse,
+    Dialog,
+    FormControl,
+    FormHelperText,
+    FormLabel,
+    OutlinedInput,
+    TextField,
+    Typography,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
@@ -22,13 +22,13 @@ import { DialogTransition } from '../../../components/sharedComponents/dialog-tr
 import IOSSwitch from '../../../components/sharedComponents/iosSwitch';
 import { descriptionHasOtherDpoints } from '../../../pages/configuration/tools/[toolId]/rules';
 import {
-  CreateRule,
-  CreateRuleWithOtherDPoint,
-  DPoint,
-  Rule,
-  RuleWithConstraint,
-  RuleWithOtherDPoint,
-  Tool,
+    CreateRule,
+    CreateRuleWithOtherDPoint,
+    DPoint,
+    Rule,
+    RuleWithConstraint,
+    RuleWithOtherDPoint,
+    Tool,
 } from '../../types';
 import { ConstraintEnum, FrameEnum, RuleEnum } from '../../types/enums';
 
@@ -387,48 +387,6 @@ export default function ManageRuleDialog({
                 </FormControl>
               )}
             />
-
-            {/* <Autocomplete
-              multiple
-              options={dPoints}
-              autoHighlight
-              size="small"
-              getOptionLabel={({ name }) => name}
-              onChange={(_, selectedAccount) => {
-                formik.setFieldValue(
-                  'dpoints',
-                  selectedAccount ? selectedAccount.map(({ id }) => id) : null
-                );
-              }}
-              value={dPoints.filter((_) =>
-                formik.values.dpoints.includes(_.id)
-              )}
-              renderInput={(params) => (
-                <FormControl
-                  fullWidth
-                  error={
-                    formik.touched.dpoints && Boolean(formik.errors.dpoints)
-                  }
-                >
-                  <FormLabel>Select Dpoints</FormLabel>
-                  <TextField
-                    {...params}
-                    placeholder="Select Dpoints"
-                    inputProps={{
-                      ...params.inputProps,
-                      autoComplete: 'autocomplete',
-                    }}
-                    error={
-                      formik.touched.dpoints && Boolean(formik.errors.dpoints)
-                    }
-                    {...formik.getFieldProps('dpoints')}
-                  />
-                  {formik.touched.dpoints && formik.errors.dpoints && (
-                    <FormHelperText>{formik.errors.dpoints}</FormHelperText>
-                  )}
-                </FormControl>
-              )}
-            /> */}
           </Box>
 
           <Box
