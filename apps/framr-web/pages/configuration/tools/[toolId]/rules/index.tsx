@@ -25,7 +25,34 @@ import ManageRuleDialog from '../../../../../lib/modules/rules/ManageRuleDialog'
 import RuleDetailDialog from '../../../../../lib/modules/rules/RuleDetailDialog';
 import MoreMenu from '../../../../../lib/modules/services/MoreMenu';
 import { theme } from '../../../../../lib/theme';
-import { CreateRule, Rule } from '../../../../../lib/types';
+import {
+  CreateRule,
+  CreateRuleWithConstraint,
+  CreateRuleWithOtherDPoint,
+  CreateStandAloneRule,
+  Rule,
+  RuleWithConstraint,
+  RuleWithOtherDPoint,
+  StandAloneRule,
+} from '../../../../../lib/types';
+
+export function descriptionHasOtherDpoints(description: RuleEnum) {
+  return (
+    description !== RuleEnum.SHOULD_BE_PRESENT &&
+    description !== RuleEnum.SHOULD_BE_THE_FIRST &&
+    description !== RuleEnum.SHOULD_NOT_BE_PRESENT &&
+    description !== RuleEnum.SHOULD_NOT_BE_THE_FIRST &&
+    description !== RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT &&
+    description !== RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+  );
+}
+
+export function descriptionHasConstraint(description: RuleEnum) {
+  return (
+    description === RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+    description === RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+  );
+}
 
 export default function RuleManagement() {
   const { push } = useRouter();
@@ -146,14 +173,71 @@ export default function RuleManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
 
   function handleCreate(val: CreateRule) {
+    const { concernedDpoint, description, framesets, tool, name } =
+      val as CreateStandAloneRule;
+
+    let submitData: CreateRule = {
+      concernedDpoint,
+      description,
+      framesets,
+      tool,
+      name: name ? name : undefined,
+    };
+
+    if (descriptionHasOtherDpoints(val.description)) {
+      const { otherDpoints, description } = val as CreateRuleWithOtherDPoint;
+      submitData = {
+        ...submitData,
+        description,
+        otherDpoints,
+      } as RuleWithOtherDPoint;
+    } else if (descriptionHasConstraint(val.description)) {
+      const { description, interval, type } = val as CreateRuleWithConstraint;
+      submitData = {
+        ...submitData,
+        description,
+        interval,
+        type,
+      } as RuleWithConstraint;
+    }
+    // if it neither has a secondary dpoint nor constraint, then it's stand alone
     //TODO: CALL API HERE TO CREATE NEW DPoint
-    console.log(val);
+    console.log(submitData);
     setActiveRule(undefined);
   }
 
   function handleEdit(val: Rule) {
+    const { concernedDpoint, description, framesets, id, tool, name } =
+      val as StandAloneRule;
+
+    let submitData: Rule = {
+      concernedDpoint,
+      description,
+      framesets,
+      id,
+      tool,
+      name: name ? name : undefined,
+    };
+
+    if (descriptionHasOtherDpoints(val.description)) {
+      const { otherDpoints, description } = val as RuleWithOtherDPoint;
+      submitData = {
+        ...submitData,
+        description,
+        otherDpoints,
+      } as RuleWithOtherDPoint;
+    } else if (descriptionHasConstraint(val.description)) {
+      const { description, interval, type } = val as RuleWithConstraint;
+      submitData = {
+        ...submitData,
+        description,
+        interval,
+        type,
+      } as RuleWithConstraint;
+    }
+    // if it neither has a secondary dpoint nor constraint, then it's stand alone
     //TODO: CALL API HERE TO EDIT dpoint
-    console.log(val);
+    console.log(submitData);
     setActiveRule(undefined);
   }
 

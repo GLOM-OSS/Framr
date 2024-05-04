@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { DialogTransition } from '../../../components/sharedComponents/dialog-transition';
 import IOSSwitch from '../../../components/sharedComponents/iosSwitch';
+import { descriptionHasOtherDpoints } from '../../../pages/configuration/tools/[toolId]/rules';
 import {
   CreateRule,
   CreateRuleWithOtherDPoint,
@@ -79,17 +80,6 @@ export default function ManageRuleDialog({
       tool: tool,
     },
   ]);
-
-  function descriptionHasOtherDpoints(description: RuleEnum) {
-    return (
-      description !== RuleEnum.SHOULD_BE_PRESENT &&
-      description !== RuleEnum.SHOULD_BE_THE_FIRST &&
-      description !== RuleEnum.SHOULD_NOT_BE_PRESENT &&
-      description !== RuleEnum.SHOULD_NOT_BE_THE_FIRST &&
-      description !== RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT &&
-      description !== RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
-    );
-  }
 
   function getSecondaryDPointsDisplayValue() {
     const tt = dPoints.filter((_) => formik.values.otherDpoints.includes(_.id));
