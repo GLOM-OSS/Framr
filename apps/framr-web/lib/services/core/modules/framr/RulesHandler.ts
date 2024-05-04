@@ -35,7 +35,13 @@ export function partition<T>(
 }
 
 export class RulesHandler {
-  private orderedDPoints: FramesetDpoint[] = [];
+  private _orderedDPoints: FramesetDpoint[] = [];
+  public get orderedDPoints(): FramesetDpoint[] {
+    return this._orderedDPoints;
+  }
+  public set orderedDPoints(value: FramesetDpoint[]) {
+    this._orderedDPoints = value;
+  }
 
   /**
    * Helper function to handle ordering of first data points, handling conflicts
@@ -46,7 +52,7 @@ export class RulesHandler {
   handleFirstDPoints(
     firstDPoints: FramesetDpoint[],
     rules: GeneratorConfigRule[]
-  ): FramesetDpoint[] {
+  ) {
     const orderedFirstDPoints: FramesetDpoint[] = [];
 
     firstDPoints.forEach((dpoint) => {
@@ -82,7 +88,7 @@ export class RulesHandler {
       });
     });
 
-    return orderedFirstDPoints;
+    this.orderedDPoints = [...orderedFirstDPoints];
   }
 
   handleDPointRules(dpoint: FramesetDpoint, rules: GeneratorConfigRule[]) {

@@ -22,19 +22,24 @@ export class FramrService {
   private readonly database: IDBFactory<FramrDBSchema>;
 
   private _generatorConfig: GeneratorConfig | null = null;
-  private orderedDPoints: FramesetDpoint[] = [];
-
-  constructor() {
-    this.eventBus = new EventBus();
-    this.database = IDBConnection.getDatabase();
-    this.rulesHandler = new RulesHandler();
-  }
-
   public get generatorConfig(): GeneratorConfig | null {
     return this._generatorConfig;
   }
   public set generatorConfig(value: GeneratorConfig) {
     this._generatorConfig = value;
+  }
+
+  public get orderedDPoints(): FramesetDpoint[] {
+    return this.rulesHandler.orderedDPoints;
+  }
+  public set orderedDPoints(value: FramesetDpoint[]) {
+    this.rulesHandler.orderedDPoints = value;
+  }
+
+  constructor() {
+    this.eventBus = new EventBus();
+    this.database = IDBConnection.getDatabase();
+    this.rulesHandler = new RulesHandler();
   }
 
   async initialize(config: CreateGeneratorConfig) {
@@ -223,9 +228,7 @@ export class FramrService {
     );
 
     // Add first data points to the ordered list, handling conflicts
-    this.orderedDPoints = [
-      ...this.rulesHandler.handleFirstDPoints(firstDPoints, rules),
-    ];
+    this.rulesHandler.handleFirstDPoints(firstDPoints, rules);
 
     const remainingValidDPoints = remainingDPoints.filter(
       (remainingDPoint) =>
