@@ -12,12 +12,22 @@ import {
   WithOtherDPointRuleEnum,
 } from '../../../../types/enums';
 
+/**
+ * Represents the number of bits, last index, and data point index for spreading cursors.
+ */
 export type SpreadingCursors = {
   bitsCount: number;
   lastIndex: number;
   dpointIndex: number;
 };
 
+/**
+ * Partitions an array into two arrays based on a predicate function.
+ * @param array The array to partition.
+ * @param predicate A function that determines which array to partition the element into.
+ * @returns An array containing two arrays,
+ * one for elements satisfying the predicate and the other for elements not satisfying the predicate.
+ */
 export function partition<T>(
   array: T[],
   predicate: (value: T) => boolean
@@ -36,18 +46,25 @@ export function partition<T>(
 
 export class RulesHandler {
   private _orderedDPoints: FramesetDpoint[] = [];
+
+  /**
+   * Gets the ordered data points.
+   */
   public get orderedDPoints(): FramesetDpoint[] {
     return this._orderedDPoints;
   }
+
+  /**
+   * Sets the ordered data points.
+   */
   public set orderedDPoints(value: FramesetDpoint[]) {
     this._orderedDPoints = value;
   }
 
   /**
-   * Helper function to handle ordering of first data points, handling conflicts
-   * @param firstDPoints array of dpoints intending to be first
-   * @param rules Generator config rules
-   * @returns array of frameset dpoints
+   * Handles the ordering of data points intended to be first, considering conflicts and applying rules.
+   * @param firstDPoints Array of data points intended to be first.
+   * @param rules Generator config rules.
    */
   handleFirstDPoints(
     firstDPoints: FramesetDpoint[],
@@ -91,6 +108,12 @@ export class RulesHandler {
     this.orderedDPoints = [...orderedFirstDPoints];
   }
 
+  /**
+   * Handles rules related to an individual data point, including constraints and sequencing.
+   * @param dpoint The data point to handle.
+   * @param rules Generator config rules.
+   * @returns 0 if conflicting rules apply, 1 otherwise.
+   */
   handleDPointRules(dpoint: FramesetDpoint, rules: GeneratorConfigRule[]) {
     const precededByRule = rules.find(
       (rule) =>
@@ -162,6 +185,13 @@ export class RulesHandler {
     }
   }
 
+  /**
+   * Handles rules related to maximum bit constraints for MWD data points.
+   * @param mwdDPoints Array of MWD data points.
+   * @param cursors Spreading cursors containing bit count, last index, and data point index.
+   * @param generatorConfig Generator configuration.
+   * @returns Object containing updated cursors and MWD data points.
+   */
   handleMwdMaxBitRule(
     mwdDPoints: DPoint[],
     cursors: SpreadingCursors,
@@ -195,6 +225,13 @@ export class RulesHandler {
     return { cursors, mwdDPoints };
   }
 
+  /**
+   * Handles rules with density or update rate constraints for data points.
+   * @param dpoints Array of data points.
+   * @param rules Generator config rules.
+   * @param generatorConfig Generator configuration.
+   * @returns Object containing non-constraint data points and bit constraint data points.
+   */
   handleWithConstraintRules(
     dpoints: FramesetDpoint[],
     rules: GeneratorConfigRule[],
@@ -260,6 +297,13 @@ export class RulesHandler {
     return { nonConstraintDPoints, bitConstraintDPoints };
   }
 
+  /**
+   * Handles rules that prohibit certain sequences or configurations of data points.
+   * @param dpointPosition The position where dpoint should insert
+   * @param dpoint data point
+   * @param rules generator config rule
+   * @returns 0 if the dpoint has an error and 1 if everything went well
+   */
   private handleProhibitiveRules(
     dpointPosition: number,
     dpoint: FramesetDpoint,
@@ -307,6 +351,12 @@ export class RulesHandler {
     return 1;
   }
 
+  /**
+   * Handles rules requiring sequential placement of data points relative to each other.
+   * @param dpointPosition The position where dpoint should insert
+   * @param sequentialRule This can either be a followed by or a preceded by rule
+   * @param rules generator config rule
+   */
   private handleSequentialRule(
     dpointPosition: number,
     sequentialRule: RuleWithOtherDPoint,
@@ -325,6 +375,16 @@ export class RulesHandler {
     this.orderedDPoints.splice(dpointPosition, 0, ...orderedOtherDPoints);
   }
 
+  /**
+   *  Handles rules where a data point should be present in a set only under certain conditions.
+   * @param dpointPosition The position where to insert the dpoint
+   * @param dpoint data point
+   * @param setOnlyRule
+   * @param rules generator config rule
+   * @param precededByRule
+   * @param followedByRule
+   * @returns 0 if the dpoint has an error and 1 if everything went well
+   */
   private handleSetOnlyRule(
     dpointPosition: number,
     dpoint: FramesetDpoint,
@@ -384,6 +444,13 @@ export class RulesHandler {
     return 1;
   }
 
+  /**
+   * Handles rules associated with other data points (nested within another rule),
+   * recursively applying rules.
+   * @param otherDPoints
+   * @param rules
+   * @returns an ordered list of dpoints
+   */
   private handleOtherDPointsRules(
     otherDPoints: FramesetDpoint[],
     rules: GeneratorConfigRule[]
