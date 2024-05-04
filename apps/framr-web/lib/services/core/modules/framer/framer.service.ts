@@ -8,13 +8,13 @@ import {
   GeneratorConfigRule,
   RuleWithConstraint,
   RuleWithOtherDPoint,
-} from '../../../../../lib/types';
+} from '../../../../types';
 import {
   FrameEnum,
   StandAloneRuleEnum,
   WithConstraintRuleEnum,
   WithOtherDPointRuleEnum,
-} from '../../../../../lib/types/enums';
+} from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
@@ -23,8 +23,15 @@ import { FramrDBSchema } from '../../db/schema';
 
 export const BITS_LIMIT = 80;
 
+type SpreadingCursors = {
+  bitsCount: number;
+  lastIndex: number;
+  dpointIndex: number;
+};
+
 export class FramerService {
   private currentFrame: FSLFrameType | null = null;
+  private orderedDPoints: FramesetDpoint[] = [];
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
 
@@ -184,7 +191,6 @@ export class FramerService {
   }
 
   orderFramesetDPoints(fslNumber: number, frame: FSLFrameType) {
-    const rules = this.getRules();
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
 
     const {
@@ -194,7 +200,7 @@ export class FramerService {
       framesets: fslFramesets,
     } = this.getCurrentFSL(fslNumber);
 
-    const orderedDPoints = this.orderDPoints(dpoints, rules, generatorConfig);
+    const orderedDPoints = this.orderDPoints(dpoints, generatorConfig);
 
     this.generatorConfig = {
       ...generatorConfig,
@@ -214,9 +220,10 @@ export class FramerService {
 
   orderDPoints(
     dpoints: FramesetDpoint[],
-    rules: GeneratorConfigRule[],
     generatorConfig: GeneratorConfig
   ): FramesetDpoint[] {
+    const rules = this.getRules();
+
     // Partition the data points based on whether they should be at the beginning
     const [firstDPoints, remainingDPoints] = this.partition(dpoints, (dpoint) =>
       rules.some(
@@ -227,18 +234,7 @@ export class FramerService {
     );
 
     // Add first data points to the ordered list, handling conflicts
-    const orderedDPoints: FramesetDpoint[] = [
-      ...this.handleFirstDPoints(firstDPoints, rules),
-    ];
-
-    let mwdDPoints = generatorConfig.MWDTool.rules
-      .filter(
-        (_) =>
-          _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
-          _.framesets.includes(this.currentFrame as FSLFrameType)
-      )
-      .map((_) => _.concernedDpoint)
-      .sort((a, b) => b.bits - a.bits);
+    this.orderedDPoints = [...this.handleFirstDPoints(firstDPoints, rules)];
 
     const remainingValidDPoints = remainingDPoints.filter(
       (remainingDPoint) =>
@@ -250,25 +246,35 @@ export class FramerService {
     );
 
     const { bitConstraintDPoints, nonConstraintDPoints } =
-      this.handleConstraints(remainingValidDPoints, rules, generatorConfig);
-    let mwdDPointSpreadingIndex = 0;
-    let lastMWDSpreadingIndex = -1;
+      this.handleWithConstraintRules(remainingValidDPoints, rules, generatorConfig);
 
-    // Process remaining data points and apply rules
+    // Get available MWD Tool DPoints
+    let mwdDPoints = generatorConfig.MWDTool.rules
+      .filter(
+        (_) =>
+          _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
+          _.framesets.includes(this.currentFrame as FSLFrameType)
+      )
+      .map((_) => _.concernedDpoint)
+      .sort((a, b) => b.bits - a.bits);
+
+    let cursors: SpreadingCursors = {
+      bitsCount: 0,
+      lastIndex: -1,
+      dpointIndex: 0,
+    };
+
+    // Process non constraint remaining data points and apply rules
     for (const dpoint of nonConstraintDPoints) {
-      const bitsCount = orderedDPoints.reduce(
+      const bitsCount = this.orderedDPoints.reduce(
         (bitsCount, _) => bitsCount + _.bits,
         0
       );
-      ({ lastMWDSpreadingIndex, mwdDPoints, mwdDPointSpreadingIndex } =
-        this.handleMaxBitRule(
-          bitsCount,
-          orderedDPoints,
-          generatorConfig,
-          lastMWDSpreadingIndex,
-          mwdDPoints,
-          mwdDPointSpreadingIndex
-        ));
+      ({ cursors, mwdDPoints } = this.handleMaxBitRule(
+        mwdDPoints,
+        { ...cursors, bitsCount },
+        generatorConfig
+      ));
 
       bitConstraintDPoints
         .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
@@ -276,26 +282,25 @@ export class FramerService {
           const originalIndex = bitConstraintDPoints.findIndex(
             (_) => _.dpoint.id === cdp.dpoint.id
           );
-          orderedDPoints.push(cdp.dpoint);
+          this.orderedDPoints.push(cdp.dpoint);
           bitConstraintDPoints[originalIndex] = {
             ...cdp,
-            lastCount: orderedDPoints.reduce(
+            lastCount: this.orderedDPoints.reduce(
               (bitsCount, _) => bitsCount + _.bits,
               0
             ),
           };
         });
 
-      this.handleNoConstraintRules(dpoint, rules, orderedDPoints);
+      this.handleAffirmativeRules(dpoint, rules);
     }
 
-    return orderedDPoints;
+    return this.orderedDPoints;
   }
 
-  private handleNoConstraintRules(
+  private handleAffirmativeRules(
     dpoint: FramesetDpoint,
-    rules: GeneratorConfigRule[],
-    orderedDPoints: FramesetDpoint[]
+    rules: GeneratorConfigRule[]
   ) {
     const precededByRule = rules.find(
       (rule) =>
@@ -322,41 +327,28 @@ export class FramerService {
       )
     ) {
       // If both preceded by and followed by rules exist, mark the data point with an error
-      orderedDPoints.push({
+      this.orderedDPoints.push({
         ...dpoint,
         error: `Dpoint cannot be both preceded by and followed by the same other DPoint`,
       });
       return 0;
     } else {
       // Add the data point to the ordered list if no conflicting rule applies
-      if (!orderedDPoints.some((dp) => dp.id === dpoint.id)) {
-        orderedDPoints.push(dpoint);
+      if (!this.orderedDPoints.some((dp) => dp.id === dpoint.id)) {
+        this.orderedDPoints.push(dpoint);
       }
-      const dpointPosition = orderedDPoints.findIndex(
+      const dpointPosition = this.orderedDPoints.findIndex(
         (dp) => dp.id === dpoint.id
       );
-      const result = this.handleForbiddingRules(
-        dpointPosition,
-        dpoint,
-        rules,
-        orderedDPoints
-      );
+      const result = this.handleProhibitiveRules(dpointPosition, dpoint, rules);
       if (result === 0) return 0;
 
       if (followedByRule) {
-        const otherDPoints = followedByRule.otherDpoints.map((dp) => ({
-          ...dp,
-          isBaseInstance: true,
-        }));
-        orderedDPoints.splice(dpointPosition + 1, 0, ...otherDPoints);
+        this.handleFollowedByRule(dpointPosition, followedByRule);
       }
 
       if (precededByRule) {
-        const otherDPoints = precededByRule.otherDpoints.map((dp) => ({
-          ...dp,
-          isBaseInstance: true,
-        }));
-        orderedDPoints.splice(dpointPosition, 0, ...otherDPoints);
+        this.handlePrecededByRule(dpointPosition, precededByRule);
       }
 
       const shouldBeSetOnly = rules.find(
@@ -371,7 +363,6 @@ export class FramerService {
           dpointPosition,
           dpoint,
           shouldBeSetOnly,
-          orderedDPoints,
           precededByRule,
           followedByRule
         );
@@ -380,11 +371,10 @@ export class FramerService {
     }
   }
 
-  private handleForbiddingRules(
+  private handleProhibitiveRules(
     dpointPosition: number,
     dpoint: FramesetDpoint,
-    rules: GeneratorConfigRule[],
-    orderedDPoints: FramesetDpoint[]
+    rules: GeneratorConfigRule[]
   ) {
     const shouldNotBePrecededByOther = rules.some(
       (rule) =>
@@ -393,7 +383,7 @@ export class FramerService {
           WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER ||
           rule.description ===
             WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER) &&
-        orderedDPoints.some((orderedDpoint, index) =>
+        this.orderedDPoints.some((orderedDpoint, index) =>
           (rule as RuleWithOtherDPoint).otherDpoints.some(
             (otherDPoint) =>
               otherDPoint.id === orderedDpoint.id && index < dpointPosition
@@ -407,7 +397,7 @@ export class FramerService {
           WithOtherDPointRuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER ||
           rule.description ===
             WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER) &&
-        orderedDPoints.some((orderedDPoint, index) =>
+        this.orderedDPoints.some((orderedDPoint, index) =>
           (rule as RuleWithOtherDPoint).otherDpoints.some(
             (otherDPoint) =>
               otherDPoint.id === orderedDPoint.id && index > dpointPosition
@@ -417,7 +407,7 @@ export class FramerService {
 
     if (shouldNotBePrecededByOther || shouldNotBeFollowedByOther) {
       // If the data point should not be preceded by or followed by other DPoints, mark it with an error
-      orderedDPoints.splice(dpointPosition, 1, {
+      this.orderedDPoints.splice(dpointPosition, 1, {
         ...dpoint,
         error: `Dpoint cannot be ${
           shouldNotBePrecededByOther ? 'preceded by' : 'followed by'
@@ -429,41 +419,39 @@ export class FramerService {
   }
 
   private handleMaxBitRule(
-    bitsCount: number,
-    orderedDPoints: FramesetDpoint[],
-    generatorConfig: GeneratorConfig,
-    lastMWDSpreadingIndex: number,
     mwdDPoints: DPoint[],
-    mwdDPointSpreadingIndex: number
+    cursors: SpreadingCursors,
+    generatorConfig: GeneratorConfig
   ) {
+    //Check this with Lorrain
+    const BITS_LIMIT = generatorConfig.MWDTool.max_bits;
+
     const closestBitLimitMultiple =
-      Math.floor(bitsCount / BITS_LIMIT) * BITS_LIMIT;
-    if (closestBitLimitMultiple <= bitsCount) {
-      const index = orderedDPoints.findIndex(
+      Math.floor(cursors.bitsCount / BITS_LIMIT) * BITS_LIMIT;
+    if (closestBitLimitMultiple <= cursors.bitsCount) {
+      const index = this.orderedDPoints.findIndex(
         (_, index) =>
-          _.tool.id === generatorConfig.MWDTool.id &&
-          index > lastMWDSpreadingIndex
+          _.tool.id === generatorConfig.MWDTool.id && index > cursors.lastIndex
       );
       if (index !== -1) {
         mwdDPoints = mwdDPoints.filter(
-          (_) => _.id !== orderedDPoints[index].id
+          (_) => _.id !== this.orderedDPoints[index].id
         );
       } else {
-        const mwdDPointIndex =
-          mwdDPointSpreadingIndex % (mwdDPoints.length - 1);
-        orderedDPoints.push({
+        const mwdDPointIndex = cursors.dpointIndex % (mwdDPoints.length - 1);
+        this.orderedDPoints.push({
           ...mwdDPoints[mwdDPointIndex],
           isBaseInstance:
-            Math.floor(mwdDPointSpreadingIndex / (mwdDPoints.length - 1)) <= 1,
+            Math.floor(cursors.dpointIndex / (mwdDPoints.length - 1)) <= 1,
         });
-        lastMWDSpreadingIndex = orderedDPoints.length - 1;
-        mwdDPointSpreadingIndex++;
+        cursors.lastIndex = this.orderedDPoints.length - 1;
+        cursors.dpointIndex++;
       }
     }
-    return { lastMWDSpreadingIndex, mwdDPoints, mwdDPointSpreadingIndex };
+    return { cursors, mwdDPoints };
   }
 
-  handleConstraints(
+  private handleWithConstraintRules(
     dpoints: FramesetDpoint[],
     rules: GeneratorConfigRule[],
     generatorConfig: GeneratorConfig
@@ -528,37 +516,42 @@ export class FramerService {
     return { nonConstraintDPoints, bitConstraintDPoints };
   }
 
-  handlePrecededByRule(
-    dpoint: FramesetDpoint,
-    precededByRule: RuleWithOtherDPoint,
-    orderedDPoints: FramesetDpoint[]
+  private handlePrecededByRule(
+    dpointPosition: number,
+    precededByRule: RuleWithOtherDPoint
   ): void {
-    // Implement handling logic for the "preceded by" rule
+    const otherDPoints = precededByRule.otherDpoints.map((dp) => ({
+      ...dp,
+      isBaseInstance: true,
+    }));
+    this.orderedDPoints.splice(dpointPosition, 0, ...otherDPoints);
   }
 
-  handleFollowedByRule(
-    dpoint: FramesetDpoint,
-    followedByRule: RuleWithOtherDPoint,
-    orderedDPoints: FramesetDpoint[]
+  private handleFollowedByRule(
+    dpointPosition: number,
+    followedByRule: RuleWithOtherDPoint
   ): void {
-    // Implement handling logic for the "followed by" rule
+    const otherDPoints = followedByRule.otherDpoints.map((dp) => ({
+      ...dp,
+      isBaseInstance: true,
+    }));
+    this.orderedDPoints.splice(dpointPosition + 1, 0, ...otherDPoints);
   }
 
-  handleSetOnlyRule(
+  private handleSetOnlyRule(
     dpointPosition: number,
     dpoint: FramesetDpoint,
-    shouldBeSetOnly: RuleWithOtherDPoint,
-    orderedDPoints: FramesetDpoint[],
+    setOnlyRule: RuleWithOtherDPoint,
     precededByRule?: RuleWithOtherDPoint,
     followedByRule?: RuleWithOtherDPoint
   ) {
     const [precededByRuleCommonDPoints, otherDPoints] = this.partition(
-      shouldBeSetOnly.otherDpoints,
+      setOnlyRule.otherDpoints,
       (otherDPoint) =>
         !!precededByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
     );
     const [followedByRuleCommonDPoints, otherDPoints2] = this.partition(
-      shouldBeSetOnly.otherDpoints,
+      setOnlyRule.otherDpoints,
       (otherDPoint) =>
         !!followedByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
     );
@@ -572,7 +565,7 @@ export class FramerService {
         precededByRule?.otherDpoints.length;
 
     if (shouldInsertAfter || shouldInsertBefore) {
-      orderedDPoints.splice(
+      this.orderedDPoints.splice(
         dpointPosition +
           (shouldInsertAfter
             ? followedByRuleCommonDPoints.length + 1
@@ -584,7 +577,7 @@ export class FramerService {
         }))
       );
     } else {
-      orderedDPoints.splice(dpointPosition, 1, {
+      this.orderedDPoints.splice(dpointPosition, 1, {
         ...dpoint,
         error:
           'DPoints following or preceding DPoint are conflicting with DPoint set',
