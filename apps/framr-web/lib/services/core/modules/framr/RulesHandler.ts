@@ -12,7 +12,7 @@ import {
   WithOtherDPointRuleEnum,
 } from '../../../../types/enums';
 
-type SpreadingCursors = {
+export type SpreadingCursors = {
   bitsCount: number;
   lastIndex: number;
   dpointIndex: number;

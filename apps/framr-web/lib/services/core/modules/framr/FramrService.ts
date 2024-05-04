@@ -14,24 +14,15 @@ import { EventBus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema } from '../../db/schema';
-import { RulesHandler, partition } from './RulesHandler';
+import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
 
-export const BITS_LIMIT = 80;
-
-type SpreadingCursors = {
-  bitsCount: number;
-  lastIndex: number;
-  dpointIndex: number;
-};
-
-export class FramerService {
-  private currentFrame: FSLFrameType | null = null;
-  private orderedDPoints: FramesetDpoint[] = [];
+export class FramrService {
   private readonly eventBus: EventBus;
-  private readonly database: IDBFactory<FramrDBSchema>;
   private readonly rulesHandler: RulesHandler;
+  private readonly database: IDBFactory<FramrDBSchema>;
 
   private _generatorConfig: GeneratorConfig | null = null;
+  private orderedDPoints: FramesetDpoint[] = [];
 
   constructor() {
     this.eventBus = new EventBus();
@@ -197,7 +188,7 @@ export class FramerService {
       framesets: fslFramesets,
     } = this.getCurrentFSL(fslNumber);
 
-    const orderedDPoints = this.orderDPoints(dpoints, generatorConfig);
+    const orderedDPoints = this.orderDPoints(frame, dpoints, generatorConfig);
 
     this.generatorConfig = {
       ...generatorConfig,
@@ -216,6 +207,7 @@ export class FramerService {
   }
 
   orderDPoints(
+    frame: FSLFrameType,
     dpoints: FramesetDpoint[],
     generatorConfig: GeneratorConfig
   ): FramesetDpoint[] {
@@ -256,7 +248,7 @@ export class FramerService {
       .filter(
         (_) =>
           _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
-          _.framesets.includes(this.currentFrame as FSLFrameType)
+          _.framesets.includes(frame)
       )
       .map((_) => _.concernedDpoint)
       .sort((a, b) => b.bits - a.bits);
