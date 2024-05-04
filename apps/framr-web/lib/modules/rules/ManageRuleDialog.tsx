@@ -197,6 +197,7 @@ export default function ManageRuleDialog({
         alert(
           'An error occured getting some or all dpoints in rule (concerned and or secondary). Please restart'
         );
+        close();
         resetForm();
         return;
       }
@@ -230,10 +231,10 @@ export default function ManageRuleDialog({
     },
   });
 
-  const close = () => {
+  function close() {
     closeDialog();
     formik.resetForm();
-  };
+  }
 
   const [ruleHasName, setRuleHasName] = useState<boolean>(false);
   useEffect(() => {
