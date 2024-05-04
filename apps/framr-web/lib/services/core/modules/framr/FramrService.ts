@@ -15,7 +15,7 @@ import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema } from '../../db/schema';
 import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
-
+import { randomUUID } from 'crypto';
 export class FramrService {
   private readonly eventBus: EventBus;
   private readonly rulesHandler: RulesHandler;
@@ -94,7 +94,7 @@ export class FramrService {
 
     this.generatorConfig = {
       ...config,
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       MWDTool: {
         ...config.MWDTool,
         rules: mwdRules,
@@ -212,7 +212,7 @@ export class FramrService {
     };
   }
 
-  orderDPoints(
+  private orderDPoints(
     frame: FSLFrameType,
     dpoints: FramesetDpoint[],
     generatorConfig: GeneratorConfig
@@ -241,7 +241,7 @@ export class FramrService {
     );
 
     const { bitConstraintDPoints, nonConstraintDPoints } =
-      this.rulesHandler.handleWithConstraintRules(
+      this.rulesHandler.filterAndBuildBitConstraintData(
         remainingValidDPoints,
         rules,
         generatorConfig
@@ -269,28 +269,20 @@ export class FramrService {
         (bitsCount, _) => bitsCount + _.bits,
         0
       );
-      ({ cursors, mwdDPoints } = this.rulesHandler.handleMwdMaxBitRule(
+      ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
         mwdDPoints,
         { ...cursors, bitsCount },
         generatorConfig
       ));
 
-      bitConstraintDPoints
-        .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
-        .forEach((cdp) => {
-          const originalIndex = bitConstraintDPoints.findIndex(
-            (_) => _.dpoint.id === cdp.dpoint.id
-          );
-          this.orderedDPoints.push(cdp.dpoint);
-          bitConstraintDPoints[originalIndex] = {
-            ...cdp,
-            lastCount: this.orderedDPoints.reduce(
-              (bitsCount, _) => bitsCount + _.bits,
-              0
-            ),
-          };
-        });
+      // Handle rule with bit constraints
+      this.rulesHandler.handleBitContraintRule(
+        bitConstraintDPoints,
+        bitsCount,
+        rules
+      );
 
+      // Handle all other rules
       this.rulesHandler.handleDPointRules(dpoint, rules);
     }
   }
