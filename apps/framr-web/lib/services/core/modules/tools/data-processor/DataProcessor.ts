@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   DPoint,
   LWDTool,
@@ -38,11 +39,11 @@ export class DataProcessor {
       mandatory: { dpoint: mandatoryDpoints },
       services: { service: toolServices },
       ...tool
-    } of xmlTools) {
+    } of Array.isArray(xmlTools) ? xmlTools : [xmlTools]) {
       const newTool: LWDTool = {
         ...tool,
         type: ToolEnum.LWD,
-        id: crypto.randomUUID(),
+        id: randomUUID(),
       };
       tools.push(newTool);
 
@@ -51,11 +52,11 @@ export class DataProcessor {
           name,
           bits: 0,
           tool: newTool,
-          id: crypto.randomUUID(),
+          id: randomUUID(),
         };
         rules.push({
           tool: newTool,
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           concernedDpoint: newDPoint,
           description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
           framesets: this.getDpointFrames(rest),
@@ -68,13 +69,25 @@ export class DataProcessor {
           name,
           interact,
           tool: newTool,
-          id: crypto.randomUUID(),
-          dpoints: dpoints.map(({ name, ...rest }) => ({
-            name,
-            bits: 0,
-            tool: newTool,
-            id: crypto.randomUUID(),
-          })),
+          id: randomUUID(),
+          dpoints: (Array.isArray(dpoints) ? dpoints : [dpoints]).map(
+            ({ name, ...rest }) => {
+              const newDPoint: DPoint = {
+                name,
+                bits: 0,
+                tool: newTool,
+                id: randomUUID(),
+              };
+              rules.push({
+                tool: newTool,
+                id: randomUUID(),
+                concernedDpoint: newDPoint,
+                description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
+                framesets: this.getDpointFrames(rest),
+              });
+              return newDPoint;
+            }
+          ),
         }))
       );
     }
