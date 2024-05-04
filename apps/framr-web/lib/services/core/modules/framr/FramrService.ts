@@ -193,7 +193,8 @@ export class FramrService {
       framesets: fslFramesets,
     } = this.getCurrentFSL(fslNumber);
 
-    const orderedDPoints = this.orderDPoints(frame, dpoints, generatorConfig);
+    // order DPoints and populate the orderedDPoints array
+    this.orderDPoints(frame, dpoints, generatorConfig);
 
     this.generatorConfig = {
       ...generatorConfig,
@@ -203,7 +204,7 @@ export class FramrService {
           fslInstance.number === fslNumber
             ? {
                 number: fslNumber,
-                framesets: { ...fslFramesets, [frame]: orderedDPoints },
+                framesets: { ...fslFramesets, [frame]: this.orderedDPoints },
               }
             : fslInstance
         ),
@@ -215,7 +216,7 @@ export class FramrService {
     frame: FSLFrameType,
     dpoints: FramesetDpoint[],
     generatorConfig: GeneratorConfig
-  ): FramesetDpoint[] {
+  ) {
     const rules = this.getRules();
 
     // Partition the data points based on whether they should be at the beginning
@@ -292,8 +293,6 @@ export class FramrService {
 
       this.rulesHandler.handleDPointRules(dpoint, rules);
     }
-
-    return this.orderedDPoints;
   }
 
   private getRules(toolId?: string) {
