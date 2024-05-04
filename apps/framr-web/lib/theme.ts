@@ -145,7 +145,6 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
           fontSize: '36px',
           lineHeight: '44px',
           letterSpacing: '-0.72px',
-          paddingBottom: '10px',
           fontWeight: 700,
           color: 'var(--titleActive)',
         },
@@ -154,7 +153,6 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
           fontSize: '30px',
           lineHeight: '36px',
           letterSpacing: '-2%',
-          paddingBottom: '10px',
         },
         h3: {
           fontWeight: 600,
@@ -167,17 +165,15 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
           fontSize: '20px',
           lineHeight: '24px',
           letterSpacing: '-1.5%',
-          paddingBottom: '10px',
         },
         h5: {
           fontWeight: 600,
           fontSize: '18px',
           lineHeight: '20px',
           letterSpacing: '-1.5%',
-          paddingBottom: '10px',
         },
         body1: {
-          fontSize: '1rem',
+          fontSize: '14px',
           fontWeight: 400,
         },
         body2: {
