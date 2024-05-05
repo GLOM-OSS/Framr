@@ -10,8 +10,13 @@ interface Frameset {
   dpoints: FramesetDpoint[];
 }
 
+export type FSLFrameType = Extract<
+  FrameEnum,
+  FrameEnum.GTF | FrameEnum.MTF | FrameEnum.ROT
+>;
+
 export interface FSLFrameset extends Frameset {
-  frame: FrameEnum.GTF | FrameEnum.MTF | FrameEnum.ROT;
+  frame: FSLFrameType;
 }
 
 export interface UtilityFrameset extends Frameset {

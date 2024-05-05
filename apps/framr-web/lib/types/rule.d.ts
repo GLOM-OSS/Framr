@@ -1,16 +1,18 @@
 import { DPoint } from './dpoint';
-import { FrameEnum, RuleEnum } from './enums';
+import {
+  ConstraintEnum,
+  FrameEnum,
+  WithOtherDPointRuleEnum,
+  StandAloneRuleEnum,
+  WithConstraintRuleEnum,
+} from './enums';
 import { Tool } from './tool';
 
 export interface CreateStandAloneRule {
   name?: string;
   tool: Tool;
   concernedDpoint: DPoint;
-  description:
-    | RuleEnum.SHOULD_BE_PRESENT
-    | RuleEnum.SHOULD_BE_THE_FIRST
-    | RuleEnum.SHOULD_NOT_BE_PRESENT
-    | RuleEnum.SHOULD_NOT_BE_THE_FIRST;
+  description: StandAloneRuleEnum;
   framesets: FrameEnum[];
 }
 
@@ -19,6 +21,7 @@ export interface StandAloneRule extends CreateStandAloneRule {
 }
 
 export interface CreateRuleWithOtherDPoint extends CreateStandAloneRule {
+  description: WithOtherDPointRuleEnum;
   otherDpoints: DPoint[];
   description:
     | RuleEnum.SHOULD_BE_FOLLOWED_BY_OTHER
@@ -39,9 +42,7 @@ export interface RuleWithOtherDPoint extends CreateRuleWithOtherDPoint {
 export interface CreateRuleWithConstraint extends CreateStandAloneRule {
   interval: number;
   type: ConstraintEnum;
-  description:
-    | RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
-    | RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT;
+  description: WithConstraintRuleEnum;
 }
 
 export interface RuleWithConstraint extends CreateRuleWithConstraint {

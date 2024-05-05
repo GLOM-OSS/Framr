@@ -1,4 +1,4 @@
-import { CreateRule } from 'apps/framr-web/lib/types';
+import { CreateRule } from '../../../../../lib/types';
 import { FramrServiceError } from '../../../libs/errors';
 import {
   EventBus,
@@ -76,7 +76,7 @@ export class RulesService implements RuleInterface {
       .then((response) => {
         this.eventBus.emit(channel, {
           data: response.map((_) => _.value),
-          status: EventBusChannelStatus.ERROR,
+          status: EventBusChannelStatus.SUCCESS,
         });
       })
       .catch((error) => {
