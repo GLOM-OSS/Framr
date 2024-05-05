@@ -3,8 +3,15 @@ import watch from '@iconify/icons-fluent/timer-24-regular';
 import { Icon } from '@iconify/react';
 import { Box, Button, Chip, Dialog, Divider, Typography } from '@mui/material';
 import { DialogTransition } from '../../../components/sharedComponents/dialog-transition';
+import {
+  descriptionHasConstraint,
+  descriptionHasOtherDpoints,
+} from '../../../pages/configuration/tools/[toolId]/rules';
 import { Rule, RuleWithConstraint, RuleWithOtherDPoint } from '../../types';
-import { RuleEnum } from '../../types/enums';
+import {
+  WithConstraintRuleEnum,
+  WithOtherDPointRuleEnum,
+} from '../../types/enums';
 
 interface RuleDetailDialogProps {
   isDialogOpen: boolean;
@@ -22,17 +29,8 @@ export default function RuleDetailDialog({
     closeDialog();
   };
 
-  const ruleHasOtherDpoints =
-    data.description !== RuleEnum.SHOULD_BE_PRESENT &&
-    data.description !== RuleEnum.SHOULD_BE_THE_FIRST &&
-    data.description !== RuleEnum.SHOULD_NOT_BE_PRESENT &&
-    data.description !== RuleEnum.SHOULD_NOT_BE_THE_FIRST &&
-    data.description !== RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT &&
-    data.description !== RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT;
-
-  const ruleHasConstraint =
-    data.description === RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
-    data.description === RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT;
+  const ruleHasOtherDpoints = descriptionHasOtherDpoints(data.description);
+  const ruleHasConstraint = descriptionHasConstraint(data.description);
 
   return (
     <Dialog
@@ -172,7 +170,8 @@ export default function RuleDetailDialog({
                       color: '#6E6D7A',
                     }}
                   >{`Secondary dpoint${
-                    data.description === RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
+                    data.description ===
+                    WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
                       ? 's'
                       : ''
                   }`}</Typography>
@@ -206,7 +205,7 @@ export default function RuleDetailDialog({
                     <Icon
                       icon={
                         data.description ===
-                        RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+                        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
                           ? watch
                           : up
                       }
@@ -214,7 +213,7 @@ export default function RuleDetailDialog({
                     <Typography sx={{ fontWeight: 500, color: '#2F3A45' }}>
                       {`Every ${(data as RuleWithConstraint).interval} ${
                         data.description ===
-                        RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+                        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
                           ? 'seconds'
                           : 'meters'
                       }`}
