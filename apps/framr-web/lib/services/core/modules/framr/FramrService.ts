@@ -100,13 +100,15 @@ export class FramrService {
             frame === FrameEnum.GTF
           ) {
             const currentFrameset = currentFSL.framesets[frame];
-            currentFSL.framesets[frame] = {
-              frame: currentFrameset.frame,
-              dpoints: [
-                ...currentFrameset.dpoints,
-                { ...dpoint, isBaseInstance: true },
-              ],
-            };
+            if (!currentFrameset.dpoints.some((_) => _.id === dpoint.id)) {
+              currentFSL.framesets[frame] = {
+                frame: currentFrameset.frame,
+                dpoints: [
+                  ...currentFrameset.dpoints,
+                  { ...dpoint, isBaseInstance: true },
+                ],
+              };
+            }
           } else if (frame === FrameEnum.UTIL) {
             generatorConfig.framesets.utility.dpoints.push({
               ...dpoint,
@@ -262,11 +264,13 @@ export class FramrService {
         (bitsCount, _) => bitsCount + _.bits,
         0
       );
-      ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
-        mwdDPoints,
-        { ...cursors, bitsCount },
-        generatorConfig
-      ));
+      if (bitsCount > 0) {
+        ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
+          mwdDPoints,
+          { ...cursors, bitsCount },
+          generatorConfig
+        ));
+      }
 
       // Handle rule with bit constraints
       this.rulesHandler.handleBitContraintRule(
@@ -283,7 +287,8 @@ export class FramrService {
     }
   }
 
-  private getRules(toolId?: string) {
+  // private getRules(toolId?: string) {
+  getRules(toolId?: string) {
     const rules: GeneratorConfigRule[] = [];
     if (toolId) {
       const toolRules = this.generatorConfig?.tools
