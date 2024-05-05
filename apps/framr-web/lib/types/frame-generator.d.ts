@@ -18,12 +18,12 @@ interface GeneratorConfigTool extends LWDTool {
 export interface CreateGeneratorConfig {
   jobName?: string;
   wellName?: string;
-  MWDTool: MWDTool;
+  MWDTool: MWDGeneratorConfigTool;
   /** in bit per seconds */
   bitRate: number;
   /** in meter per seconds */
   penetrationRate: number;
-  tools: LWDTool[];
+  tools: GeneratorConfigTool[];
 }
 
 interface MWDGeneratorConfigTool extends MWDTool {
@@ -31,8 +31,6 @@ interface MWDGeneratorConfigTool extends MWDTool {
 }
 
 export interface GeneratorConfig extends CreateGeneratorConfig {
-  MWDTool: MWDGeneratorConfigTool;
-  tools: GeneratorConfigTool[];
   framesets: {
     fsl: FSL[];
     utility: UtilityFrameset;

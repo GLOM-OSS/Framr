@@ -42,29 +42,15 @@ export class FramrService {
     this.rulesHandler = new RulesHandler();
   }
 
-  async initialize(config: CreateGeneratorConfig) {
+  initialize(config: CreateGeneratorConfig) {
     if (this.generatorConfig) {
       throw new FramrServiceError('Service was already initialized');
     }
 
-    const rules = await this.database.findAll('rules');
-
-    const initializeToolRules = (toolId: string) => {
-      return rules
-        .filter(({ value: rule }) => rule.tool.id === toolId)
-        .map<GeneratorConfigRule>((_) => ({
-          ..._.value,
-          isGeneric: true,
-          isActive: true,
-        }));
-    };
-
-    const mwdRules = initializeToolRules(config.MWDTool.id);
-
     const initializeFramesets = (frameType: FSLFrameType | FrameEnum.UTIL) => {
       return {
         frame: frameType,
-        dpoints: mwdRules
+        dpoints: config.MWDTool.rules
           .filter(
             (rule) =>
               rule.description === StandAloneRuleEnum.SHOULD_BE_PRESENT &&
@@ -95,14 +81,6 @@ export class FramrService {
     this.generatorConfig = {
       ...config,
       id: randomUUID(),
-      MWDTool: {
-        ...config.MWDTool,
-        rules: mwdRules,
-      },
-      tools: config.tools.map((tool) => ({
-        ...tool,
-        rules: initializeToolRules(tool.id),
-      })),
       framesets: mwdFramesets,
     };
   }
