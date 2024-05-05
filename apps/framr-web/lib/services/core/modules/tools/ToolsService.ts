@@ -7,7 +7,6 @@ import {
   EventBusPayload,
 } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
-import { XmlIO } from '../../../libs/xml-io';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, ToolRecord } from '../../db/schema';
 import { ToolInterface, ToolsEventChannel } from './ToolInterface';
@@ -16,13 +15,11 @@ import { DataProcessor } from './data-processor/DataProcessor';
 export class ToolsService implements ToolInterface {
   private readonly STORE_NAME = 'tools';
 
-  private readonly xmlIO: XmlIO;
   private readonly dataProcessor: DataProcessor;
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
 
   constructor() {
-    this.xmlIO = new XmlIO();
     this.dataProcessor = new DataProcessor();
     this.eventBus = new EventBus();
     this.database = IDBConnection.getDatabase();

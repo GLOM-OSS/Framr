@@ -12,11 +12,13 @@ import { FrameEnum, StandAloneRuleEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
+import { XmlIO } from '../../../libs/xml-io';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema } from '../../db/schema';
 import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
 import { randomUUID } from 'crypto';
 export class FramrService {
+  private readonly xmlIO: XmlIO;
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
   private rulesHandler: RulesHandler;
@@ -37,6 +39,7 @@ export class FramrService {
   }
 
   constructor() {
+    this.xmlIO = new XmlIO();
     this.eventBus = new EventBus();
     this.database = IDBConnection.getDatabase();
     this.rulesHandler = new RulesHandler();
@@ -203,6 +206,47 @@ export class FramrService {
         tool.id === toolId ? { ...tool, rules } : tool
       ),
     };
+  }
+
+  exportGeneratorConfig() {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
+    let dataString =
+      `LIBTYPE:${this.generatorConfig.MWDTool.long}` +
+      `\nFRMTYPE:REPEATING` +
+      `\nUSER FRAME LIBRARY` +
+      `\nFrameBuilderWizard Version : TnAShared2022_1_001 built on ${new Date().toISOString()}` +
+      `\nLast modified: ${new Date().toISOString()}`;
+
+    let frameNumber = 2000;
+    const { jobName, wellName, framesets, MWDTool } = this.generatorConfig;
+    framesets.fsl.forEach(({ framesets, number: fslNumber }) => {
+      [FrameEnum.MTF, FrameEnum.GTF, FrameEnum.ROT].forEach((frame, i) => {
+        dataString +=
+          `\nSTARTOFFRAME` +
+          `\nFRM_TYPE:${frame}` +
+          `\nMTF_FRM#${frameNumber}` +
+          `\nGTF_FRM#${frameNumber + 1}` +
+          `\nROT_FRM#${frameNumber + 2}` +
+          `\nFSL ${fslNumber} ${wellName}` +
+          `\nFRAME#${frameNumber + i}`;
+        const { dpoints } = framesets[frame as FSLFrameType];
+        dpoints.forEach((dpoint) => {
+          dataString += `\n${dpoint.name}`;
+        });
+
+        dataString += `\nNULL` + `\n37321` + `ENDOFFRAME\n`;
+      });
+      frameNumber++;
+    });
+
+    // FIXME: call udl builder instead
+    this.xmlIO.buildAndDownload(
+      { dataString },
+      `${new Date().toISOString()}_${jobName}_${wellName}_${MWDTool.name}.udl`
+    );
   }
 
   private orderDPoints(
