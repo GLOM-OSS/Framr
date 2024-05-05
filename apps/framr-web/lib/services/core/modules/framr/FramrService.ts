@@ -219,7 +219,7 @@ export class FramrService {
       )
     );
 
-    this.rulesHandler = new RulesHandler();
+    this.rulesHandler = new RulesHandler(frame);
 
     // Add first data points to the ordered list, handling conflicts
     this.rulesHandler.handleFirstDPoints(firstDPoints, rules);
