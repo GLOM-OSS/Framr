@@ -309,7 +309,7 @@ export class RulesHandler {
         const originalIndex = dpoints.findIndex(
           (_) => _.dpoint.id === cdp.dpoint.id
         );
-        orderedDPoints.push(cdp.dpoint);
+        otherDPoints.push(cdp.dpoint);
         dpoints[originalIndex] = {
           ...cdp,
           lastCount: this.orderedDPoints.reduce(
@@ -318,8 +318,10 @@ export class RulesHandler {
           ),
         };
       });
-    const orderedDPoints = this.handleOtherDPointsRules(otherDPoints, rules);
-    this.orderedDPoints.push(...orderedDPoints);
+    if (otherDPoints.length > 0) {
+      const orderedDPoints = this.handleOtherDPointsRules(otherDPoints, rules);
+      this.orderedDPoints.push(...orderedDPoints);
+    }
   }
 
   handleOverloadingDPoints(generatorConfig: GeneratorConfig) {
@@ -409,11 +411,15 @@ export class RulesHandler {
         isBaseInstance: true,
       })
     );
-    const orderedOtherDPoints = this.handleOtherDPointsRules(
-      otherDPoints,
-      rules
-    );
-    this.orderedDPoints.splice(dpointPosition, 0, ...orderedOtherDPoints);
+    if (otherDPoints.length > 0) {
+      const concernedDpointId = sequentialRule.concernedDpoint.id;
+      const orderedOtherDPoints = this.handleOtherDPointsRules(
+        otherDPoints,
+        rules,
+        concernedDpointId
+      );
+      this.orderedDPoints.splice(dpointPosition, 0, ...orderedOtherDPoints);
+    }
   }
 
   /**
@@ -434,13 +440,13 @@ export class RulesHandler {
     precededByRule?: RuleWithOtherDPoint,
     followedByRule?: RuleWithOtherDPoint
   ) {
-    const [precededByRuleCommonDPoints, otherDPoints1] = partition(
+    const [precededByRuleCommonDPoints, uncommonOtherDPoints1] = partition(
       setOnlyRule.otherDpoints,
       (otherDPoint) =>
         !!precededByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
     );
-    const [followedByRuleCommonDPoints, otherDPoints2] = partition(
-      setOnlyRule.otherDpoints,
+    const [followedByRuleCommonDPoints, setOnlyRuleOtherDPoints] = partition(
+      uncommonOtherDPoints1,
       (otherDPoint) =>
         !!followedByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
     );
@@ -454,26 +460,27 @@ export class RulesHandler {
         precededByRule?.otherDpoints.length;
 
     if (shouldInsertAfter || shouldInsertBefore) {
-      const otherDPoints = [
-        ...otherDPoints1,
-        ...otherDPoints2,
-      ].map<FramesetDpoint>((dpoint) => ({
-        ...dpoint,
-        isBaseInstance: true,
-      }));
-      const orderedOtherDPoints = this.handleOtherDPointsRules(
-        otherDPoints,
-        rules
+      const otherDPoints = setOnlyRuleOtherDPoints.map<FramesetDpoint>(
+        (dpoint) => ({
+          ...dpoint,
+          isBaseInstance: true,
+        })
       );
-
-      this.orderedDPoints.splice(
-        dpointPosition +
-          (shouldInsertAfter
-            ? followedByRuleCommonDPoints.length + 1
-            : -precededByRuleCommonDPoints.length),
-        0,
-        ...orderedOtherDPoints
-      );
+      if (otherDPoints.length > 0) {
+        const orderedOtherDPoints = this.handleOtherDPointsRules(
+          otherDPoints,
+          rules,
+          dpoint.id
+        );
+        this.orderedDPoints.splice(
+          dpointPosition +
+            (shouldInsertAfter
+              ? followedByRuleCommonDPoints.length + 1
+              : -precededByRuleCommonDPoints.length),
+          0,
+          ...orderedOtherDPoints
+        );
+      }
     } else {
       this.orderedDPoints.splice(dpointPosition, 1, {
         ...dpoint,
@@ -494,12 +501,13 @@ export class RulesHandler {
    */
   private handleOtherDPointsRules(
     otherDPoints: FramesetDpoint[],
-    rules: GeneratorConfigRule[]
+    rules: GeneratorConfigRule[],
+    concernedDpointId?: string
   ) {
     const nestedRuleHandler = new RulesHandler(this.frame);
-    otherDPoints.forEach((dpoint) =>
-      nestedRuleHandler.handleDPointRules(dpoint, rules)
-    );
+    otherDPoints
+      .filter((_) => _.id !== concernedDpointId)
+      .forEach((dpoint) => nestedRuleHandler.handleDPointRules(dpoint, rules));
     return nestedRuleHandler.orderedDPoints;
   }
 
