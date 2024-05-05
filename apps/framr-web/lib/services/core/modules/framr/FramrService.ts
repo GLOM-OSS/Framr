@@ -18,8 +18,8 @@ import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
 import { randomUUID } from 'crypto';
 export class FramrService {
   private readonly eventBus: EventBus;
-  private readonly rulesHandler: RulesHandler;
   private readonly database: IDBFactory<FramrDBSchema>;
+  private rulesHandler: RulesHandler;
 
   private _generatorConfig: GeneratorConfig | null = null;
   public get generatorConfig(): GeneratorConfig | null {
@@ -228,6 +228,8 @@ export class FramrService {
       )
     );
 
+    this.rulesHandler = new RulesHandler();
+
     // Add first data points to the ordered list, handling conflicts
     this.rulesHandler.handleFirstDPoints(firstDPoints, rules);
 
@@ -284,6 +286,9 @@ export class FramrService {
 
       // Handle all other rules
       this.rulesHandler.handleDPointRules(dpoint, rules);
+
+      // Handle frameset overloading dpoints
+      this.rulesHandler.handleOverloadingDPoints(generatorConfig);
     }
   }
 

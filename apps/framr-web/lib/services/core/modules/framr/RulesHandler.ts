@@ -326,6 +326,23 @@ export class RulesHandler {
     this.orderedDPoints.push(...orderedDPoints);
   }
 
+  handleOverloadingDPoints(generatorConfig: GeneratorConfig) {
+    const { maxBits, maxDPoints } = generatorConfig.MWDTool;
+    let bitsCount = 0;
+    this.orderedDPoints = this.orderedDPoints.map((dpoint, i) => {
+      bitsCount += dpoint.bits;
+      return {
+        ...dpoint,
+        error:
+          bitsCount > maxBits
+            ? `Frameset is overloaded with ${maxBits - bitsCount} bits`
+            : i + 1 > maxDPoints
+            ? `Frameset is overloaded with ${maxDPoints - (i + 1)} data points`
+            : undefined,
+      };
+    });
+  }
+
   /**
    * Handles rules that prohibit certain sequences or configurations of data points.
    * @param dpointPosition The position where dpoint should insert
