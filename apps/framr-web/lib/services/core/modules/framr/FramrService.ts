@@ -190,6 +190,19 @@ export class FramrService {
     };
   }
 
+  updateToolRules(toolId: string, rules: GeneratorConfigRule[]) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
+    this.generatorConfig = {
+      ...this.generatorConfig,
+      tools: this.generatorConfig.tools.map((tool) =>
+        tool.id === toolId ? { ...tool, rules } : tool
+      ),
+    };
+  }
+
   private orderDPoints(
     frame: FSLFrameType,
     dpoints: FramesetDpoint[],
@@ -273,16 +286,16 @@ export class FramrService {
   private getRules(toolId?: string) {
     const rules: GeneratorConfigRule[] = [];
     if (toolId) {
-      const toolRules = this.generatorConfig?.tools.find(
-        (_) => _.id === toolId
-      )?.rules;
+      const toolRules = this.generatorConfig?.tools
+        .find((_) => _.id === toolId)
+        ?.rules.filter((_) => _.isActive);
       if (!toolRules) {
         throw new FramrServiceError('Unknown tool id');
       }
       rules.push(...toolRules);
     } else {
       for (const tool of this.generatorConfig?.tools ?? []) {
-        rules.push(...tool.rules);
+        rules.push(...tool.rules.filter((_) => _.isActive));
       }
     }
     return rules;
