@@ -17,8 +17,10 @@ import { useState } from 'react';
 import {
   ConstraintEnum,
   FrameEnum,
-  RuleEnum,
+  RuleEnumType,
+  StandAloneRuleEnum,
   ToolEnum,
+  WithConstraintRuleEnum,
 } from '../../../../..//lib/types/enums';
 import { ConfirmDialog } from '../../../../../components/sharedComponents/confirmDialog';
 import ManageRuleDialog from '../../../../../lib/modules/rules/ManageRuleDialog';
@@ -36,21 +38,25 @@ import {
   StandAloneRule,
 } from '../../../../../lib/types';
 
-export function descriptionHasOtherDpoints(description: RuleEnum) {
+export function descriptionHasOtherDpoints(description: RuleEnumType) {
   return (
-    description !== RuleEnum.SHOULD_BE_PRESENT &&
-    description !== RuleEnum.SHOULD_BE_THE_FIRST &&
-    description !== RuleEnum.SHOULD_NOT_BE_PRESENT &&
-    description !== RuleEnum.SHOULD_NOT_BE_THE_FIRST &&
-    description !== RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT &&
-    description !== RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+    description !== StandAloneRuleEnum.SHOULD_BE_PRESENT &&
+    description !== StandAloneRuleEnum.SHOULD_BE_THE_FIRST &&
+    description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
+    description !== StandAloneRuleEnum.SHOULD_NOT_BE_THE_FIRST &&
+    description !==
+      WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT &&
+    description !==
+      WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
   );
 }
 
-export function descriptionHasConstraint(description: RuleEnum) {
+export function descriptionHasConstraint(description: RuleEnumType) {
   return (
-    description === RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
-    description === RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+    description ===
+      WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+    description ===
+      WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
   );
 }
 
@@ -63,7 +69,8 @@ export default function RuleManagement() {
     {
       id: '1234',
       name: 'rule1',
-      description: RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+      description:
+        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
       tool: {
         id: 'abcd123',
         name: 'ADN',
@@ -86,20 +93,6 @@ export default function RuleManagement() {
       framesets: [FrameEnum.MTF, FrameEnum.ROT],
       interval: 3,
       type: ConstraintEnum.DISTANCE,
-      // otherDpoints: [
-      //   {
-      //     id: 'abcd123',
-      //     name: 'ADN',
-      //     bits: 1,
-      //     tool: {
-      //       id: 'abcd123',
-      //       name: 'ADN',
-      //       version: 'V8.5bf8',
-      //       long: 'adnVISION 675',
-      //       type: ToolEnum.LWD,
-      //     },
-      //   }
-      // ],
     },
   ]);
 

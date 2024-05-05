@@ -2,18 +2,18 @@ import up from '@iconify/icons-fluent/arrow-sort-up-24-regular';
 import watch from '@iconify/icons-fluent/timer-24-regular';
 import { Icon } from '@iconify/react';
 import {
-    Autocomplete,
-    Box,
-    Button,
-    CircularProgress,
-    Collapse,
-    Dialog,
-    FormControl,
-    FormHelperText,
-    FormLabel,
-    OutlinedInput,
-    TextField,
-    Typography,
+  Autocomplete,
+  Box,
+  Button,
+  CircularProgress,
+  Collapse,
+  Dialog,
+  FormControl,
+  FormHelperText,
+  FormLabel,
+  OutlinedInput,
+  TextField,
+  Typography,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
@@ -22,21 +22,28 @@ import { DialogTransition } from '../../../components/sharedComponents/dialog-tr
 import IOSSwitch from '../../../components/sharedComponents/iosSwitch';
 import { descriptionHasOtherDpoints } from '../../../pages/configuration/tools/[toolId]/rules';
 import {
-    CreateRule,
-    CreateRuleWithOtherDPoint,
-    DPoint,
-    Rule,
-    RuleWithConstraint,
-    RuleWithOtherDPoint,
-    Tool,
+  CreateRule,
+  CreateRuleWithOtherDPoint,
+  DPoint,
+  Rule,
+  RuleWithConstraint,
+  RuleWithOtherDPoint,
+  Tool,
 } from '../../types';
-import { ConstraintEnum, FrameEnum, RuleEnum } from '../../types/enums';
+import {
+  ConstraintEnum,
+  FrameEnum,
+  RuleEnumType,
+  StandAloneRuleEnum,
+  WithConstraintRuleEnum,
+  WithOtherDPointRuleEnum,
+} from '../../types/enums';
 
 export interface ICreateRule {
   name?: string;
   tool: Tool;
   concernedDpoint: string;
-  description: RuleEnum;
+  description: RuleEnumType;
   framesets: FrameEnum[];
   otherDpoints: string[];
   interval: number;
@@ -62,7 +69,11 @@ export default function ManageRuleDialog({
   tool,
 }: ManageRuleDialogProps) {
   const framesets = Object.values(FrameEnum);
-  const descriptions = Object.values(RuleEnum);
+  const descriptions = [
+    ...Object.values(StandAloneRuleEnum),
+    ...Object.values(WithConstraintRuleEnum),
+    ...Object.values(WithOtherDPointRuleEnum),
+  ];
   const constraintTypes = Object.values(ConstraintEnum);
   //TODO; replace this with a call to the API
   const [dPoints] = useState<DPoint[]>([
@@ -83,7 +94,8 @@ export default function ManageRuleDialog({
 
   function getSecondaryDPointsDisplayValue() {
     const tt = dPoints.filter((_) => formik.values.otherDpoints.includes(_.id));
-    return formik.values.description === RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
+    return formik.values.description ===
+      WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
       ? tt
       : tt.length === 0
       ? null
@@ -94,7 +106,7 @@ export default function ManageRuleDialog({
     name: '',
     tool: tool,
     concernedDpoint: dPoints[0].id,
-    description: RuleEnum.SHOULD_BE_PRESENT,
+    description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
     framesets: [],
     otherDpoints: [],
     interval: 0,
@@ -117,16 +129,20 @@ export default function ManageRuleDialog({
     type: Yup.string()
       .oneOf(constraintTypes)
       .when('description', {
-        is: (val: RuleEnum) =>
-          val === RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
-          val === RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+        is: (val: RuleEnumType) =>
+          val ===
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+          val ===
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
         then: (schema) => schema.required('Please select a constraint type'),
         otherwise: (schema) => schema.nullable(),
       }),
     interval: Yup.number().when('description', {
-      is: (val: RuleEnum) =>
-        val === RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
-        val === RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+      is: (val: RuleEnumType) =>
+        val ===
+          WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+        val ===
+          WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
       then: (schema) => schema.required('Please enter an interval'),
       otherwise: (schema) => schema.nullable(),
     }),
@@ -134,7 +150,7 @@ export default function ManageRuleDialog({
     otherDpoints: Yup.array()
       .of(Yup.string().oneOf(dPoints.map((dpoint) => dpoint.id)))
       .when('description', {
-        is: (val: RuleEnum) => descriptionHasOtherDpoints(val),
+        is: (val: RuleEnumType) => descriptionHasOtherDpoints(val),
         then: (schema) =>
           schema
             .min(1, 'Rule must have at least 1 secondary dpoint')
@@ -142,7 +158,8 @@ export default function ManageRuleDialog({
         otherwise: (schema) => schema.optional(),
       })
       .when('description', {
-        is: (val: RuleEnum) => val === RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY,
+        is: (val: RuleEnumType) =>
+          val === WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY,
         then: (schema) =>
           schema.min(2, 'Rule must have at least 2 secondary dpoints'),
         otherwise: (schema) =>
@@ -163,9 +180,9 @@ export default function ManageRuleDialog({
               }
             : { otherDpoints: [] }),
           ...(data.description ===
-            RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
           data.description ===
-            RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
             ? {
                 type: (data as RuleWithConstraint).type,
                 interval: (data as RuleWithConstraint).interval,
@@ -198,6 +215,7 @@ export default function ManageRuleDialog({
             ...values,
             concernedDpoint,
             otherDpoints: secondaryDPoints as DPoint[],
+            id: data.id,
           } as RuleWithOtherDPoint);
         } else
           handleCreate({
@@ -207,7 +225,12 @@ export default function ManageRuleDialog({
           } as CreateRuleWithOtherDPoint);
       } else {
         if (data) {
-          handleEdit({ ...values, concernedDpoint, otherDpoints: [] } as Rule);
+          handleEdit({
+            ...values,
+            concernedDpoint,
+            otherDpoints: [],
+            id: data.id,
+          });
         } else {
           handleCreate({
             ...values,
@@ -311,12 +334,12 @@ export default function ManageRuleDialog({
                 formik.setFieldValue('description', selectedDescription);
                 if (
                   selectedDescription ===
-                  RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
                 )
                   formik.setFieldValue('type', ConstraintEnum.DISTANCE);
                 if (
                   selectedDescription ===
-                  RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
                 )
                   formik.setFieldValue('type', ConstraintEnum.TIME);
               }}
@@ -446,7 +469,7 @@ export default function ManageRuleDialog({
               <Autocomplete
                 multiple={
                   formik.values.description ===
-                  RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
+                  WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
                 }
                 options={dPoints}
                 autoHighlight
@@ -455,7 +478,7 @@ export default function ManageRuleDialog({
                 onChange={(_, selectedDPoints) => {
                   if (
                     formik.values.description ===
-                    RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
+                    WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
                   )
                     formik.setFieldValue(
                       'otherDpoints',
@@ -478,7 +501,7 @@ export default function ManageRuleDialog({
                   >
                     <FormLabel>{`Select Secondary ${
                       formik.values.description ===
-                      RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
+                      WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
                         ? 'Dpoints'
                         : 'Dpoint'
                     }`}</FormLabel>
@@ -486,7 +509,7 @@ export default function ManageRuleDialog({
                       {...params}
                       placeholder={`Select Secondary ${
                         formik.values.description ===
-                        RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
+                        WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
                           ? 'Dpoints'
                           : 'Dpoint'
                       }`}
@@ -512,9 +535,9 @@ export default function ManageRuleDialog({
             )}
 
             {(formik.values.description ===
-              RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
               formik.values.description ===
-                RuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT) && (
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT) && (
               <FormControl
                 fullWidth
                 error={
@@ -523,7 +546,7 @@ export default function ManageRuleDialog({
               >
                 <FormLabel>
                   {formik.values.description ===
-                  RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
                     ? 'Add Distance Constraint'
                     : 'Add Time Constraint'}
                 </FormLabel>
@@ -540,7 +563,7 @@ export default function ManageRuleDialog({
                       <Icon
                         icon={
                           formik.values.description ===
-                          RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+                          WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
                             ? up
                             : watch
                         }
@@ -551,7 +574,7 @@ export default function ManageRuleDialog({
                     endAdornment: (
                       <Typography variant="body2">
                         {formik.values.description ===
-                        RuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+                        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
                           ? 'm'
                           : 's'}
                       </Typography>
