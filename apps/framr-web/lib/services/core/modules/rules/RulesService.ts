@@ -75,8 +75,16 @@ export class RulesService implements RuleInterface {
       .findAll(this.STORE_NAME)
       .then((response) => {
         let filteredResponse = null;
-        if(toolId)
-          filteredResponse = response.filter((record) => {return record.value.tool.id === toolId});
+        
+        if(toolId && DPointId){
+          filteredResponse = response.filter((record) => {return record.value.tool.id === toolId && record.value.concernedDpoint.id === DPointId});
+        }else{
+          if(toolId)
+            filteredResponse = response.filter((record) => {return record.value.tool.id === toolId});
+          if(DPointId)
+              filteredResponse = response.filter((record) => {return record.value.concernedDpoint.id === DPointId});
+        }
+
 
         filteredResponse
         ? this.eventBus.emit(channel, {
