@@ -1,15 +1,10 @@
-import { CreateService } from 'apps/framr-web/lib/types';
+import { CreateService } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
-import {
-  EventBus,
-  EventBusChannelStatus,
-  EventBusPayload,
-} from '../../../libs/event-bus';
+import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, ServiceRecord } from '../../db/schema';
 import { ServiceInterface, ServicesEventChannel } from './ServiceInterface';
-
 
 export class ServicesService implements ServiceInterface {
   private readonly eventBus: EventBus;
@@ -52,13 +47,14 @@ export class ServicesService implements ServiceInterface {
     this.database
       .findOne(this.STORE_NAME, index)
       .then((response) => {
-        const payload: EventBusPayload<EventBusChannelStatus> = response
-          ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
-          : {
-              data: new FramrServiceError('Service not found'),
-              status: EventBusChannelStatus.ERROR,
-            };
-        this.eventBus.emit(channel, payload);
+        if (!response) {
+          throw new Error('Service not found');
+        }
+
+        this.eventBus.emit(channel, {
+          data: response.value,
+          status: EventBusChannelStatus.SUCCESS,
+        });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -68,13 +64,19 @@ export class ServicesService implements ServiceInterface {
       });
   }
 
-  findAll(): void {
+  findAll(toolId?: string): void {
     const channel = ServicesEventChannel.FIND_ALL_SERVICES_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
+        let services = response.map((_) => _.value);
+
+        if (toolId) {
+          services = services.filter((_) => _.tool.id === toolId);
+        }
+
         this.eventBus.emit(channel, {
-          data: response.map((_) => _.value),
+          data: services,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -105,7 +107,6 @@ export class ServicesService implements ServiceInterface {
       });
   }
 
-
   delete(index: string): void {
     const channel = ServicesEventChannel.DELETE_SERVICES_CHANNEL;
 
@@ -124,5 +125,4 @@ export class ServicesService implements ServiceInterface {
         });
       });
   }
-
 }

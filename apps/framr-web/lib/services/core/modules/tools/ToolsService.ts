@@ -3,14 +3,17 @@ import { ToolEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import {
   EventBus,
-  EventBusChannelStatus,
-  EventBusPayload,
+  EventBusChannelStatus
 } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { XmlIO } from '../../../libs/xml-io';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, ToolRecord } from '../../db/schema';
-import { ToolInterface, ToolsEventChannel } from './ToolInterface';
+import {
+  ToolFilterOptions,
+  ToolInterface,
+  ToolsEventChannel,
+} from './ToolInterface';
 import { DataProcessor } from './data-processor/DataProcessor';
 
 export class ToolsService implements ToolInterface {
@@ -61,13 +64,14 @@ export class ToolsService implements ToolInterface {
     this.database
       .findOne(this.STORE_NAME, index)
       .then((response) => {
-        const payload: EventBusPayload<EventBusChannelStatus> = response
-          ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
-          : {
-              data: new FramrServiceError('Tool not found'),
-              status: EventBusChannelStatus.ERROR,
-            };
-        this.eventBus.emit(channel, payload);
+        if (!response) {
+          throw new Error('Tool not found');
+        }
+
+        this.eventBus.emit(channel, {
+          data: response.value,
+          status: EventBusChannelStatus.SUCCESS,
+        });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -77,13 +81,18 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  findAll(): void {
+  findAll(filter?: ToolFilterOptions): void {
     const channel = ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
+        let tools = response.map((_) => _.value);
+        if (filter?.type) {
+          tools = tools.filter((_) => _.type === filter.type);
+        }
+
         this.eventBus.emit(channel, {
-          data: response.map((_) => _.value),
+          data: tools,
           status: EventBusChannelStatus.SUCCESS,
         });
       })

@@ -1,15 +1,11 @@
-import { CreateRule } from 'apps/framr-web/lib/types';
+import { CreateRule } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
-import {
-  EventBus,
-  EventBusChannelStatus,
-  EventBusPayload,
-} from '../../../libs/event-bus';
+import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, RuleRecord } from '../../db/schema';
+import { FilterOptions } from '../common/common.types';
 import { RuleInterface, RulesEventChannel } from './RuleInterface';
-
 
 export class RulesService implements RuleInterface {
   private readonly eventBus: EventBus;
@@ -20,7 +16,6 @@ export class RulesService implements RuleInterface {
     this.database = IDBConnection.getDatabase();
     this.eventBus = new EventBus();
   }
-
 
   create(createRule: CreateRule): void {
     const channel = RulesEventChannel.CREATE_RULES_CHANNEL;
@@ -53,13 +48,14 @@ export class RulesService implements RuleInterface {
     this.database
       .findOne(this.STORE_NAME, index)
       .then((response) => {
-        const payload: EventBusPayload<EventBusChannelStatus> = response
-          ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
-          : {
-              data: new FramrServiceError('Rule not found'),
-              status: EventBusChannelStatus.ERROR,
-            };
-        this.eventBus.emit(channel, payload);
+        if (!response) {
+          throw new Error('Rule not found');
+        }
+
+        this.eventBus.emit(channel, {
+          data: response.value,
+          status: EventBusChannelStatus.SUCCESS,
+        });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -69,13 +65,26 @@ export class RulesService implements RuleInterface {
       });
   }
 
-  findAll(): void {
+  findAll(filter?: FilterOptions): void {
     const channel = RulesEventChannel.FIND_ALL_RULES_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
+        let rules = response.map((_) => _.value);
+        if (filter?.dpointId) {
+          rules = rules.filter((_) => _.concernedDpoint.id === filter.dpointId);
+        }
+
+        if (filter?.toolId) {
+          rules = rules.filter((_) => _.tool.id === filter.toolId);
+        }
+
+        if (filter?.serviceId) {
+          throw new Error('Rules cannot be filter by service id');
+        }
+
         this.eventBus.emit(channel, {
-          data: response.map((_) => _.value),
+          data: rules,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
