@@ -1,16 +1,9 @@
-import { FramrServiceError } from '../errors';
-import { EventBusChannelStatus } from './EventBusEnum';
 
-type EventBusDataMap = {
-  [EventBusChannelStatus.SUCCESS]: unknown;
-  [EventBusChannelStatus.ERROR]: FramrServiceError;
-};
-
-export interface EventBusPayload<Status extends EventBusChannelStatus> {
-  data: EventBusDataMap[Status];
+export interface EventBusPayload<T> {
+  data: T;
   status: Status;
 }
 
-interface EventBusHandler<Status extends EventBusChannelStatus> {
-  (payload: EventBusPayload<Status>): void;
+interface EventBusHandler<T> {
+  (payload: EventBusPayload<T>): void;
 }
