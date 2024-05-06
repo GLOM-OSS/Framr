@@ -242,9 +242,8 @@ export class FramrService {
       frameNumber++;
     });
 
-    // FIXME: call udl builder instead
-    this.xmlIO.buildAndDownload(
-      { dataString },
+    this.xmlIO.downloadFile(
+      dataString,
       `${new Date().toISOString()}_${jobName}_${wellName}_${MWDTool.name}.udl`
     );
   }
