@@ -116,18 +116,21 @@ export default function ManageRuleDialog({
   const validationSchema = Yup.object().shape({
     name: Yup.string().optional(),
     concernedDpoint: Yup.string()
-      .oneOf(dPoints.map((dpoint) => dpoint.id))
+      .oneOf(
+        dPoints.map((dpoint) => dpoint.id),
+        'Select dpoint in list'
+      )
       .required('Please select a dpoint'),
     description: Yup.string()
-      .oneOf(descriptions)
+      .oneOf(descriptions, 'Select description in list')
       .required('Please select a description'),
     framesets: Yup.array()
-      .of(Yup.string().oneOf(framesets))
+      .of(Yup.string().oneOf(framesets, 'Select a frameset in list'))
       .min(1, 'Rule is considered for atleast a frameset')
       .required('Please select a frameset'),
 
     type: Yup.string()
-      .oneOf(constraintTypes)
+      .oneOf(constraintTypes, 'Select a constraint type in list')
       .when('description', {
         is: (val: RuleEnumType) =>
           val ===
@@ -148,7 +151,12 @@ export default function ManageRuleDialog({
     }),
 
     otherDpoints: Yup.array()
-      .of(Yup.string().oneOf(dPoints.map((dpoint) => dpoint.id)))
+      .of(
+        Yup.string().oneOf(
+          dPoints.map((dpoint) => dpoint.id),
+          'Select dpoint in list'
+        )
+      )
       .when('description', {
         is: (val: RuleEnumType) => descriptionHasOtherDpoints(val),
         then: (schema) =>

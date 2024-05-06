@@ -82,7 +82,12 @@ export default function ManageServiceDialog({
     name: Yup.string().required('Name is required'),
     interact: Yup.string().optional(),
     dpoints: Yup.array()
-      .of(Yup.string().oneOf(dPoints.map((dpoint) => dpoint.id)))
+      .of(
+        Yup.string().oneOf(
+          dPoints.map((dpoint) => dpoint.id),
+          'Select dpoint in list'
+        )
+      )
       .min(1, 'Service must have at least a dpoint')
       .required('Service must have at least a dpoint'),
   });
