@@ -10,7 +10,7 @@ export enum ServicesEventChannel {
 export interface ServiceInterface {
   create(service: CreateService): void;
   findOne(index: string): void;
-  findAll(): void;
-  update(index: string, service: CreateService): void;
+  findAll(toolId?: string): void;
+  update(toolId: string, service: CreateService): void;
   delete(index: string): void;
 }

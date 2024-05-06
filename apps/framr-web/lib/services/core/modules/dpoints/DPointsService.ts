@@ -1,13 +1,10 @@
-import { CreateDPoint } from 'apps/framr-web/lib/types';
+import { CreateDPoint, DPoint } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
-import {
-  EventBus,
-  EventBusChannelStatus,
-  EventBusPayload,
-} from '../../../libs/event-bus';
+import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { DPointRecord, FramrDBSchema } from '../../db/schema';
+import { FilterOptions } from '../common/common.types';
 import { DPointInterface, DPointsEventChannel } from './DPointInterface';
 
 export class DPointsService implements DPointInterface {
@@ -51,13 +48,14 @@ export class DPointsService implements DPointInterface {
     this.database
       .findOne(this.STORE_NAME, index)
       .then((response) => {
-        const payload: EventBusPayload<EventBusChannelStatus> = response
-          ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
-          : {
-              data: new FramrServiceError('Dpoint not found'),
-              status: EventBusChannelStatus.ERROR,
-            };
-        this.eventBus.emit(channel, payload);
+        if (!response) {
+          throw new Error('Dpoint not found');
+        }
+
+        this.eventBus.emit(channel, {
+          data: response.value,
+          status: EventBusChannelStatus.SUCCESS,
+        });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -67,13 +65,23 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  findAll(): void {
+  findAll(filter?: FilterOptions): void {
     const channel = DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
-      .then((response) => {
+      .then(async (response) => {
+        let dpoints = response.map((_) => _.value);
+
+        if (filter?.serviceId) {
+          dpoints = await this.findServiceDPoints(filter.serviceId);
+        }
+
+        if (filter?.toolId) {
+          dpoints = dpoints.filter((_) => _.tool.id === filter?.toolId);
+        }
+
         this.eventBus.emit(channel, {
-          data: response.map((_) => _.value),
+          data: dpoints,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -121,5 +129,11 @@ export class DPointsService implements DPointInterface {
           status: EventBusChannelStatus.ERROR,
         });
       });
+  }
+
+  private async findServiceDPoints(serviceId: string): Promise<DPoint[]> {
+    const service = await this.database.findOne('services', serviceId);
+    if (!service) throw new FramrServiceError('Service not found');
+    return service?.value.dpoints;
   }
 }
