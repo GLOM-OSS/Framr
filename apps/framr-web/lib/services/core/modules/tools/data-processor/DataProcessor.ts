@@ -1,13 +1,18 @@
-import { XmlIO } from '../../../../libs/xml-io';
+import { randomUUID } from 'crypto';
 import {
-  XmlDataPoint,
-  XmlData,
   DPoint,
   LWDTool,
   Rule,
   Service,
+  XmlData,
+  XmlDataPoint,
 } from '../../../../../types';
-import { FrameEnum, RuleEnum, ToolEnum } from '../../../../../types/enums';
+import {
+  FrameEnum,
+  StandAloneRuleEnum,
+  ToolEnum,
+} from '../../../../../types/enums';
+import { XmlIO } from '../../../../libs/xml-io';
 
 export type FramrBulkData = {
   tools: LWDTool[];
@@ -34,27 +39,26 @@ export class DataProcessor {
       mandatory: { dpoint: mandatoryDpoints },
       services: { service: toolServices },
       ...tool
-    } of xmlTools) {
+    } of Array.isArray(xmlTools) ? xmlTools : [xmlTools]) {
       const newTool: LWDTool = {
         ...tool,
         type: ToolEnum.LWD,
-        id: crypto.randomUUID(),
+        id: randomUUID(),
       };
       tools.push(newTool);
 
       for (const { name, ...rest } of mandatoryDpoints) {
         const newDPoint: DPoint = {
           name,
-          //FIXME: where do I get this value
           bits: 0,
           tool: newTool,
-          id: crypto.randomUUID(),
+          id: randomUUID(),
         };
         rules.push({
           tool: newTool,
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           concernedDpoint: newDPoint,
-          description: RuleEnum.SHOULD_BE_PRESENT,
+          description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
           framesets: this.getDpointFrames(rest),
         });
         dpoints.push(newDPoint);
@@ -65,13 +69,25 @@ export class DataProcessor {
           name,
           interact,
           tool: newTool,
-          id: crypto.randomUUID(),
-          dpoints: dpoints.map(({ name, ...rest }) => ({
-            name,
-            bits: 0,
-            tool: newTool,
-            id: crypto.randomUUID(),
-          })),
+          id: randomUUID(),
+          dpoints: (Array.isArray(dpoints) ? dpoints : [dpoints]).map(
+            ({ name, ...rest }) => {
+              const newDPoint: DPoint = {
+                name,
+                bits: 0,
+                tool: newTool,
+                id: randomUUID(),
+              };
+              rules.push({
+                tool: newTool,
+                id: randomUUID(),
+                concernedDpoint: newDPoint,
+                description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
+                framesets: this.getDpointFrames(rest),
+              });
+              return newDPoint;
+            }
+          ),
         }))
       );
     }

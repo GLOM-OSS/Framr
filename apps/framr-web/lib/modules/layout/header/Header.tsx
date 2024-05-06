@@ -26,7 +26,7 @@ export default function Header() {
   ];
 
   function getCorrespondingBreadcrumb() {
-    if (pathname.split('/').length <= 2)
+    if (pathname.split('/').length <= 3)
       return (
         <BaseBreadcrumb
           breadcrumbs={
