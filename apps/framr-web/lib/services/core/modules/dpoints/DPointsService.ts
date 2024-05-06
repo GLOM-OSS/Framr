@@ -1,13 +1,10 @@
-import { CreateDPoint, DPoint } from 'apps/framr-web/lib/types';
+import { CreateDPoint, DPoint } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
-import {
-  EventBus,
-  EventBusChannelStatus,
-  EventBusPayload,
-} from '../../../libs/event-bus';
+import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
-import { DPointRecord, FramrDBSchema, ServiceRecord } from '../../db/schema';
+import { DPointRecord, FramrDBSchema } from '../../db/schema';
+import { FilterOptions } from '../common/common.types';
 import { DPointInterface, DPointsEventChannel } from './DPointInterface';
 
 export class DPointsService implements DPointInterface {
@@ -51,13 +48,14 @@ export class DPointsService implements DPointInterface {
     this.database
       .findOne(this.STORE_NAME, index)
       .then((response) => {
-        const payload: EventBusPayload<EventBusChannelStatus> = response
-          ? { data: response.value, status: EventBusChannelStatus.SUCCESS }
-          : {
-              data: new FramrServiceError('Dpoint not found'),
-              status: EventBusChannelStatus.ERROR,
-            };
-        this.eventBus.emit(channel, payload);
+        if (!response) {
+          throw new Error('Dpoint not found');
+        }
+
+        this.eventBus.emit(channel, {
+          data: response.value,
+          status: EventBusChannelStatus.SUCCESS,
+        });
       })
       .catch((error) => {
         this.eventBus.emit(channel, {
@@ -67,41 +65,23 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  findAll(toolId?: string, serviceId?: string): void {
+  findAll(filter?: FilterOptions): void {
     const channel = DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
-      .then((response) => {
-        let filteredResponse = null;
-        let filteredToolIdResponse = null;
-        let filteredServiceIdResponse = null;
+      .then(async (response) => {
+        let dpoints = response.map((_) => _.value);
 
-        if(toolId)
-          filteredToolIdResponse = response.filter((record) => { return record.value.tool.id === toolId});
-        if(serviceId) {
-          filteredServiceIdResponse = this.checkServiceId(serviceId);
+        if (filter?.serviceId) {
+          dpoints = await this.findServiceDPoints(filter.serviceId);
         }
 
-        if(filteredServiceIdResponse && filteredToolIdResponse) {
-          filteredResponse = filteredServiceIdResponse.filter((serviceRecord) => {
-            return filteredToolIdResponse.some((toolRecord) => {
-              return serviceRecord.id === toolRecord.value.id;
-          });
-          })
-        }
-        else if(filteredServiceIdResponse && !filteredToolIdResponse)
-          filteredResponse = filteredServiceIdResponse;
-        else {
-          filteredResponse = filteredToolIdResponse?.map((toolRecord) => { return toolRecord.value });
+        if (filter?.toolId) {
+          dpoints = dpoints.filter((_) => _.tool.id === filter?.toolId);
         }
 
-        filteredResponse
-        ? this.eventBus.emit(channel, {
-          data: response.map((filteredResponse) => filteredResponse.value),
-          status: EventBusChannelStatus.SUCCESS,
-        })
-       : this.eventBus.emit(channel, {
-          data: response.map((_) => _.value),
+        this.eventBus.emit(channel, {
+          data: dpoints,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -151,20 +131,9 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  checkServiceId(serviceId: string): DPoint[] {
-    let dpoints : DPoint[] = [];
-    this.database.findOne("services", serviceId)
-      .then((response) => {
-        if (response) {
-          dpoints = response.value.dpoints;
-        } else {
-          throw new FramrServiceError('Service not found');
-        }
-      })
-      .catch((error) => {
-        throw new FramrServiceError(error.message);
-      });
-
-      return dpoints!;
+  private async findServiceDPoints(serviceId: string): Promise<DPoint[]> {
+    const service = await this.database.findOne('services', serviceId);
+    if (!service) throw new FramrServiceError('Service not found');
+    return service?.value.dpoints;
   }
 }

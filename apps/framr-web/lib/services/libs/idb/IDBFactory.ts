@@ -147,7 +147,7 @@ export class IDBFactory<T extends DBSchema> {
   async update<S extends StoreNames<T>>(
     storeName: S,
     key: IDBValidKey,
-    payload: Partial<StoreRecordValue<T>>,
+    payload: Partial<StoreRecordValue<T, S>>,
     tx?: IDBTransaction<T, S, 'readwrite'>
   ) {
     try {

@@ -1,4 +1,5 @@
 import { CreateRule } from '../../../../types';
+import { FilterOptions } from '../common/common.types';
 
 export enum RulesEventChannel {
   CREATE_RULES_CHANNEL = 'CREATE_RULES',
@@ -10,7 +11,7 @@ export enum RulesEventChannel {
 export interface RuleInterface {
   create(rule: CreateRule): void;
   findOne(index: string): void;
-  findAll(toolId?: string, DPointId?: string): void;
+  findAll(filter?: FilterOptions): void;
   update(index: string, rule: CreateRule): void;
   delete(index: string): void;
 }
