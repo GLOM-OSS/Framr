@@ -68,17 +68,21 @@ export class ServicesService implements ServiceInterface {
       });
   }
 
-  findAll(index?: string): void {
+  findAll(toolId?: string): void {
     const channel = ServicesEventChannel.FIND_ALL_SERVICES_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
-        response.find((item) => item.key === index)
+        let filteredResponse = null;
+        if(toolId)
+          filteredResponse = response.filter((record) => { return record.value.tool.id === toolId});
+
+        filteredResponse
         ? this.eventBus.emit(channel, {
-          data: response.find((item) => item.key === index)?.value,
-          status: EventBusChannelStatus.SUCCESS
+          data: response.map((filteredResponse) => filteredResponse.value),
+          status: EventBusChannelStatus.SUCCESS,
         })
-        : this.eventBus.emit(channel, {
+       : this.eventBus.emit(channel, {
           data: response.map((_) => _.value),
           status: EventBusChannelStatus.SUCCESS,
         });

@@ -128,8 +128,8 @@ export class IDBFactory<T extends DBSchema> {
         (value, i) =>
           ({
             key: allKeys[i],
-            value: value as StoreRecord<T>['value'],
-          } satisfies StoreRecord<T>)
+            value: value as StoreRecord<T, S>['value'],
+          } satisfies StoreRecord<T, S>)
       );
     } catch (error) {
       throw new IDBError((error as Error).message, 'findAll');
@@ -296,9 +296,9 @@ export class IDBFactory<T extends DBSchema> {
     mode: M,
     /**
        * Callback to be executed within the context of the transaction.
-       * 
+       *
        * Only await the `IDBFactory` methods supporting the `tx` parameter in this callback
-       * 
+       *
        * @example
        * const transactionCallback: TransactionCallback<DBSchema, 'readwrite'> =
           async (transaction) => {

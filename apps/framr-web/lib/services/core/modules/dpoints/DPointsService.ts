@@ -1,4 +1,4 @@
-import { CreateDPoint } from 'apps/framr-web/lib/types';
+import { CreateDPoint, DPoint } from 'apps/framr-web/lib/types';
 import { FramrServiceError } from '../../../libs/errors';
 import {
   EventBus,
@@ -7,7 +7,7 @@ import {
 } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
-import { DPointRecord, FramrDBSchema } from '../../db/schema';
+import { DPointRecord, FramrDBSchema, ServiceRecord } from '../../db/schema';
 import { DPointInterface, DPointsEventChannel } from './DPointInterface';
 
 export class DPointsService implements DPointInterface {
@@ -67,17 +67,40 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  findAll(index?: string): void {
+  findAll(toolId?: string, serviceId?: string): void {
     const channel = DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
       .then((response) => {
-        response.find((item) => item.key === index)
+        let filteredResponse = null;
+        let filteredToolIdResponse = null;
+        let filteredServiceIdResponse = null;
+
+        if(toolId)
+          filteredToolIdResponse = response.filter((record) => { return record.value.tool.id === toolId});
+        if(serviceId) {
+          filteredServiceIdResponse = this.checkServiceId(serviceId);
+        }
+
+        if(filteredServiceIdResponse && filteredToolIdResponse) {
+          filteredResponse = filteredServiceIdResponse.filter((serviceRecord) => {
+            return filteredToolIdResponse.some((toolRecord) => {
+              return serviceRecord.id === toolRecord.value.id;
+          });
+          })
+        }
+        else if(filteredServiceIdResponse && !filteredToolIdResponse)
+          filteredResponse = filteredServiceIdResponse;
+        else {
+          filteredResponse = filteredToolIdResponse?.map((toolRecord) => { return toolRecord.value });
+        }
+
+        filteredResponse
         ? this.eventBus.emit(channel, {
-          data: response.find((item) => item.key === index)?.value,
-          status: EventBusChannelStatus.SUCCESS
+          data: response.map((filteredResponse) => filteredResponse.value),
+          status: EventBusChannelStatus.SUCCESS,
         })
-        : this.eventBus.emit(channel, {
+       : this.eventBus.emit(channel, {
           data: response.map((_) => _.value),
           status: EventBusChannelStatus.SUCCESS,
         });
@@ -126,5 +149,22 @@ export class DPointsService implements DPointInterface {
           status: EventBusChannelStatus.ERROR,
         });
       });
+  }
+
+  checkServiceId(serviceId: string): DPoint[] {
+    let dpoints : DPoint[] = [];
+    this.database.findOne("services", serviceId)
+      .then((response) => {
+        if (response) {
+          dpoints = response.value.dpoints;
+        } else {
+          throw new FramrServiceError('Service not found');
+        }
+      })
+      .catch((error) => {
+        throw new FramrServiceError(error.message);
+      });
+
+      return dpoints!;
   }
 }
