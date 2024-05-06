@@ -11,7 +11,11 @@ import {
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Tool } from '../../../../../lib/types';
-import { ToolEnum } from '../../../../../lib/types/enums';
+import { ToolsEventChannel, ToolsService } from '../../../../services';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../../services/libs/event-bus';
 import ToolConfigMenu from '../menus/ToolConfigMenu';
 import ToolMenu from '../menus/ToolMenu';
 
@@ -28,30 +32,22 @@ export default function ToolBreadcrumb() {
   const [activeTool, setActiveTool] = useState<string>('DPoint');
   const [activeToolConfig, setActiveToolConfig] = useState<string>('DPoint');
 
-  useEffect(() => {
-    //TODO: call api here to fetch all tools
-    const tools: Tool[] = [
-      {
-        id: 'wds',
-        type: ToolEnum.LWD,
-        name: 'WDS',
-        version: '1.0',
-        long: 'Wired Drill String',
-      },
-      {
-        id: 'mwd',
-        type: ToolEnum.MWD,
-        name: 'MWD',
-        version: '1.0',
-        long: 'Measurement While Drilling',
-        max_bits: 1,
-        max_dpoints: 2,
-      },
-    ];
+  const eventBus = new EventBus();
 
-    const tool = tools.find((tool) => tool.id === toolId);
-    if (tool) setActiveTool(tool.name);
-    else setActiveTool('Unknown Tool');
+  const toolsService = new ToolsService();
+  eventBus.once<Tool>(
+    ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
+    ({ data, status }) => {
+      if (status === EventBusChannelStatus.SUCCESS) {
+        setActiveTool(data.name);
+      } else setActiveTool('Unknown Tool');
+    }
+  );
+  useEffect(() => {
+    if (typeof toolId === 'string') {
+      toolsService.findOne(toolId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolId]);
 
   return (
