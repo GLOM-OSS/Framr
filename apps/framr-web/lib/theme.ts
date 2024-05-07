@@ -205,7 +205,20 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
     },
     components: {
       // FOR EVERY COMPONENT, DESTRUCTURE AND ADD ...newTheme?.components?.componentName
+      MuiIconButton: {
+        defaultProps: {
+          size: 'small',
+        },
+      },
+      MuiTooltip: {
+        defaultProps: {
+          arrow: true,
+        },
+      },
       MuiButton: {
+        defaultProps: {
+          size: 'small',
+        },
         styleOverrides: {
           root: ({ theme }) => ({
             borderRadius: '8px',
@@ -223,32 +236,6 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
               border: `1px solid ${theme.common.line}`,
               color: theme.common.body,
             },
-            // '&.MuiButton-containedPrimary:hover': {
-            //   backgroundColor: theme.palette.primary.light,
-            // },
-            // '&.MuiButton-containedSecondary': {
-            //   color: theme.palette.primary.main,
-            //   backgroundColor:
-            //     theme.palette.mode === 'light'
-            //       ? 'rgba(99, 95, 199, 0.1)'
-            //       : 'white',
-            // },
-            // '&.MuiButton-containedSecondary:hover': {
-            //   backgroundColor:
-            //     theme.palette.mode === 'light'
-            //       ? 'rgba(99, 95, 199, 0.25)'
-            //       : 'white',
-            // },
-            // '&.MuiButton-containedError:hover': {
-            //   backgroundColor: theme.palette.error.light,
-            // },
-          }),
-        },
-      },
-      MuiFormLabel: {
-        styleOverrides: {
-          root: ({ theme }) => ({
-            // top: '-8px !important',
           }),
         },
       },
@@ -264,6 +251,9 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
         },
       },
       MuiTextField: {
+        defaultProps: {
+          size: 'small',
+        },
         styleOverrides: {
           root: ({ theme }) => ({
             background: theme.common.offWhite,

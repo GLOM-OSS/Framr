@@ -147,7 +147,7 @@ export class IDBFactory<T extends DBSchema> {
   async update<S extends StoreNames<T>>(
     storeName: S,
     key: IDBValidKey,
-    payload: Partial<StoreRecordValue<T>>,
+    payload: Partial<StoreRecordValue<T, S>>,
     tx?: IDBTransaction<T, S, 'readwrite'>
   ) {
     try {
@@ -296,9 +296,9 @@ export class IDBFactory<T extends DBSchema> {
     mode: M,
     /**
        * Callback to be executed within the context of the transaction.
-       * 
+       *
        * Only await the `IDBFactory` methods supporting the `tx` parameter in this callback
-       * 
+       *
        * @example
        * const transactionCallback: TransactionCallback<DBSchema, 'readwrite'> =
           async (transaction) => {

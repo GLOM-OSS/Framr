@@ -1,36 +1,35 @@
-import { CreateDPoint, DPoint } from '../../../../types';
+import { CreateService } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
-import { DPointRecord, FramrDBSchema } from '../../db/schema';
-import { FilterOptions } from '../common/common.types';
-import { DPointInterface, DPointsEventChannel } from './DPointInterface';
+import { FramrDBSchema, ServiceRecord } from '../../db/schema';
+import { ServiceInterface, ServicesEventChannel } from './ServiceInterface';
 
-export class DPointsService implements DPointInterface {
+export class ServicesService implements ServiceInterface {
   private readonly eventBus: EventBus;
   private readonly database: IDBFactory<FramrDBSchema>;
-  private readonly STORE_NAME = 'dpoints';
+  private readonly STORE_NAME = 'services';
 
   constructor() {
     this.database = IDBConnection.getDatabase();
     this.eventBus = new EventBus();
   }
 
-  create(createDpoint: CreateDPoint): void {
-    const channel = DPointsEventChannel.CREATE_DPOINT_CHANNEL;
-    const newDpoint: DPointRecord = {
+  create(createService: CreateService): void {
+    const channel = ServicesEventChannel.CREATE_SERVICES_CHANNEL;
+    const newRule: ServiceRecord = {
       value: {
         id: crypto.randomUUID(),
-        ...createDpoint,
+        ...createService,
       },
     };
 
     this.database
-      .insert(this.STORE_NAME, newDpoint)
+      .insert(this.STORE_NAME, newRule)
       .then((response) => {
         this.eventBus.emit(channel, {
-          data: { ...newDpoint!.value, id: response },
+          data: { ...newRule!.value, id: response },
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -43,13 +42,13 @@ export class DPointsService implements DPointInterface {
   }
 
   findOne(index: string): void {
-    const channel = DPointsEventChannel.FIND_ONE_DPOINT_CHANNEL;
+    const channel = ServicesEventChannel.FIND_ONE_SERVICES_CHANNEL;
 
     this.database
       .findOne(this.STORE_NAME, index)
       .then((response) => {
         if (!response) {
-          throw new Error('Dpoint not found');
+          throw new Error('Service not found');
         }
 
         this.eventBus.emit(channel, {
@@ -65,23 +64,19 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  findAll(filter?: FilterOptions): void {
-    const channel = DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL;
+  findAll(toolId?: string): void {
+    const channel = ServicesEventChannel.FIND_ALL_SERVICES_CHANNEL;
     this.database
       .findAll(this.STORE_NAME)
-      .then(async (response) => {
-        let dpoints = response.map((_) => _.value);
+      .then((response) => {
+        let services = response.map((_) => _.value);
 
-        if (filter?.serviceId) {
-          dpoints = await this.findServiceDPoints(filter.serviceId);
-        }
-
-        if (filter?.toolId) {
-          dpoints = dpoints.filter((_) => _.tool.id === filter?.toolId);
+        if (toolId) {
+          services = services.filter((_) => _.tool.id === toolId);
         }
 
         this.eventBus.emit(channel, {
-          data: dpoints,
+          data: services,
           status: EventBusChannelStatus.SUCCESS,
         });
       })
@@ -93,11 +88,11 @@ export class DPointsService implements DPointInterface {
       });
   }
 
-  update(index: string, createDpoint: CreateDPoint): void {
-    const channel = DPointsEventChannel.UPDATE_DPOINT_CHANNEL;
+  update(index: string, createService: CreateService): void {
+    const channel = ServicesEventChannel.UPDATE_SERVICES_CHANNEL;
 
     this.database
-      .update(this.STORE_NAME, index, createDpoint)
+      .update(this.STORE_NAME, index, createService)
       .then(() => {
         this.eventBus.emit(channel, {
           data: undefined,
@@ -113,7 +108,7 @@ export class DPointsService implements DPointInterface {
   }
 
   delete(index: string): void {
-    const channel = DPointsEventChannel.DELETE_DPOINT_CHANNEL;
+    const channel = ServicesEventChannel.DELETE_SERVICES_CHANNEL;
 
     this.database
       .delete(this.STORE_NAME, index)
@@ -129,11 +124,5 @@ export class DPointsService implements DPointInterface {
           status: EventBusChannelStatus.ERROR,
         });
       });
-  }
-
-  private async findServiceDPoints(serviceId: string): Promise<DPoint[]> {
-    const service = await this.database.findOne('services', serviceId);
-    if (!service) throw new FramrServiceError('Service not found');
-    return service?.value.dpoints;
   }
 }
