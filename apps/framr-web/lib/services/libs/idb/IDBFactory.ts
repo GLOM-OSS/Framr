@@ -97,7 +97,7 @@ export class IDBFactory<T extends DBSchema> {
       else value = await this.db.get(storeName, key as StoreRecordKey<T, S>);
 
       if (!value) return null;
-      return { key: storedKey, value } satisfies StoreRecord<T, S>;
+      return { key: storedKey, value } as StoreRecord<T, S>;
     } catch (error) {
       throw new IDBError((error as Error).message, 'findOne');
     }
@@ -129,7 +129,7 @@ export class IDBFactory<T extends DBSchema> {
           ({
             key: allKeys[i],
             value: value as StoreRecord<T, S>['value'],
-          } satisfies StoreRecord<T, S>)
+          } as StoreRecord<T, S>)
       );
     } catch (error) {
       throw new IDBError((error as Error).message, 'findAll');

@@ -54,19 +54,19 @@ export class XmlIO {
   buildAndDownload(obj: object, fileName: string = 'export.xml'): void {
     try {
       const xmlString = this.xmlBuilder.buildObject(obj);
-      this.downloadXmlFile(xmlString, fileName);
+      this.downloadFile(xmlString, fileName);
     } catch (error) {
       throw new FramrServiceError(`Error building XML: ${error}`);
     }
   }
 
   /**
-   * Dowlaod XML file
-   * @param xmlString
+   * Dowlaod data file
+   * @param dataString
    * @param fileName
    */
-  private downloadXmlFile(xmlString: string, fileName: string): void {
-    const blob = new Blob([xmlString], { type: 'text/xml' });
+  downloadFile(dataString: string, fileName: string): void {
+    const blob = new Blob([dataString], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
