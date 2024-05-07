@@ -6,19 +6,34 @@ import { Icon } from '@iconify/react';
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../../../../../components/sharedComponents/confirmDialog';
 import ManageDPointDialog from '../../../../../lib/modules/dpoints/ManageDPointDialog';
 import MoreMenu from '../../../../../lib/modules/dpoints/MoreMenu';
+import {
+  DPointsEventChannel,
+  DPointsService,
+  ToolsEventChannel,
+  ToolsService,
+} from '../../../../../lib/services';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../../../lib/services/libs/event-bus';
 import { theme } from '../../../../../lib/theme';
 import { CreateDPoint, DPoint, Tool } from '../../../../../lib/types';
 import { ToolEnum } from '../../../../../lib/types/enums';
 
 export default function ToolManagement() {
-  const { push } = useRouter();
+  const {
+    push,
+    query: { toolId },
+  } = useRouter();
+
+  const eventBus = new EventBus();
+  const toolsService = new ToolsService();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  //TODO: FETCH FOR THE ACTIVE TOOL HERE
-  const [tool] = useState<Tool>({
+  const [tool, setTool] = useState<Tool>({
     id: 'abcd132',
     name: 'ADN',
     version: 'V8.5bf8',
@@ -26,22 +41,40 @@ export default function ToolManagement() {
     type: ToolEnum.LWD,
   });
 
-  //TODO; replace this with a call to the API
-  const [dPoints] = useState<DPoint[]>([
-    {
-      id: 'abcd123',
-      name: 'ADN',
-      bits: 1,
-      tool: tool,
-    },
+  function fetchTool(toolId: string) {
+    eventBus.once<Tool>(
+      ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setTool(data);
+        }
+      }
+    );
+    toolsService.findOne(toolId);
+  }
 
-    {
-      id: 'abcd213',
-      name: 'ADN',
-      bits: 1,
-      tool: tool,
-    },
-  ]);
+  const dpointsService = new DPointsService();
+  const [dPoints, setDPoints] = useState<DPoint[]>([]);
+
+  function fetchDPoints() {
+    eventBus.once<DPoint[]>(
+      DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setDPoints(data);
+        }
+      }
+    );
+    dpointsService.findAll();
+  }
+
+  useEffect(() => {
+    if (typeof toolId === 'string') {
+      fetchTool(toolId);
+    }
+    fetchDPoints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolId]);
 
   const [activeDPoint, setActiveDpoint] = useState<DPoint>();
 
@@ -72,23 +105,41 @@ export default function ToolManagement() {
   const [isCreateNewToolDialogOpen, setIsCreateNewToolDialogOpen] =
     useState<boolean>(false);
 
-  function handleCreateTool(val: CreateDPoint) {
-    //TODO: CALL API HERE TO CREATE NEW DPoint
-    console.log(val);
-    setActiveDpoint(undefined);
+  function handleCreateDPoint(val: CreateDPoint) {
+    eventBus.once<DPoint>(
+      DPointsEventChannel.CREATE_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveDpoint(undefined);
+        }
+      }
+    );
+    dpointsService.create(val);
   }
 
-  function handleEditTool(val: DPoint) {
-    //TODO: CALL API HERE TO EDIT dpoint
-    console.log(val);
-    setActiveDpoint(undefined);
+  function handleEditDPoint(val: DPoint) {
+    eventBus.once<DPoint>(
+      DPointsEventChannel.UPDATE_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveDpoint(undefined);
+        }
+      }
+    );
+    dpointsService.update(val.id, val);
   }
 
   function handleDelete(val: DPoint) {
-    //TODO: CALL API HERE TO DELETE dpoint
-    console.log('delete dpoint', val);
-    setIsDeleteDialogOpen(false);
-    setActiveDpoint(undefined);
+    eventBus.once<DPoint>(
+      DPointsEventChannel.DELETE_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setIsDeleteDialogOpen(false);
+          setActiveDpoint(undefined);
+        }
+      }
+    );
+    dpointsService.delete(val.id);
   }
 
   return (
@@ -125,8 +176,8 @@ export default function ToolManagement() {
         }}
         isDialogOpen={isEditDialogOpen || isCreateNewToolDialogOpen}
         isSubmitting={false}
-        handleCreate={handleCreateTool}
-        handleEdit={handleEditTool}
+        handleCreate={handleCreateDPoint}
+        handleEdit={handleEditDPoint}
         data={activeDPoint}
         tool={tool}
       />

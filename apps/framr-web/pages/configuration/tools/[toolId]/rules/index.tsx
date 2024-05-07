@@ -13,9 +13,8 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  ConstraintEnum,
   FrameEnum,
   RuleEnumType,
   StandAloneRuleEnum,
@@ -26,6 +25,11 @@ import { ConfirmDialog } from '../../../../../components/sharedComponents/confir
 import ManageRuleDialog from '../../../../../lib/modules/rules/ManageRuleDialog';
 import RuleDetailDialog from '../../../../../lib/modules/rules/RuleDetailDialog';
 import MoreMenu from '../../../../../lib/modules/services/MoreMenu';
+import { RulesEventChannel, RulesService } from '../../../../../lib/services';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../../../lib/services/libs/event-bus';
 import { theme } from '../../../../../lib/theme';
 import {
   CreateRule,
@@ -64,37 +68,25 @@ export default function RuleManagement() {
   const { push } = useRouter();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  //TODO: CALL API TO FETCH RULES HERE
-  const [rules] = useState<Rule[]>([
-    {
-      id: '1234',
-      name: 'rule1',
-      description:
-        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-      tool: {
-        id: 'abcd123',
-        name: 'ADN',
-        version: 'V8.5bf8',
-        long: 'adnVISION 675',
-        type: ToolEnum.LWD,
-      },
-      concernedDpoint: {
-        id: 'abcd123',
-        name: 'ADN',
-        bits: 1,
-        tool: {
-          id: 'abcd123',
-          name: 'ADN',
-          version: 'V8.5bf8',
-          long: 'adnVISION 675',
-          type: ToolEnum.LWD,
-        },
-      },
-      framesets: [FrameEnum.MTF, FrameEnum.ROT],
-      interval: 3,
-      type: ConstraintEnum.DISTANCE,
-    },
-  ]);
+  const eventBus = new EventBus();
+  const rulesService = new RulesService();
+  const [rules, setRules] = useState<Rule[]>([]);
+
+  function fetchRules() {
+    eventBus.once<Rule[]>(
+      RulesEventChannel.FIND_ALL_RULES_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setRules(data);
+        }
+      }
+    );
+    rulesService.findAll();
+  }
+  useEffect(() => {
+    fetchRules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [activeRule, setActiveRule] = useState<Rule>();
 
@@ -165,6 +157,18 @@ export default function RuleManagement() {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
 
+  function createRule(val: CreateRule) {
+    eventBus.once<Rule>(
+      RulesEventChannel.CREATE_RULES_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveRule(undefined);
+        }
+      }
+    );
+    rulesService.create(val);
+  }
+
   function handleCreate(val: CreateRule) {
     const { concernedDpoint, description, framesets, tool, name } =
       val as CreateStandAloneRule;
@@ -193,10 +197,21 @@ export default function RuleManagement() {
         type,
       } as RuleWithConstraint;
     }
+
     // if it neither has a secondary dpoint nor constraint, then it's stand alone
-    //TODO: CALL API HERE TO CREATE NEW DPoint
-    console.log(submitData);
-    setActiveRule(undefined);
+    createRule(submitData);
+  }
+
+  function editRule(val: Rule) {
+    eventBus.once<Rule>(
+      RulesEventChannel.UPDATE_RULES_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveRule(undefined);
+        }
+      }
+    );
+    rulesService.update(val.id, val);
   }
 
   function handleEdit(val: Rule) {
@@ -229,16 +244,20 @@ export default function RuleManagement() {
       } as RuleWithConstraint;
     }
     // if it neither has a secondary dpoint nor constraint, then it's stand alone
-    //TODO: CALL API HERE TO EDIT dpoint
-    console.log(submitData);
-    setActiveRule(undefined);
+    editRule(submitData);
   }
 
   function handleDelete(val: Rule) {
-    //TODO: CALL API HERE TO DELETE dpoint
-    console.log('delete dpoint', val);
-    setIsDeleteDialogOpen(false);
-    setActiveRule(undefined);
+    eventBus.once<Rule>(
+      RulesEventChannel.DELETE_RULES_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setIsDeleteDialogOpen(false);
+          setActiveRule(undefined);
+        }
+      }
+    );
+    rulesService.delete(val.id);
   }
 
   return (

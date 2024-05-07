@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../../../../../components/sharedComponents/confirmDialog';
 import ManageServiceDialog from '../../../../../lib/modules/services/ManageServiceDialog';
 import MoreMenu from '../../../../../lib/modules/services/MoreMenu';
@@ -14,11 +14,27 @@ import ServiceDetailDialog from '../../../../../lib/modules/services/ServiceDeta
 import { theme } from '../../../../../lib/theme';
 import { CreateService, Service, Tool } from '../../../../../lib/types';
 import { ToolEnum } from '../../../../../lib/types/enums';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../../../lib/services/libs/event-bus';
+import {
+  ServicesEventChannel,
+  ServicesService,
+  ToolsEventChannel,
+  ToolsService,
+} from '../../../../../lib/services';
 
 export default function ToolManagement() {
-  const { push } = useRouter();
+  const {
+    push,
+    query: { toolId },
+  } = useRouter();
+
+  const eventBus = new EventBus();
+  const toolsService = new ToolsService();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [tool] = useState<Tool>({
+  const [tool, setTool] = useState<Tool>({
     id: 'abcd132',
     name: 'ADN',
     version: 'V8.5bf8',
@@ -26,29 +42,39 @@ export default function ToolManagement() {
     type: ToolEnum.LWD,
   });
 
-  //TODO; replace this with a call to the API
-  const [Services] = useState<Service[]>([
-    {
-      id: 'abcd123',
-      name: 'ADN',
-      tool: tool,
-      dpoints: [
-        {
-          id: 'abcd123',
-          name: 'ADN',
-          tool: tool,
-          bits: 1,
-        },
-      ],
-    },
+  function fetchTool(toolId: string) {
+    eventBus.once<Tool>(
+      ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setTool(data);
+        }
+      }
+    );
+    toolsService.findOne(toolId);
+  }
 
-    {
-      id: 'abcd213',
-      name: 'ADN',
-      tool: tool,
-      dpoints: [],
-    },
-  ]);
+  const servicesService = new ServicesService();
+  const [services, setServices] = useState<Service[]>([]);
+  function fetchServices(toolId: string) {
+    eventBus.once<Service[]>(
+      ServicesEventChannel.FIND_ALL_SERVICES_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setServices(data);
+        }
+      }
+    );
+    servicesService.findAll(toolId);
+  }
+
+  useEffect(() => {
+    if (typeof toolId === 'string') {
+      fetchTool(toolId);
+      fetchServices(toolId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolId]);
 
   const [activeService, setActiveService] = useState<Service>();
 
@@ -81,22 +107,40 @@ export default function ToolManagement() {
     useState<boolean>(false);
 
   function handleCreate(val: CreateService) {
-    //TODO: CALL API HERE TO CREATE NEW Service
-    console.log(val);
-    setActiveService(undefined);
+    eventBus.once<Service>(
+      ServicesEventChannel.CREATE_SERVICES_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveService(undefined);
+        }
+      }
+    );
+    servicesService.create(val);
   }
 
   function handleEdit(val: Service) {
-    //TODO: CALL API HERE TO edit tool
-    console.log(val);
-    setActiveService(undefined);
+    eventBus.once<Service>(
+      ServicesEventChannel.UPDATE_SERVICES_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveService(undefined);
+        }
+      }
+    );
+    servicesService.update(val.id, val);
   }
 
   function handleDelete(val: Service) {
-    //TODO: CALL API HERE TO DELETE
-    console.log('delete service', val);
-    setIsDeleteDialogOpen(false);
-    setActiveService(undefined);
+    eventBus.once<Service>(
+      ServicesEventChannel.DELETE_SERVICES_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setIsDeleteDialogOpen(false);
+          setActiveService(undefined);
+        }
+      }
+    );
+    servicesService.delete(val.id);
   }
 
   return (
@@ -199,7 +243,7 @@ export default function ToolManagement() {
             </Tooltip>
             <Typography variant="h3">Services</Typography>
             <Typography variant="h3" sx={{ color: theme.common.line }}>
-              {Services.length}
+              {services.length}
             </Typography>
           </Box>
           <Box
@@ -226,7 +270,7 @@ export default function ToolManagement() {
           </Box>
         </Box>
         <DataGrid
-          rows={Services}
+          rows={services}
           columns={serviceColumns}
           hideFooter
           autoPageSize
