@@ -25,19 +25,23 @@ export default function ToolMenu({
   const { push, pathname } = useRouter();
 
   const eventBus = new EventBus();
-
-  const [tools, setTools] = useState<Tool[]>([]);
   const toolsService = new ToolsService();
-  eventBus.once<Tool[]>(
-    ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL,
-    ({ data, status }) => {
-      if (status === EventBusChannelStatus.SUCCESS) {
-        setTools(data);
+  const [tools, setTools] = useState<Tool[]>([]);
+
+  function fetchTools() {
+    eventBus.once<Tool[]>(
+      ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setTools(data);
+        }
       }
-    }
-  );
-  useEffect(() => {
+    );
     toolsService.findAll();
+  }
+
+  useEffect(() => {
+    fetchTools();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -29,23 +29,25 @@ export default function ToolBreadcrumb() {
     query: { toolId },
   } = useRouter();
 
+  const eventBus = new EventBus();
+  const toolsService = new ToolsService();
   const [activeTool, setActiveTool] = useState<string>('DPoint');
   const [activeToolConfig, setActiveToolConfig] = useState<string>('DPoint');
 
-  const eventBus = new EventBus();
-
-  const toolsService = new ToolsService();
-  eventBus.once<Tool>(
-    ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
-    ({ data, status }) => {
-      if (status === EventBusChannelStatus.SUCCESS) {
-        setActiveTool(data.name);
-      } else setActiveTool('Unknown Tool');
-    }
-  );
+  function fetchTool(toolId: string) {
+    eventBus.once<Tool>(
+      ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveTool(data.name);
+        } else setActiveTool('Unknown Tool');
+      }
+    );
+    toolsService.findOne(toolId);
+  }
   useEffect(() => {
     if (typeof toolId === 'string') {
-      toolsService.findOne(toolId);
+      fetchTool(toolId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolId]);
