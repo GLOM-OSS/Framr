@@ -108,9 +108,10 @@ export default function ToolManagement() {
   function handleCreateDPoint(val: CreateDPoint) {
     eventBus.once<DPoint>(
       DPointsEventChannel.CREATE_DPOINT_CHANNEL,
-      ({ data, status }) => {
+      ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveDpoint(undefined);
+          fetchDPoints();
         }
       }
     );
@@ -120,9 +121,10 @@ export default function ToolManagement() {
   function handleEditDPoint(val: DPoint) {
     eventBus.once<DPoint>(
       DPointsEventChannel.UPDATE_DPOINT_CHANNEL,
-      ({ data, status }) => {
+      ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveDpoint(undefined);
+          fetchDPoints();
         }
       }
     );
@@ -132,10 +134,11 @@ export default function ToolManagement() {
   function handleDelete(val: DPoint) {
     eventBus.once<DPoint>(
       DPointsEventChannel.DELETE_DPOINT_CHANNEL,
-      ({ data, status }) => {
+      ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveDpoint(undefined);
+          fetchDPoints();
         }
       }
     );

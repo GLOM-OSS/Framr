@@ -112,6 +112,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveService(undefined);
+          fetchServices(val.tool.id);
         }
       }
     );
@@ -124,6 +125,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveService(undefined);
+          fetchServices(val.tool.id);
         }
       }
     );
@@ -137,6 +139,7 @@ export default function ToolManagement() {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveService(undefined);
+          fetchServices(val.tool.id);
         }
       }
     );

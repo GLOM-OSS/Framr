@@ -163,6 +163,7 @@ export default function RuleManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveRule(undefined);
+          fetchRules();
         }
       }
     );
@@ -208,6 +209,7 @@ export default function RuleManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveRule(undefined);
+          fetchRules();
         }
       }
     );
@@ -254,6 +256,7 @@ export default function RuleManagement() {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveRule(undefined);
+          fetchRules();
         }
       }
     );

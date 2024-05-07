@@ -74,6 +74,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveTool(undefined);
+          fetchTools()
         }
       }
     );

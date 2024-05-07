@@ -112,7 +112,7 @@ export default function ManageRuleDialog({
   const initialValues: ICreateRule = {
     name: '',
     tool: tool,
-    concernedDpoint: dPoints[0].id,
+    concernedDpoint: '',
     description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
     framesets: [],
     otherDpoints: [],
