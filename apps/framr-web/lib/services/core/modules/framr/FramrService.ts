@@ -12,14 +12,16 @@ import { FrameEnum, StandAloneRuleEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
+import { XmlIO } from '../../../libs/xml-io';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema } from '../../db/schema';
 import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
 import { randomUUID } from 'crypto';
 export class FramrService {
+  private readonly xmlIO: XmlIO;
   private readonly eventBus: EventBus;
-  private readonly rulesHandler: RulesHandler;
   private readonly database: IDBFactory<FramrDBSchema>;
+  private rulesHandler: RulesHandler;
 
   private _generatorConfig: GeneratorConfig | null = null;
   public get generatorConfig(): GeneratorConfig | null {
@@ -37,34 +39,21 @@ export class FramrService {
   }
 
   constructor() {
+    this.xmlIO = new XmlIO();
     this.eventBus = new EventBus();
     this.database = IDBConnection.getDatabase();
     this.rulesHandler = new RulesHandler();
   }
 
-  async initialize(config: CreateGeneratorConfig) {
+  initialize(config: CreateGeneratorConfig) {
     if (this.generatorConfig) {
       throw new FramrServiceError('Service was already initialized');
     }
 
-    const rules = await this.database.findAll('rules');
-
-    const initializeToolRules = (toolId: string) => {
-      return rules
-        .filter(({ value: rule }) => rule.tool.id === toolId)
-        .map<GeneratorConfigRule>((_) => ({
-          ..._.value,
-          isGeneric: true,
-          isActive: true,
-        }));
-    };
-
-    const mwdRules = initializeToolRules(config.MWDTool.id);
-
     const initializeFramesets = (frameType: FSLFrameType | FrameEnum.UTIL) => {
       return {
         frame: frameType,
-        dpoints: mwdRules
+        dpoints: config.MWDTool.rules
           .filter(
             (rule) =>
               rule.description === StandAloneRuleEnum.SHOULD_BE_PRESENT &&
@@ -95,14 +84,6 @@ export class FramrService {
     this.generatorConfig = {
       ...config,
       id: randomUUID(),
-      MWDTool: {
-        ...config.MWDTool,
-        rules: mwdRules,
-      },
-      tools: config.tools.map((tool) => ({
-        ...tool,
-        rules: initializeToolRules(tool.id),
-      })),
       framesets: mwdFramesets,
     };
   }
@@ -122,13 +103,15 @@ export class FramrService {
             frame === FrameEnum.GTF
           ) {
             const currentFrameset = currentFSL.framesets[frame];
-            currentFSL.framesets[frame] = {
-              frame: currentFrameset.frame,
-              dpoints: [
-                ...currentFrameset.dpoints,
-                { ...dpoint, isBaseInstance: true },
-              ],
-            };
+            if (!currentFrameset.dpoints.some((_) => _.id === dpoint.id)) {
+              currentFSL.framesets[frame] = {
+                frame: currentFrameset.frame,
+                dpoints: [
+                  ...currentFrameset.dpoints,
+                  { ...dpoint, isBaseInstance: true },
+                ],
+              };
+            }
           } else if (frame === FrameEnum.UTIL) {
             generatorConfig.framesets.utility.dpoints.push({
               ...dpoint,
@@ -212,6 +195,59 @@ export class FramrService {
     };
   }
 
+  updateToolRules(toolId: string, rules: GeneratorConfigRule[]) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
+    this.generatorConfig = {
+      ...this.generatorConfig,
+      tools: this.generatorConfig.tools.map((tool) =>
+        tool.id === toolId ? { ...tool, rules } : tool
+      ),
+    };
+  }
+
+  exportGeneratorConfig() {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
+    let dataString =
+      `LIBTYPE:${this.generatorConfig.MWDTool.long}` +
+      `\nFRMTYPE:REPEATING` +
+      `\nUSER FRAME LIBRARY` +
+      `\nFrameBuilderWizard Version : TnAShared2022_1_001 built on ${new Date().toISOString()}` +
+      `\nLast modified: ${new Date().toISOString()}`;
+
+    let frameNumber = 2000;
+    const { jobName, wellName, framesets, MWDTool } = this.generatorConfig;
+    framesets.fsl.forEach(({ framesets, number: fslNumber }) => {
+      [FrameEnum.MTF, FrameEnum.GTF, FrameEnum.ROT].forEach((frame, i) => {
+        dataString +=
+          `\nSTARTOFFRAME` +
+          `\nFRM_TYPE:${frame}` +
+          `\nMTF_FRM#${frameNumber}` +
+          `\nGTF_FRM#${frameNumber + 1}` +
+          `\nROT_FRM#${frameNumber + 2}` +
+          `\nFSL ${fslNumber} ${wellName}` +
+          `\nFRAME#${frameNumber + i}`;
+        const { dpoints } = framesets[frame as FSLFrameType];
+        dpoints.forEach((dpoint) => {
+          dataString += `\n${dpoint.name}`;
+        });
+
+        dataString += `\nNULL` + `\n37321` + `ENDOFFRAME\n`;
+      });
+      frameNumber++;
+    });
+
+    this.xmlIO.downloadFile(
+      dataString,
+      `${new Date().toISOString()}_${jobName}_${wellName}_${MWDTool.name}.udl`
+    );
+  }
+
   private orderDPoints(
     frame: FSLFrameType,
     dpoints: FramesetDpoint[],
@@ -227,6 +263,8 @@ export class FramrService {
           rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
       )
     );
+
+    this.rulesHandler = new RulesHandler(frame);
 
     // Add first data points to the ordered list, handling conflicts
     this.rulesHandler.handleFirstDPoints(firstDPoints, rules);
@@ -269,11 +307,13 @@ export class FramrService {
         (bitsCount, _) => bitsCount + _.bits,
         0
       );
-      ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
-        mwdDPoints,
-        { ...cursors, bitsCount },
-        generatorConfig
-      ));
+      if (bitsCount > 0) {
+        ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
+          mwdDPoints,
+          { ...cursors, bitsCount },
+          generatorConfig
+        ));
+      }
 
       // Handle rule with bit constraints
       this.rulesHandler.handleBitContraintRule(
@@ -284,22 +324,26 @@ export class FramrService {
 
       // Handle all other rules
       this.rulesHandler.handleDPointRules(dpoint, rules);
+
+      // Handle frameset overloading dpoints
+      this.rulesHandler.handleOverloadingDPoints(generatorConfig);
     }
   }
 
-  private getRules(toolId?: string) {
+  // private getRules(toolId?: string) {
+  getRules(toolId?: string) {
     const rules: GeneratorConfigRule[] = [];
     if (toolId) {
-      const toolRules = this.generatorConfig?.tools.find(
-        (_) => _.id === toolId
-      )?.rules;
+      const toolRules = this.generatorConfig?.tools
+        .find((_) => _.id === toolId)
+        ?.rules.filter((_) => _.isActive);
       if (!toolRules) {
         throw new FramrServiceError('Unknown tool id');
       }
       rules.push(...toolRules);
     } else {
       for (const tool of this.generatorConfig?.tools ?? []) {
-        rules.push(...tool.rules);
+        rules.push(...tool.rules.filter((_) => _.isActive));
       }
     }
     return rules;

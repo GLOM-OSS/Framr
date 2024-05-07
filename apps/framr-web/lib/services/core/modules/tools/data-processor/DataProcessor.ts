@@ -65,29 +65,32 @@ export class DataProcessor {
       }
 
       services.push(
-        ...toolServices.map(({ dpoint: dpoints, interact, name }) => ({
+        ...toolServices.map(({ dpoint: serviceDPoints, interact, name }) => ({
           name,
           interact,
           tool: newTool,
           id: randomUUID(),
-          dpoints: (Array.isArray(dpoints) ? dpoints : [dpoints]).map(
-            ({ name, ...rest }) => {
-              const newDPoint: DPoint = {
-                name,
-                bits: 0,
-                tool: newTool,
-                id: randomUUID(),
-              };
-              rules.push({
-                tool: newTool,
-                id: randomUUID(),
-                concernedDpoint: newDPoint,
-                description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
-                framesets: this.getDpointFrames(rest),
-              });
-              return newDPoint;
-            }
-          ),
+          dpoints: (Array.isArray(serviceDPoints)
+            ? serviceDPoints
+            : [serviceDPoints]
+          ).map(({ name, ...rest }) => {
+            const newDPoint: DPoint = {
+              name,
+              bits: 0,
+              tool: newTool,
+              id: randomUUID(),
+            };
+            const dpoint = dpoints.find((_) => _.name === name);
+            if (!dpoint) dpoints.push(newDPoint);
+            rules.push({
+              tool: newTool,
+              id: randomUUID(),
+              concernedDpoint: dpoint ?? newDPoint,
+              description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
+              framesets: this.getDpointFrames(rest),
+            });
+            return newDPoint;
+          }),
         }))
       );
     }

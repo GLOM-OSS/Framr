@@ -27,8 +27,8 @@ export interface LWDTool extends CreateLWDTool {
 
 export interface CreateMWDTool extends CreateLWDTool {
   type: ToolEnum.MWD;
-  max_bits: number;
-  max_dpoints: number;
+  maxBits: number;
+  maxDPoints: number;
 }
 
 export interface MWDTool extends CreateMWDTool {
