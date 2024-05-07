@@ -4,11 +4,12 @@ import more from '@iconify/icons-fluent/more-vertical-24-regular';
 import { Icon } from '@iconify/react';
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../../../components/sharedComponents/confirmDialog';
+import { ToolsEventChannel, ToolsService } from '../../services';
+import { EventBus, EventBusChannelStatus } from '../../services/libs/event-bus';
 import { theme } from '../../theme';
 import { CreateTool, ITool, Tool } from '../../types';
-import { ToolEnum } from '../../types/enums';
 import ManageToolDialog from './ManageToolDialog';
 import MoreMenu from './MoreMenu';
 import ToolDetailDialog from './ToolDetailsDialog';
@@ -16,51 +17,25 @@ import ToolDetailDialog from './ToolDetailsDialog';
 export default function ToolManagement() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  //TODO; replace this with a call to the API
-  const [tools] = useState<Tool[]>([
-    {
-      id: 'abcd123',
-      name: 'ADN',
-      version: 'V8.5bf8',
-      long: 'adnVISION 675',
-      type: ToolEnum.LWD,
-    },
-    {
-      id: 'abcd132',
-      name: 'ADN',
-      version: 'V8.5bf8',
-      long: 'adnVISION 675',
-      type: ToolEnum.LWD,
-    },
-    {
-      id: 'abcd213',
-      name: 'ADN',
-      version: 'V8.5bf8',
-      long: 'adnVISION 675',
-      type: ToolEnum.LWD,
-    },
-    {
-      id: 'abcd231',
-      name: 'ADN',
-      version: 'V8.5bf8',
-      long: 'adnVISION 675',
-      type: ToolEnum.LWD,
-    },
-    {
-      id: 'abcd321',
-      name: 'ADN',
-      version: 'V8.5bf8',
-      long: 'adnVISION 675',
-      type: ToolEnum.LWD,
-    },
-    {
-      id: 'abcd312',
-      name: 'ADN',
-      version: 'V8.5bf8',
-      long: 'adnVISION 675',
-      type: ToolEnum.LWD,
-    },
-  ]);
+  const eventBus = new EventBus();
+  const toolsService = new ToolsService();
+  const [tools, setTools] = useState<Tool[]>([]);
+
+  function fetchTools() {
+    eventBus.once<Tool[]>(
+      ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setTools(data);
+        }
+      }
+    );
+    toolsService.findAll();
+  }
+  useEffect(() => {
+    fetchTools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [activeTool, setActiveTool] = useState<Tool>();
 
@@ -94,22 +69,40 @@ export default function ToolManagement() {
     useState<boolean>(false);
 
   function handleCreateTool(val: CreateTool) {
-    //TODO: CALL API HERE TO CREATE NEW TOOL
-    console.log(val);
-    setActiveTool(undefined);
+    eventBus.once<Tool>(
+      ToolsEventChannel.CREATE_TOOLS_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveTool(undefined);
+        }
+      }
+    );
+    toolsService.create(val);
   }
 
   function handleEditTool(val: ITool) {
-    //TODO: CALL API HERE TO EDIT NEW TOOL
-    console.log(val);
-    setActiveTool(undefined);
+    eventBus.once<Tool>(
+      ToolsEventChannel.UPDATE_TOLLS_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveTool(undefined);
+        }
+      }
+    );
+    toolsService.update(val.id, val);
   }
 
   function handleDeleteTool(tool: Tool) {
-    //TODO: CALL API HERE TO DELETE
-    alert('delete tool');
-    setIsDeleteDialogOpen(false);
-    setActiveTool(undefined);
+    eventBus.once<Tool>(
+      ToolsEventChannel.DELETE_TOLLS_CHANNEL,
+      ({ status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setIsDeleteDialogOpen(false);
+          setActiveTool(undefined);
+        }
+      }
+    );
+    toolsService.delete(tool.id);
   }
 
   return (

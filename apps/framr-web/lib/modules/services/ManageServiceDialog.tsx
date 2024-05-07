@@ -12,9 +12,11 @@ import {
   Typography,
 } from '@mui/material';
 import { useFormik } from 'formik';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { DialogTransition } from '../../../components/sharedComponents/dialog-transition';
+import { DPointsEventChannel, DPointsService } from '../../services';
+import { EventBus, EventBusChannelStatus } from '../../services/libs/event-bus';
 import { CreateService, DPoint, Service, Tool } from '../../types';
 
 interface ICreateService {
@@ -46,22 +48,27 @@ export default function ManageServiceDialog({
   data,
   tool,
 }: ManageServiceDialogProps) {
-  //TODO; replace this with a call to the API
-  const [dPoints] = useState<DPoint[]>([
-    {
-      id: 'abcd123',
-      name: 'ADN',
-      bits: 1,
-      tool: tool,
-    },
+  const [dPoints, setDPoints] = useState<DPoint[]>([]);
 
-    {
-      id: 'abcdw213',
-      name: 'ADN',
-      bits: 1,
-      tool: tool,
-    },
-  ]);
+  const eventBus = new EventBus();
+
+  const dpointsService = new DPointsService();
+  function fetchDPoints() {
+    eventBus.once<DPoint[]>(
+      DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setDPoints(data);
+        }
+      }
+    );
+    dpointsService.findAll();
+  }
+
+  useEffect(() => {
+    fetchDPoints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initialValues: ICreateService | IService = data
     ? {
