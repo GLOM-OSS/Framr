@@ -4,6 +4,7 @@ import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { DPointRecord, FramrDBSchema } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import { FilterOptions } from '../common/common.types';
 import { DPointInterface, DPointsEventChannel } from './DPointInterface';
 
@@ -21,8 +22,8 @@ export class DPointsService implements DPointInterface {
     const channel = DPointsEventChannel.CREATE_DPOINT_CHANNEL;
     const newDpoint: DPointRecord = {
       value: {
-        id: crypto.randomUUID(),
         ...createDpoint,
+        id: getRandomID(),
       },
     };
 

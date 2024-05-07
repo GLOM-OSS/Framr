@@ -1,14 +1,12 @@
 import { CreateTool, MWDTool } from '../../../../types';
 import { ToolEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
-import {
-  EventBus,
-  EventBusChannelStatus
-} from '../../../libs/event-bus';
+import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { XmlIO } from '../../../libs/xml-io';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, ToolRecord } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import {
   ToolFilterOptions,
   ToolInterface,
@@ -35,10 +33,10 @@ export class ToolsService implements ToolInterface {
     const channel = ToolsEventChannel.CREATE_TOOLS_CHANNEL;
     const newTool: ToolRecord = {
       value: {
-        id: crypto.randomUUID(),
         ...(createTool.type === ToolEnum.MWD
           ? { ...(createTool as MWDTool), type: ToolEnum.MWD }
           : { ...createTool, type: ToolEnum.LWD }),
+        id: getRandomID(),
       },
     };
 
