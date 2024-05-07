@@ -86,6 +86,7 @@ export class FramrService {
       id: randomUUID(),
       framesets: mwdFramesets,
     };
+    return this.generatorConfig;
   }
 
   addAndDispatchDPoints(fslNumber: number, toolId: string, dpoints: DPoint[]) {

@@ -17,7 +17,7 @@ import {
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useFormik } from 'formik';
 import Scrollbars from 'rc-scrollbars';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import ManageRulesDialog from '../../../lib/modules/FrameGeneratorConfig/ManageRulesDialog';
 import MoreMenu from '../../../lib/modules/FrameGeneratorConfig/MoreMenu';
@@ -33,12 +33,15 @@ import {
   Rule,
   Tool,
 } from '../../../lib/types';
+import { ToolEnum } from '../../../lib/types/enums';
 import {
-  ConstraintEnum,
-  FrameEnum,
-  ToolEnum,
-  WithConstraintRuleEnum,
-} from '../../../lib/types/enums';
+  FramrService,
+  RulesEventChannel,
+  RulesService,
+  ToolsEventChannel,
+  ToolsService,
+} from '../../services';
+import { EventBus, EventBusChannelStatus } from '../../services/libs/event-bus';
 
 interface ICreateGeneratorConfig {
   bitRate: number;
@@ -57,60 +60,43 @@ export default function FrameGeneratorConfig({
   data,
   submitConfig,
 }: FrameGeneratorConfigProps) {
-  //TODO: replace this with a call to the API
-  const [mwdTools] = useState<MWDTool[]>([
-    {
-      id: '5',
-      long: 'Resolver',
-      name: 'Puptool',
-      max_bits: 16,
-      max_dpoints: 16,
-      type: ToolEnum.MWD,
-      version: '1.0',
-    },
-    {
-      id: '6',
-      long: 'Boston',
-      name: 'rostool',
-      max_bits: 16,
-      max_dpoints: 16,
-      type: ToolEnum.MWD,
-      version: '1.0',
-    },
-    {
-      id: '7',
-      long: 'Kimbi',
-      name: 'Juptool',
-      max_bits: 16,
-      max_dpoints: 16,
-      type: ToolEnum.MWD,
-      version: '1.0',
-    },
-  ]);
-  //TODO: replace this with a call to the API
-  const [lwdTools] = useState<LWDTool[]>([
-    {
-      id: '1',
-      long: 'Tornado',
-      name: 'Train',
-      type: ToolEnum.LWD,
-      version: '1.0',
-    },
-    {
-      id: '2',
-      long: 'Boston',
-      name: 'Frost',
-      type: ToolEnum.LWD,
-      version: '1.0',
-    },
-    {
-      id: '3',
-      long: 'Kimbi',
-      name: 'Jup',
-      type: ToolEnum.LWD,
-      version: '1.0',
-    },
-  ]);
+  const eventBus = new EventBus();
+  const toolsService = new ToolsService();
+  const [mwdTools, setMWDTools] = useState<MWDTool[]>([]);
+  const [lwdTools, setLWDTools] = useState<LWDTool[]>([]);
+
+  function fetchTools() {
+    eventBus.once<Tool[]>(
+      ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setMWDTools(data.filter((_) => _.type === ToolEnum.MWD) as MWDTool[]);
+          setLWDTools(data.filter((_) => _.type === ToolEnum.LWD) as LWDTool[]);
+        }
+      }
+    );
+    toolsService.findAll();
+  }
+
+  const rulesService = new RulesService();
+  const [rules, setRules] = useState<Rule[]>([]);
+  function fetchRules() {
+    eventBus.once<Rule[]>(
+      RulesEventChannel.FIND_ALL_RULES_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setRules(data);
+        }
+      }
+    );
+    rulesService.findAll();
+  }
+
+  useEffect(() => {
+    fetchRules();
+    fetchTools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initialValues: ICreateGeneratorConfig = {
     bitRate: data?.bitRate || 0,
@@ -147,6 +133,8 @@ export default function FrameGeneratorConfig({
     MWDGeneratorConfigTool | undefined
   >(data?.MWDTool);
 
+  const framrService = new FramrService();
+
   const formik = useFormik({
     initialValues,
     validationSchema,
@@ -167,20 +155,8 @@ export default function FrameGeneratorConfig({
         MWDTool: selectedMWDTool as MWDGeneratorConfigTool,
         tools: selectedLWDTools,
       };
-      //TODO: CALL API HERE TO SUBMIT createGeneratorConfig data
-      const tt: GeneratorConfig = {
-        ...submitData,
-        id: '1234',
-        framesets: {
-          fsl: [],
-          utility: {
-            dpoints: [],
-            frame: FrameEnum.UTIL,
-          },
-        },
-      };
-      //TODO: submitConfig shoul receive GeneratorConfig
-      submitConfig(tt);
+
+      submitConfig(framrService.initialize(submitData));
       setSelectedLWDTools([]);
       setSelectedMWDTool(undefined);
       resetForm();
@@ -190,42 +166,13 @@ export default function FrameGeneratorConfig({
   function computeGeneratorConfigTools(tools: Tool[]) {
     const newGeneratorConfigTools: IGeneratorConfigTool[] = tools.map(
       (tool) => {
-        //TODO: fetch for tool rules
-        const rules: Rule[] = [
-          {
-            id: '1234',
-            name: 'rule1',
-            description:
-              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-            tool: {
-              id: 'abcd123',
-              name: 'ADN',
-              version: 'V8.5bf8',
-              long: 'adnVISION 675',
-              type: ToolEnum.LWD,
-            },
-            concernedDpoint: {
-              id: 'abcd123',
-              name: 'ADN',
-              bits: 1,
-              tool: {
-                id: 'abcd123',
-                name: 'ADN',
-                version: 'V8.5bf8',
-                long: 'adnVISION 675',
-                type: ToolEnum.LWD,
-              },
-            },
-            framesets: [FrameEnum.MTF, FrameEnum.ROT],
-            interval: 3,
-            type: ConstraintEnum.DISTANCE,
-          },
-        ];
         const configTool: IGeneratorConfigTool = {
           ...tool,
-          rules: rules.map((rule) => {
-            return { ...rule, isActive: true, isGeneric: true };
-          }),
+          rules: rules
+            .filter((_) => _.tool.id === tool.id)
+            .map((rule) => {
+              return { ...rule, isActive: true, isGeneric: true };
+            }),
         };
         return configTool;
       }
@@ -270,8 +217,6 @@ export default function FrameGeneratorConfig({
     },
   ];
 
-  /*TODO: CALL API HERE TO SAVE NEW CONFIG RULES 
-  AND MAKE IT TAKEN INTO ACCOUNT IN GENERATOR*/
   function handleSaveConfigRules(
     tool: IGeneratorConfigTool,
     rules: GeneratorConfigRule[]
@@ -282,6 +227,7 @@ export default function FrameGeneratorConfig({
       }
       return selectedTool;
     });
+    framrService.updateToolRules(tool.id, rules);
     setSelectedLWDTools(newSelectedTools);
     setActiveTool(undefined);
   }
