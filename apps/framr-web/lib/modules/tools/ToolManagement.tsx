@@ -86,6 +86,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveTool(undefined);
+          fetchTools();
         }
       }
     );
@@ -99,6 +100,7 @@ export default function ToolManagement() {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveTool(undefined);
+          fetchTools()
         }
       }
     );
