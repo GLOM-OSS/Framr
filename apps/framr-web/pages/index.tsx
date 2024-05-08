@@ -1,13 +1,22 @@
 import { Box, Button, Divider } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import GeneratorHeader from '../lib/modules/FrameGenerator/GeneratorHeader';
-import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
-import { GeneratorConfig } from '../lib/types';
 import ToolList from '../lib/modules/FrameGenerator/ToolList';
+import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
+import { DPoint, GeneratorConfig } from '../lib/types';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
   const [frameConfig, setFrameConfig] = useState<GeneratorConfig>();
+  const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
+
+  useEffect(() => {
+    /*TODO: CALL API HERE THAT SORTS SELECTED DPOINTS
+    AND RETURNS THEM BY ORDER OF PRIORITY PER FRAMESETS
+    THEN SET DATAIN FRAMESETS IN frameConfig
+    */
+    console.log(selectedDPoints);
+  }, [selectedDPoints]);
   return isConfigOpen || !frameConfig ? (
     <FrameGeneratorConfig
       data={frameConfig}
@@ -37,7 +46,10 @@ export default function FrameGenerator() {
           gridTemplateColumns: '26.6fr auto 74.4fr',
         }}
       >
-        <ToolList data={frameConfig} />
+        <ToolList
+          data={frameConfig}
+          getDPoints={(selectedDPoints) => setSelectedDPoints(selectedDPoints)}
+        />
         <Divider orientation="vertical" />
         <Button onClick={() => setIsConfigOpen(true)}>Frame Generator</Button>
       </Box>
