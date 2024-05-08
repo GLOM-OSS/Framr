@@ -132,10 +132,18 @@ export default function FrameGeneratorConfig({
       .required('Penetration rate is required')
       .min(1, 'Penetration rate cannot be less than 1'),
     MWDTool: Yup.string()
-      .oneOf(mwdTools.map(({ id }) => id))
+      .oneOf(
+        mwdTools.map(({ id }) => id),
+        'Select a tool in list'
+      )
       .required('MWD Tool is required'),
     tools: Yup.array()
-      .of(Yup.string().oneOf(lwdTools.map(({ id }) => id)))
+      .of(
+        Yup.string().oneOf(
+          lwdTools.map(({ id }) => id),
+          'Select a tool in list'
+        )
+      )
       .min(1, 'You must select at least an LWD tool')
       .required('At least one LWD tool is required'),
   });
