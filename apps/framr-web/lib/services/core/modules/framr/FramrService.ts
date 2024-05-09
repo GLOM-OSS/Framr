@@ -89,7 +89,7 @@ export class FramrService {
     return this.generatorConfig;
   }
 
-  addAndDispatchDPoints(fslNumber: number, toolId: string, dpoints: DPoint[]) {
+  addAndDispatchDPoints(fslNumber: number, dpoints: DPoint[], toolId?: string) {
     const rules = this.getRules(toolId);
     const currentFSL = this.getCurrentFSL(fslNumber);
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
