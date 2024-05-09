@@ -10,17 +10,12 @@ import {
 } from '../../../../types';
 import { FrameEnum, StandAloneRuleEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
-import { EventBus } from '../../../libs/event-bus';
-import { IDBFactory } from '../../../libs/idb';
 import { XmlIO } from '../../../libs/xml-io';
-import { IDBConnection } from '../../db/IDBConnection';
-import { FramrDBSchema } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
-import { randomUUID } from 'crypto';
+
 export class FramrService {
   private readonly xmlIO: XmlIO;
-  private readonly eventBus: EventBus;
-  private readonly database: IDBFactory<FramrDBSchema>;
   private rulesHandler: RulesHandler;
 
   private _generatorConfig: GeneratorConfig | null = null;
@@ -40,8 +35,6 @@ export class FramrService {
 
   constructor() {
     this.xmlIO = new XmlIO();
-    this.eventBus = new EventBus();
-    this.database = IDBConnection.getDatabase();
     this.rulesHandler = new RulesHandler();
   }
 
@@ -83,7 +76,7 @@ export class FramrService {
 
     this.generatorConfig = {
       ...config,
-      id: randomUUID(),
+      id: getRandomID(),
       framesets: mwdFramesets,
     };
     return this.generatorConfig;
