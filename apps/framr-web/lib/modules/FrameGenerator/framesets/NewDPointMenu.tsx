@@ -8,9 +8,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
-import { DPoint } from '../../../../lib/types';
-import { ToolEnum } from '../../../../lib/types/enums';
+import { useEffect, useState } from 'react';
+import { DPointsEventChannel, DPointsService } from '../../../services';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../services/libs/event-bus';
+import { DPoint } from '../../../types';
 
 interface NewDPointProps {
   isMenuOpen: boolean;
@@ -24,34 +28,26 @@ export default function NewDPointMenu({
   closeMenu,
   handleSubmit,
 }: NewDPointProps) {
-  //TODO; replace this with a call to the API
-  const [dPoints] = useState<DPoint[]>([
-    {
-      id: 'abcd123',
-      name: 'ADN',
-      bits: 1,
-      tool: {
-        id: '1',
-        long: 'Puptool',
-        name: 'Puptool',
-        type: ToolEnum.LWD,
-        version: '0.2.2',
-      },
-    },
+  const eventBus = new EventBus();
+  const dpointsService = new DPointsService();
+  const [dPoints, setDPoints] = useState<DPoint[]>([]);
 
-    {
-      id: 'abcdw213',
-      name: 'ADN',
-      bits: 1,
-      tool: {
-        id: '1',
-        long: 'Puptool',
-        name: 'Puptool',
-        type: ToolEnum.LWD,
-        version: '0.2.2',
-      },
-    },
-  ]);
+  function fetchDPoints() {
+    eventBus.once<DPoint[]>(
+      DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setDPoints(data);
+        }
+      }
+    );
+    dpointsService.findAll();
+  }
+
+  useEffect(() => {
+    fetchDPoints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [dPoint, setDPoint] = useState<DPoint | null>(null);
 

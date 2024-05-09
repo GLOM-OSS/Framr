@@ -1,7 +1,13 @@
 import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
+import {
+  DPointsEventChannel,
+  DPointsService,
+  ServicesEventChannel,
+  ServicesService,
+} from '../../services';
+import { EventBus, EventBusChannelStatus } from '../../services/libs/event-bus';
 import { DPoint, IGeneratorConfigTool, Service } from '../../types';
-import { ToolEnum } from '../../types/enums';
 import { ToolCard } from './ToolCard';
 interface ToolProps {
   tool: IGeneratorConfigTool;
@@ -23,100 +29,41 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   );
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
 
-  function fetchToolMandatoryDpoints(): DPoint[] {
-    //TODO: FETCH TOOL'S MANDATORY DPOINTS HERE
-    return [
-      {
-        id: '1',
-        name: 'dpoint1',
-        bits: 1,
-        tool: {
-          id: '3',
-          long: 'Kimbi',
-          name: 'Jup',
-          type: ToolEnum.LWD,
-          version: '1.0',
-        },
-      },
-      {
-        id: '2',
-        name: 'dpoint2',
-        bits: 1,
-        tool: {
-          id: '3',
-          long: 'Kimbi',
-          name: 'Jup',
-          type: ToolEnum.LWD,
-          version: '1.0',
-        },
-      },
-    ];
+  const eventBus = new EventBus();
+  const dpointsService = new DPointsService();
+  function fetchToolMandatoryDpoints() {
+    eventBus.once<DPoint[]>(
+      DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          const mandDpoints = mandatoryDPoints ?? data;
+          if (!mandatoryDPoints)
+            setMandatoryDPoints((prev) => {
+              setPrevMandatoryDPoints(prev);
+              return mandDpoints;
+            });
+        }
+      }
+    );
+    dpointsService.findAll({ toolId: tool.id, mandatory: true });
   }
 
+  const servicesService = new ServicesService();
   function fetchToolServices() {
-    //TODO: FETCH tool's mandatory SERVICES HERE
-    setServices([
-      {
-        id: '1',
-        name: 'service1',
-        dpoints: [
-          {
-            id: '7',
-            name: 'dpoint1',
-            bits: 1,
-            tool: {
-              id: '3',
-              long: 'Kimbi',
-              name: 'Jup',
-              type: ToolEnum.LWD,
-              version: '1.0',
-            },
-          },
-        ],
-        tool: {
-          id: '3',
-          long: 'Kimbi',
-          name: 'Jup',
-          type: ToolEnum.LWD,
-          version: '1.0',
-        },
-      },
-      {
-        id: '2',
-        name: 'service2',
-        dpoints: [
-          {
-            id: '8',
-            name: 'dpoint2',
-            bits: 1,
-            tool: {
-              id: '3',
-              long: 'Kimbi',
-              name: 'Jup',
-              type: ToolEnum.LWD,
-              version: '1.0',
-            },
-          },
-        ],
-        tool: {
-          id: '3',
-          long: 'Kimbi',
-          name: 'Jup',
-          type: ToolEnum.LWD,
-          version: '1.0',
-        },
-      },
-    ]);
+    eventBus.once<Service[]>(
+      ServicesEventChannel.FIND_ALL_SERVICES_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setServices(data);
+        }
+      }
+    );
+    servicesService.findAll(tool.id);
   }
 
   function handleSelectTool() {
     setIsSelected((prev) => {
-      const mandDpoints = mandatoryDPoints ?? fetchToolMandatoryDpoints();
-      if (!mandatoryDPoints)
-        setMandatoryDPoints((prev) => {
-          setPrevMandatoryDPoints(prev);
-          return mandDpoints;
-        });
+      fetchToolMandatoryDpoints();
       return !prev;
     });
     if (!isOpen) setIsOpen(true);

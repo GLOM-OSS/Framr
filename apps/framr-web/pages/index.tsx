@@ -9,6 +9,7 @@ import FramesetList from '../lib/modules/FrameGenerator/framesets/FramesetList';
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
 import { DPoint, GeneratorConfig } from '../lib/types';
 import { FrameEnum } from '../lib/types/enums';
+import { FramrService } from '../lib/services';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
@@ -17,15 +18,20 @@ export default function FrameGenerator() {
   const [activeFSL, setActiveFSL] = useState<number>(1);
   const [selectedFrames, setSelectedFrames] = useState<FrameEnum[]>([]);
 
+  const framrService = new FramrService();
   const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
 
   useEffect(() => {
-    /*TODO: CALL API HERE THAT SORTS SELECTED DPOINTS
-    AND RETURNS THEM BY ORDER OF PRIORITY PER FRAMESETS
-    THEN SET DATAIN FRAMESETS IN frameConfig
-    */
-    console.log(selectedDPoints);
-  }, [selectedDPoints]);
+   framrService.addAndDispatchDPoints(activeFSL, selectedDPoints);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFSL, selectedDPoints]);
+
+  useEffect(() => {
+    if (framrService.generatorConfig) {
+      setFrameConfig(framrService.generatorConfig);
+    }
+  }, [framrService.generatorConfig]);
+
   return isConfigOpen || !frameConfig ? (
     <FrameGeneratorConfig
       data={frameConfig}
