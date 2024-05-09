@@ -50,7 +50,7 @@ export default function ManageToolDialog({
     version: Yup.string().required('Version is required'),
     long: Yup.string().required('Long is required'),
     type: Yup.mixed<ToolEnum>()
-      .oneOf(Object.values(ToolEnum))
+      .oneOf(Object.values(ToolEnum), 'Select tool type in list')
       .required('Type is required'),
     max_bits: Yup.number()
       .min(1, 'Max bits must be greater than 0')
