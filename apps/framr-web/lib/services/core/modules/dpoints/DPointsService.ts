@@ -1,3 +1,4 @@
+import { StandAloneRuleEnum } from '../../../../types/enums';
 import { CreateDPoint, DPoint } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
@@ -79,6 +80,16 @@ export class DPointsService implements DPointInterface {
 
         if (filter?.toolId) {
           dpoints = dpoints.filter((_) => _.tool.id === filter?.toolId);
+          if (filter?.mandatory) {
+            const rules = await this.database.findAll('rules');
+            dpoints = dpoints.filter(({ id }) =>
+              rules.some(
+                ({ value: rule }) =>
+                  rule.concernedDpoint.id === id &&
+                  rule.description === StandAloneRuleEnum.SHOULD_BE_PRESENT
+              )
+            );
+          }
         }
 
         this.eventBus.emit(channel, {
