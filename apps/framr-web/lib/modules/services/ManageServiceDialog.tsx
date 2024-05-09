@@ -45,7 +45,7 @@ export default function ManageServiceDialog({
   isSubmitting,
   handleCreate,
   handleEdit,
-  data,
+  data: service,
   tool,
 }: ManageServiceDialogProps) {
   const [dPoints, setDPoints] = useState<DPoint[]>([]);
@@ -53,7 +53,7 @@ export default function ManageServiceDialog({
   const eventBus = new EventBus();
 
   const dpointsService = new DPointsService();
-  function fetchDPoints() {
+  function fetchDPoints(toolId: string) {
     eventBus.once<DPoint[]>(
       DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
       ({ data, status }) => {
@@ -62,19 +62,19 @@ export default function ManageServiceDialog({
         }
       }
     );
-    dpointsService.findAll();
+    dpointsService.findAll({ toolId });
   }
 
   useEffect(() => {
-    fetchDPoints();
+    if (tool) fetchDPoints(tool.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tool]);
 
-  const initialValues: ICreateService | IService = data
+  const initialValues: ICreateService | IService = service
     ? {
-        ...data,
-        dpoints: data.dpoints.map(({ id }) => id) ?? [],
-        interact: data.interact ?? '',
+        ...service,
+        dpoints: service.dpoints.map(({ id }) => id) ?? [],
+        interact: service.interact ?? '',
         tool: tool,
       }
     : {
@@ -105,7 +105,7 @@ export default function ManageServiceDialog({
     enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
       const dpoints = dPoints.filter((_) => values.dpoints.includes(_.id));
-      if (data) handleEdit({ ...values, dpoints } as Service);
+      if (service) handleEdit({ ...values, dpoints } as Service);
       else handleCreate({ ...values, dpoints } as CreateService);
       resetForm();
       closeDialog();
@@ -134,7 +134,7 @@ export default function ManageServiceDialog({
           variant="h4"
           sx={{ padding: { laptop: '0 40px', mobile: 0 } }}
         >
-          {data ? 'Edit Service' : 'Create Service'}
+          {service ? 'Edit Service' : 'Create Service'}
         </Typography>
 
         <Box
@@ -246,7 +246,7 @@ export default function ManageServiceDialog({
               disabled={isSubmitting}
               endIcon={isSubmitting && <CircularProgress size={20} />}
             >
-              {data ? 'Save' : 'Create Tool'}
+              {service ? 'Save' : 'Create Tool'}
             </Button>
           </Box>
         </Box>

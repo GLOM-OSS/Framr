@@ -82,7 +82,7 @@ export default function ManageRuleDialog({
   const dpointsService = new DPointsService();
   const [dPoints, setDPoints] = useState<DPoint[]>([]);
 
-  function fetchDPoints() {
+  function fetchDPoints(toolId: string) {
     eventBus.once<DPoint[]>(
       DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
       ({ data, status }) => {
@@ -91,13 +91,13 @@ export default function ManageRuleDialog({
         }
       }
     );
-    dpointsService.findAll();
+    dpointsService.findAll({ toolId });
   }
 
   useEffect(() => {
-    fetchDPoints();
+    fetchDPoints(tool.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tool]);
 
   function getSecondaryDPointsDisplayValue() {
     const tt = dPoints.filter((_) => formik.values.otherDpoints.includes(_.id));

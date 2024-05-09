@@ -18,14 +18,18 @@ import {
   FrameEnum,
   RuleEnumType,
   StandAloneRuleEnum,
-  ToolEnum,
   WithConstraintRuleEnum,
 } from '../../../../..//lib/types/enums';
 import { ConfirmDialog } from '../../../../../components/sharedComponents/confirmDialog';
 import ManageRuleDialog from '../../../../../lib/modules/rules/ManageRuleDialog';
 import RuleDetailDialog from '../../../../../lib/modules/rules/RuleDetailDialog';
 import MoreMenu from '../../../../../lib/modules/services/MoreMenu';
-import { RulesEventChannel, RulesService } from '../../../../../lib/services';
+import {
+  RulesEventChannel,
+  RulesService,
+  ToolsEventChannel,
+  ToolsService,
+} from '../../../../../lib/services';
 import {
   EventBus,
   EventBusChannelStatus,
@@ -40,6 +44,7 @@ import {
   RuleWithConstraint,
   RuleWithOtherDPoint,
   StandAloneRule,
+  Tool,
 } from '../../../../../lib/types';
 
 export function descriptionHasOtherDpoints(description: RuleEnumType) {
@@ -65,14 +70,31 @@ export function descriptionHasConstraint(description: RuleEnumType) {
 }
 
 export default function RuleManagement() {
-  const { push } = useRouter();
+  const {
+    push,
+    query: { toolId },
+  } = useRouter();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const eventBus = new EventBus();
   const rulesService = new RulesService();
+  const toolsService = new ToolsService();
   const [rules, setRules] = useState<Rule[]>([]);
+  const [activeTool, setActiveTool] = useState<Tool>();
 
-  function fetchRules() {
+  function fetchTool(toolId: string) {
+    eventBus.once<Tool>(
+      ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setActiveTool(data);
+        }
+      }
+    );
+    toolsService.findOne(toolId);
+  }
+
+  function fetchRules(toolId: string) {
     eventBus.once<Rule[]>(
       RulesEventChannel.FIND_ALL_RULES_CHANNEL,
       ({ data, status }) => {
@@ -81,12 +103,15 @@ export default function RuleManagement() {
         }
       }
     );
-    rulesService.findAll();
+    rulesService.findAll({ toolId });
   }
   useEffect(() => {
-    fetchRules();
+    if (typeof toolId === 'string') {
+      fetchTool(toolId);
+      fetchRules(toolId);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [toolId]);
 
   const [activeRule, setActiveRule] = useState<Rule>();
 
@@ -160,10 +185,10 @@ export default function RuleManagement() {
   function createRule(val: CreateRule) {
     eventBus.once<Rule>(
       RulesEventChannel.CREATE_RULES_CHANNEL,
-      ({ status }) => {
+      ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveRule(undefined);
-          fetchRules();
+          fetchRules(data.tool.id);
         }
       }
     );
@@ -206,10 +231,10 @@ export default function RuleManagement() {
   function editRule(val: Rule) {
     eventBus.once<Rule>(
       RulesEventChannel.UPDATE_RULES_CHANNEL,
-      ({ status }) => {
+      ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveRule(undefined);
-          fetchRules();
+          fetchRules(data.tool.id);
         }
       }
     );
@@ -252,11 +277,11 @@ export default function RuleManagement() {
   function handleDelete(val: Rule) {
     eventBus.once<Rule>(
       RulesEventChannel.DELETE_RULES_CHANNEL,
-      ({ status }) => {
+      ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveRule(undefined);
-          fetchRules();
+          fetchRules(data.tool.id);
         }
       }
     );
@@ -302,25 +327,21 @@ export default function RuleManagement() {
           />
         </>
       )}
-      <ManageRuleDialog
-        isDialogOpen={isEditDialogOpen || isCreateDialogOpen}
-        closeDialog={() => {
-          setActiveRule(undefined);
-          setIsEditDialogOpen(false);
-          setIsCreateDialogOpen(false);
-        }}
-        data={activeRule}
-        handleCreate={handleCreate}
-        handleEdit={handleEdit}
-        isSubmitting={false}
-        tool={{
-          id: 'abcd123',
-          name: 'ADN',
-          version: 'V8.5bf8',
-          long: 'adnVISION 675',
-          type: ToolEnum.LWD,
-        }}
-      />
+      {activeTool && (
+        <ManageRuleDialog
+          isDialogOpen={isEditDialogOpen || isCreateDialogOpen}
+          closeDialog={() => {
+            setActiveRule(undefined);
+            setIsEditDialogOpen(false);
+            setIsCreateDialogOpen(false);
+          }}
+          data={activeRule}
+          handleCreate={handleCreate}
+          handleEdit={handleEdit}
+          isSubmitting={false}
+          tool={activeTool}
+        />
+      )}
       <Box
         sx={{
           height: '100%',

@@ -56,7 +56,7 @@ export default function ToolManagement() {
   const dpointsService = new DPointsService();
   const [dPoints, setDPoints] = useState<DPoint[]>([]);
 
-  function fetchDPoints() {
+  function fetchDPoints(toolId: string) {
     eventBus.once<DPoint[]>(
       DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
       ({ data, status }) => {
@@ -65,14 +65,14 @@ export default function ToolManagement() {
         }
       }
     );
-    dpointsService.findAll();
+    dpointsService.findAll({ toolId });
   }
 
   useEffect(() => {
     if (typeof toolId === 'string') {
       fetchTool(toolId);
+      fetchDPoints(toolId);
     }
-    fetchDPoints();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolId]);
 
@@ -111,7 +111,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveDpoint(undefined);
-          fetchDPoints();
+          fetchDPoints(tool.id);
         }
       }
     );
@@ -124,7 +124,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveDpoint(undefined);
-          fetchDPoints();
+          fetchDPoints(tool.id);
         }
       }
     );
@@ -138,7 +138,7 @@ export default function ToolManagement() {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveDpoint(undefined);
-          fetchDPoints();
+          fetchDPoints(tool.id);
         }
       }
     );
