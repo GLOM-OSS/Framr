@@ -55,10 +55,12 @@ interface ICreateGeneratorConfig {
 interface FrameGeneratorConfigProps {
   data?: GeneratorConfig;
   submitConfig: (data: GeneratorConfig) => void;
+  ruleTool?: IGeneratorConfigTool;
 }
 export default function FrameGeneratorConfig({
   data,
   submitConfig,
+  ruleTool,
 }: FrameGeneratorConfigProps) {
   const eventBus = new EventBus();
   const toolsService = new ToolsService();
@@ -259,6 +261,13 @@ export default function FrameGeneratorConfig({
       selectedTools ? selectedTools.map(({ id }) => id) : null
     );
   }
+
+  useEffect(() => {
+    if (ruleTool) {
+      setActiveTool(ruleTool);
+      setIsRuleDialogOpen(true);
+    }
+  }, [ruleTool]);
 
   return (
     <>
