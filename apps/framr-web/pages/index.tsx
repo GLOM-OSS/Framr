@@ -5,11 +5,11 @@ import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../components/sharedComponents/confirmDialog';
 import GeneratorHeader from '../lib/modules/FrameGenerator/GeneratorHeader';
 import ToolList from '../lib/modules/FrameGenerator/ToolList';
+import FramesetList from '../lib/modules/FrameGenerator/framesets/FrameList/FramesetList';
 import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHeader';
-import FramesetList from '../lib/modules/FrameGenerator/framesets/FramesetList';
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
 import { DPoint, GeneratorConfig } from '../lib/types';
-import { ConstraintEnum, FrameEnum } from '../lib/types/enums';
+import { ConstraintEnum, FrameEnum, ToolEnum } from '../lib/types/enums';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
@@ -62,7 +62,143 @@ export default function FrameGenerator() {
     <FrameGeneratorConfig
       data={frameConfig}
       submitConfig={(data) => {
-        setFrameConfig(data);
+        setFrameConfig({
+          ...data,
+          framesets: {
+            fsl: [
+              {
+                number: 1,
+                framesets: {
+                  Rotatory: {
+                    dpoints: [
+                      {
+                        id: 'abcd123',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                        error: 'Cannot work',
+                      },
+                      {
+                        id: 'abcdw213',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                    ],
+                    frame: FrameEnum.ROT,
+                  },
+                  'Magnetic Tool Phase': {
+                    dpoints: [
+                      {
+                        id: 'abcd123',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                      {
+                        id: 'abcdw213',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                    ],
+                    frame: FrameEnum.MTF,
+                  },
+                  'Gravitational Tool Phase': {
+                    dpoints: [
+                      {
+                        id: 'abcd123',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                      {
+                        id: 'abcdw213',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                    ],
+                    frame: FrameEnum.GTF,
+                  },
+                },
+              },
+            ],
+            utility: {
+              dpoints: [
+                {
+                  id: 'abcd123',
+                  name: 'ADN',
+                  bits: 1,
+                  tool: {
+                    id: 'abcd123',
+                    name: 'ADN',
+                    version: 'V8.5bf8',
+                    long: 'adnVISION 675',
+                    type: ToolEnum.LWD,
+                  },
+                  isBaseInstance: true,
+                },
+                {
+                  id: 'abcdw213',
+                  name: 'ADN',
+                  bits: 1,
+                  tool: {
+                    id: 'abcd123',
+                    name: 'ADN',
+                    version: 'V8.5bf8',
+                    long: 'adnVISION 675',
+                    type: ToolEnum.LWD,
+                  },
+                  isBaseInstance: true,
+                },
+              ],
+              frame: FrameEnum.UTIL,
+            },
+          },
+        });
         setIsConfigOpen(false);
       }}
     />
@@ -115,7 +251,13 @@ export default function FrameGenerator() {
             }
           />
           <Divider orientation="vertical" />
-          <Box sx={{ display: 'grid', gridTemplateRows: 'auto 1fr auto' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateRows: 'auto 1fr auto',
+              rowGap: 2,
+            }}
+          >
             <FramesetHeader
               selectModeDPoints={selectModeDPoints}
               closeSelectMode={() => {
@@ -142,7 +284,15 @@ export default function FrameGenerator() {
               selectedDPoints={selectedDPoints}
               submitMultipleConstraints={addConstraitToMultipleDPoints}
             />
-            <FramesetList />
+            <FramesetList
+              frameset={frameConfig.framesets}
+              activeFSL={activeFSL}
+              selectedFrames={selectedFrames}
+              manageRules={()=>{
+                setIsConfigOpen(true)
+                
+              }}
+            />
             <Button
               variant="contained"
               color="primary"
