@@ -10,12 +10,14 @@ import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHead
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
 import {
   DPoint,
+  FramesetDpoint,
   GeneratorConfig,
   LWDGeneratorConfigTool,
   MWDGeneratorConfigTool,
   Tool,
 } from '../lib/types';
 import { ConstraintEnum, FrameEnum, ToolEnum } from '../lib/types/enums';
+import { NewConstraint } from '../lib/modules/FrameGenerator/framesets/FrameList/Frame';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
@@ -74,6 +76,18 @@ export default function FrameGenerator() {
       const toold = generatorConfig.tools.find(({ id }) => id === tool.id);
       setRuleTool(toold);
     }
+  }
+
+  function handleRemoveDPoint(dpoint: FramesetDpoint) {
+    //TODO: call api here to remove dpoint from frameset and readjust frameConfig
+  }
+
+  function handleRemoveConstraint(dpoint: FramesetDpoint) {
+    //TODO: call api here to remove constraint on dpoint and readjusted frameConfig
+  }
+
+  function handleAddNewConstraint(val: NewConstraint) {
+    //TODO: CALL API HERE TO ADD NEW CONSTRAINT TO DPOINT
   }
 
   return isConfigOpen || !frameConfig ? (
@@ -304,9 +318,16 @@ export default function FrameGenerator() {
               submitMultipleConstraints={addConstraitToMultipleDPoints}
             />
             <FramesetList
+              handleRemoveDPoint={handleRemoveDPoint}
+              handleRemoveConstraint={handleRemoveConstraint}
+              handleAddNewConstraint={handleAddNewConstraint}
+              frameConfig={frameConfig}
               frameset={frameConfig.framesets}
               activeFSL={activeFSL}
               selectedFrames={selectedFrames}
+              handleSelect={(val) => setSelectModeDPoints(val)}
+              isSelectMode={isSelectMode}
+              selectModeDPoints={selectModeDPoints}
               manageRules={(val) => {
                 getActiveTool(val, frameConfig);
                 setIsConfigOpen(true);
