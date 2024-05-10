@@ -105,6 +105,7 @@ export default function FrameGenerator() {
             display: 'grid',
             height: '100%',
             gridTemplateColumns: '26.6fr auto 74.4fr',
+            columnGap: 2,
           }}
         >
           <ToolList
