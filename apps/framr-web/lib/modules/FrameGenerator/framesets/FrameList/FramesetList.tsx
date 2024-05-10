@@ -1,8 +1,16 @@
 import { Box } from '@mui/material';
-import { FSL, FSLFrameType, Tool, UtilityFrameset } from '../../../../types';
-import { FrameEnum } from '../../../../types/enums';
-import Frame from './Frame';
 import Scrollbars from 'rc-scrollbars';
+import {
+  DPoint,
+  FSL,
+  FSLFrameType,
+  FramesetDpoint,
+  GeneratorConfig,
+  Tool,
+  UtilityFrameset,
+} from '../../../../types';
+import { FrameEnum } from '../../../../types/enums';
+import Frame, { NewConstraint } from './Frame';
 
 interface Frameset {
   fsl: FSL[];
@@ -14,12 +22,26 @@ interface FramesetListProps {
   activeFSL: number;
   selectedFrames: FrameEnum[];
   manageRules: (val: Tool) => void;
+  frameConfig: GeneratorConfig;
+  handleAddNewConstraint: (val: NewConstraint) => void;
+  handleRemoveConstraint: (val: FramesetDpoint) => void;
+  handleRemoveDPoint: (val: FramesetDpoint) => void;
+  isSelectMode: boolean;
+  selectModeDPoints: DPoint[];
+  handleSelect: (val: DPoint[]) => void;
 }
 export default function FramesetList({
   frameset: { fsl, utility },
   selectedFrames,
   activeFSL,
   manageRules,
+  frameConfig,
+  handleAddNewConstraint,
+  handleRemoveDPoint,
+  handleRemoveConstraint: handleRemoveconstraint,
+  handleSelect,
+  isSelectMode,
+  selectModeDPoints,
 }: FramesetListProps) {
   const activeFramesetFSL = fsl.find((f) => f.number === activeFSL);
 
@@ -37,14 +59,31 @@ export default function FramesetList({
           .map((framekey, index) => (
             <Scrollbars universal autoHide key={index}>
               <Frame
+                handleSelect={handleSelect}
+                isSelectMode={isSelectMode}
+                selectModeDPoints={selectModeDPoints}
+                frameConfig={frameConfig}
                 manageRules={manageRules}
                 frame={activeFramesetFSL.framesets[framekey as FSLFrameType]}
+                handleAddNewConstraint={handleAddNewConstraint}
+                handleRemoveConstraint={handleRemoveconstraint}
+                handleRemoveDPoint={handleRemoveDPoint}
               />
             </Scrollbars>
           ))}
 
       {selectedFrames.includes(FrameEnum.UTIL) && (
-        <Frame manageRules={manageRules} frame={utility} />
+        <Frame
+          handleSelect={handleSelect}
+          isSelectMode={isSelectMode}
+          selectModeDPoints={selectModeDPoints}
+          frameConfig={frameConfig}
+          manageRules={manageRules}
+          frame={utility}
+          handleAddNewConstraint={handleAddNewConstraint}
+          handleRemoveConstraint={handleRemoveconstraint}
+          handleRemoveDPoint={handleRemoveDPoint}
+        />
       )}
     </Box>
   );

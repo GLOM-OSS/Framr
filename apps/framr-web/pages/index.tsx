@@ -5,11 +5,15 @@ import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../components/sharedComponents/confirmDialog';
 import GeneratorHeader from '../lib/modules/FrameGenerator/GeneratorHeader';
 import ToolList from '../lib/modules/FrameGenerator/ToolList';
+import { NewConstraint } from '../lib/modules/FrameGenerator/framesets/FrameList/Frame';
 import FramesetList from '../lib/modules/FrameGenerator/framesets/FrameList/FramesetList';
 import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHeader';
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
+import { FramrService } from '../lib/services';
+import { getRandomID } from '../lib/services/core/modules/common/common';
 import {
   DPoint,
+  FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
   LWDGeneratorConfigTool,
@@ -22,8 +26,6 @@ import {
   ToolEnum,
   WithConstraintRuleEnum,
 } from '../lib/types/enums';
-import { FramrService } from '../lib/services';
-import { getRandomID } from '../lib/services/core/modules/common/common';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
@@ -112,6 +114,18 @@ export default function FrameGenerator() {
       const toold = generatorConfig.tools.find(({ id }) => id === tool.id);
       setRuleTool(toold);
     }
+  }
+
+  function handleRemoveDPoint(dpoint: FramesetDpoint) {
+    //TODO: call api here to remove dpoint from frameset and readjust frameConfig
+  }
+
+  function handleRemoveConstraint(dpoint: FramesetDpoint) {
+    //TODO: call api here to remove constraint on dpoint and readjusted frameConfig
+  }
+
+  function handleAddNewConstraint(val: NewConstraint) {
+    //TODO: CALL API HERE TO ADD NEW CONSTRAINT TO DPOINT
   }
 
   return isConfigOpen || !frameConfig ? (
@@ -342,9 +356,16 @@ export default function FrameGenerator() {
               submitMultipleConstraints={addConstraitToMultipleDPoints}
             />
             <FramesetList
+              handleRemoveDPoint={handleRemoveDPoint}
+              handleRemoveConstraint={handleRemoveConstraint}
+              handleAddNewConstraint={handleAddNewConstraint}
+              frameConfig={frameConfig}
               frameset={frameConfig.framesets}
               activeFSL={activeFSL}
               selectedFrames={selectedFrames}
+              handleSelect={(val) => setSelectModeDPoints(val)}
+              isSelectMode={isSelectMode}
+              selectModeDPoints={selectModeDPoints}
               manageRules={(val) => {
                 getActiveTool(val, frameConfig);
                 setIsConfigOpen(true);
