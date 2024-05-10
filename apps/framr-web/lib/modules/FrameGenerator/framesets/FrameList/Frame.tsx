@@ -3,15 +3,21 @@ import { Icon } from '@iconify/react';
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
-  FSLFrameset,
-  FramesetDpoint,
-  UtilityFrameset,
+    FSLFrameset,
+    FramesetDpoint,
+    Tool,
+    UtilityFrameset,
 } from '../../../../../lib/types';
+import { ToolEnum } from '../../../../../lib/types/enums';
 
 interface FrameProps {
   frame: FSLFrameset | UtilityFrameset;
+  manageRules: (val: Tool) => void;
 }
-export default function Frame({ frame: { dpoints, frame } }: FrameProps) {
+export default function Frame({
+  frame: { dpoints, frame },
+  manageRules,
+}: FrameProps) {
   const toolColumns: GridColDef<FramesetDpoint>[] = [
     {
       field: 'name',
@@ -24,7 +30,12 @@ export default function Frame({ frame: { dpoints, frame } }: FrameProps) {
             dpoint.error ? (
               <Box>
                 {dpoint.error}
-                <Button sx={{marginLeft:1}} variant="contained" color="primary">
+                <Button
+                  sx={{ marginLeft: 1 }}
+                  variant="contained"
+                  color="primary"
+                  onClick={() => manageRules(dpoint.tool)}
+                >
                   Manage rules
                 </Button>
               </Box>
@@ -37,7 +48,11 @@ export default function Frame({ frame: { dpoints, frame } }: FrameProps) {
             sx={{
               display: 'grid',
               alignContent: 'center',
-              color: dpoint.error ? 'red' : 'black',
+              color: dpoint.error
+                ? '#BF0000'
+                : dpoint.tool.type === ToolEnum.MWD
+                ? '#5CB360'
+                : '#6B7280',
             }}
             height="100%"
           >
@@ -55,7 +70,11 @@ export default function Frame({ frame: { dpoints, frame } }: FrameProps) {
           sx={{
             display: 'grid',
             alignContent: 'center',
-            color: dpoint.error ? 'red' : 'black',
+            color: dpoint.error
+              ? '#BF0000'
+              : dpoint.tool.type === ToolEnum.MWD
+              ? '#5CB360'
+              : '#6B7280',
           }}
           height="100%"
         >
@@ -73,7 +92,13 @@ export default function Frame({ frame: { dpoints, frame } }: FrameProps) {
             <Icon
               icon={more}
               fontSize={18}
-              color={dpoint.error ? 'red' : 'black'}
+              color={
+                dpoint.error
+                  ? '#BF0000'
+                  : dpoint.tool.type === ToolEnum.MWD
+                  ? '#5CB360'
+                  : '#6B7280'
+              }
             />
           </IconButton>
         </Tooltip>
