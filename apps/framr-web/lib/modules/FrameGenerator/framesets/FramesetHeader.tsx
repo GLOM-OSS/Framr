@@ -5,8 +5,10 @@ import { Icon } from '@iconify/react';
 import { Box, Button, MenuItem, Select } from '@mui/material';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { DPoint } from '../../../../lib/types';
-import { FrameEnum } from '../../../../lib/types/enums';
+import { ConstraintEnum, FrameEnum } from '../../../../lib/types/enums';
+import AddMultipleConstraintsMenu from './AddMultipleConstraintMenu';
 import FrameMenu from './FrameMenu';
+import MultipleConstraintsMenu from './MultipleConstraintsMenu';
 import NewDPointMenu from './NewDPointMenu';
 import SelectHeader from './SelectHeader';
 
@@ -20,6 +22,14 @@ interface FramesetHeaderProps {
   setIsSelectMode: (val: boolean) => void;
   handleRemoveConstraints: () => void;
   handleRemoveDPoints: () => void;
+  selectedDPoints: DPoint[];
+  selectModeDPoints: DPoint[];
+  closeSelectMode: () => void;
+  submitMultipleConstraints: (val: {
+    interval: number;
+    type: ConstraintEnum;
+    dPoints: DPoint[];
+  }) => void;
 }
 export default function FramesetHeader({
   activeFSL,
@@ -31,11 +41,24 @@ export default function FramesetHeader({
   setIsSelectMode,
   handleRemoveDPoints,
   handleRemoveConstraints,
+  selectedDPoints,
+  selectModeDPoints,
+  closeSelectMode,
+  submitMultipleConstraints,
 }: FramesetHeaderProps) {
   const [frameMenuAnchorEl, setFrameMenuAnchorEl] =
     useState<HTMLElement | null>(null);
   const [newDPointAnchorEl, setNewDPointAnchorEl] =
     useState<HTMLElement | null>(null);
+  const [multipleConstraintsAnchorEl, setMultipleConstraintsAnchorEl] =
+    useState<HTMLElement | null>(null);
+  const [
+    isMultipleTimeConstraintMenuOpen,
+    setIsMultipleTimeConstraintMenuOpen,
+  ] = useState<boolean>(false);
+  const [multipleDPointUsage, setMultipleDPointUsage] = useState<
+    'time' | 'distance'
+  >();
   return (
     <>
       <NewDPointMenu
@@ -56,12 +79,39 @@ export default function FramesetHeader({
         isMenuOpen={!!frameMenuAnchorEl}
         selectedFrames={selectedFrames}
       />
+      <MultipleConstraintsMenu
+        anchorEl={multipleConstraintsAnchorEl}
+        closeMenu={() => setMultipleConstraintsAnchorEl(null)}
+        isMenuOpen={!!multipleConstraintsAnchorEl}
+        handleChoice={(val) => {
+          setIsMultipleTimeConstraintMenuOpen(true);
+          setMultipleDPointUsage(val);
+        }}
+      />
+      {multipleDPointUsage && (
+        <AddMultipleConstraintsMenu
+          anchorEl={multipleConstraintsAnchorEl}
+          closeMenu={() => {
+            setMultipleDPointUsage(undefined);
+            setMultipleConstraintsAnchorEl(null);
+          }}
+          isMenuOpen={
+            !!multipleConstraintsAnchorEl && isMultipleTimeConstraintMenuOpen
+          }
+          dPoints={selectedDPoints}
+          usage={multipleDPointUsage}
+          handleAddConstraint={submitMultipleConstraints}
+        />
+      )}
       {isSelectMode ? (
         <SelectHeader
-          addConstraintToDPoints={() => {}}
-          cancelSelectMode={() => setIsSelectMode(false)}
+          handleAddConstraintToMultipleDPoints={(val) =>
+            setMultipleConstraintsAnchorEl(val)
+          }
+          cancelSelectMode={closeSelectMode}
           handleRemoveConstraints={handleRemoveConstraints}
           removeSelectedDPoints={handleRemoveDPoints}
+          selectModeDPoints={selectModeDPoints}
         />
       ) : (
         <Box

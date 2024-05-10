@@ -2,48 +2,227 @@ import download from '@iconify/icons-fluent/arrow-download-20-regular';
 import { Icon } from '@iconify/react';
 import { Box, Button, Divider } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { ConfirmDialog } from '../components/sharedComponents/confirmDialog';
 import GeneratorHeader from '../lib/modules/FrameGenerator/GeneratorHeader';
 import ToolList from '../lib/modules/FrameGenerator/ToolList';
+import FramesetList from '../lib/modules/FrameGenerator/framesets/FrameList/FramesetList';
 import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHeader';
-import FramesetList from '../lib/modules/FrameGenerator/framesets/FramesetList';
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
 import { DPoint, GeneratorConfig } from '../lib/types';
-import { FrameEnum } from '../lib/types/enums';
-import { FramrService } from '../lib/services';
+import { ConstraintEnum, FrameEnum, ToolEnum } from '../lib/types/enums';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
   const [frameConfig, setFrameConfig] = useState<GeneratorConfig>();
   const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
   const [activeFSL, setActiveFSL] = useState<number>(1);
-  const [selectedFrames, setSelectedFrames] = useState<FrameEnum[]>([]);
+  const [selectedFrames, setSelectedFrames] = useState<FrameEnum[]>([
+    FrameEnum.GTF,
+    FrameEnum.MTF,
+    FrameEnum.ROT,
+    FrameEnum.UTIL,
+  ]);
 
-  const framrService = new FramrService();
   const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
 
   useEffect(() => {
-    if (framrService.generatorConfig)
-      framrService.addAndDispatchDPoints(activeFSL, selectedDPoints);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFSL, selectedDPoints]);
+    /*TODO: CALL API HERE THAT SORTS SELECTED DPOINTS
+    AND RETURNS THEM BY ORDER OF PRIORITY PER FRAMESETS
+    THEN SET DATAIN FRAMESETS IN frameConfig
+    */
+    console.log(selectedDPoints);
+  }, [selectedDPoints]);
 
-  useEffect(() => {
-    if (framrService.generatorConfig) {
-      setFrameConfig(framrService.generatorConfig);
-    }
-  }, [framrService.generatorConfig]);
+  const [selectModeDPoints, setSelectModeDPoints] = useState<DPoint[]>([]);
 
-  return (
-    isConfigOpen &&
-    (!frameConfig ? (
-      <FrameGeneratorConfig
-        data={frameConfig}
-        submitConfig={(data) => {
-          setFrameConfig(data);
-          setIsConfigOpen(false);
-        }}
-      />
-    ) : (
+  const [confirmDialogUsage, setConfirmDialogUsage] = useState<
+    'constraint' | 'dpoints'
+  >();
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+  function removeConstraintOnSelectedDPoints(selectModeDPoints: DPoint[]) {
+    //TODO: CALL API HERE TO REMOVE CONSTRAINTS ON SELECT MODE DOINTS
+  }
+
+  function removeSelectModeDPoints(selectModeDPoints: DPoint[]) {
+    setSelectedDPoints((prev) =>
+      prev.filter((dpoint) => !selectModeDPoints.includes(dpoint))
+    );
+  }
+
+  function addConstraitToMultipleDPoints(val: {
+    interval: number;
+    type: ConstraintEnum;
+    dPoints: DPoint[];
+  }) {
+    //TODO: CALL API HERE TO ADD CONSTRAINT TO MULTIPLE DPOINTS
+  }
+
+  return isConfigOpen || !frameConfig ? (
+    <FrameGeneratorConfig
+      data={frameConfig}
+      submitConfig={(data) => {
+        setFrameConfig({
+          ...data,
+          framesets: {
+            fsl: [
+              {
+                number: 1,
+                framesets: {
+                  Rotatory: {
+                    dpoints: [
+                      {
+                        id: 'abcd123',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                        error: 'Cannot work',
+                      },
+                      {
+                        id: 'abcdw213',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                    ],
+                    frame: FrameEnum.ROT,
+                  },
+                  'Magnetic Tool Phase': {
+                    dpoints: [
+                      {
+                        id: 'abcd123',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                      {
+                        id: 'abcdw213',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                    ],
+                    frame: FrameEnum.MTF,
+                  },
+                  'Gravitational Tool Phase': {
+                    dpoints: [
+                      {
+                        id: 'abcd123',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                      {
+                        id: 'abcdw213',
+                        name: 'ADN',
+                        bits: 1,
+                        tool: {
+                          id: 'abcd123',
+                          name: 'ADN',
+                          version: 'V8.5bf8',
+                          long: 'adnVISION 675',
+                          type: ToolEnum.LWD,
+                        },
+                        isBaseInstance: true,
+                      },
+                    ],
+                    frame: FrameEnum.GTF,
+                  },
+                },
+              },
+            ],
+            utility: {
+              dpoints: [
+                {
+                  id: 'abcd123',
+                  name: 'ADN',
+                  bits: 1,
+                  tool: {
+                    id: 'abcd123',
+                    name: 'ADN',
+                    version: 'V8.5bf8',
+                    long: 'adnVISION 675',
+                    type: ToolEnum.LWD,
+                  },
+                  isBaseInstance: true,
+                },
+                {
+                  id: 'abcdw213',
+                  name: 'ADN',
+                  bits: 1,
+                  tool: {
+                    id: 'abcd123',
+                    name: 'ADN',
+                    version: 'V8.5bf8',
+                    long: 'adnVISION 675',
+                    type: ToolEnum.LWD,
+                  },
+                  isBaseInstance: true,
+                },
+              ],
+              frame: FrameEnum.UTIL,
+            },
+          },
+        });
+        setIsConfigOpen(false);
+      }}
+    />
+  ) : (
+    <>
+      {confirmDialogUsage && (
+        <ConfirmDialog
+          closeDialog={() => {
+            setConfirmDialogUsage(undefined);
+            setIsConfirmDialogOpen(false);
+          }}
+          isDialogOpen={isConfirmDialogOpen}
+          dialogMessage={`Are you sure you want to remove the selected ${confirmDialogUsage}?`}
+          dialogTitle={`Remove ${confirmDialogUsage}`}
+          confirm={() => {
+            if (confirmDialogUsage === 'constraint')
+              removeConstraintOnSelectedDPoints(selectModeDPoints);
+            else removeSelectModeDPoints(selectModeDPoints);
+          }}
+          closeOnConfirm
+          danger
+          confirmButton={`Remove ${confirmDialogUsage}`}
+        />
+      )}
       <Box
         sx={{
           height: '100%',
@@ -62,6 +241,7 @@ export default function FrameGenerator() {
             display: 'grid',
             height: '100%',
             gridTemplateColumns: '26.6fr auto 74.4fr',
+            columnGap: 2,
           }}
         >
           <ToolList
@@ -71,8 +251,19 @@ export default function FrameGenerator() {
             }
           />
           <Divider orientation="vertical" />
-          <Box sx={{ display: 'grid', gridTemplateRows: 'auto 1fr auto' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateRows: 'auto 1fr auto',
+              rowGap: 2,
+            }}
+          >
             <FramesetHeader
+              selectModeDPoints={selectModeDPoints}
+              closeSelectMode={() => {
+                setSelectModeDPoints([]);
+                setIsSelectMode(false);
+              }}
               activeFSL={activeFSL}
               selectedFrames={selectedFrames}
               setActiveFSL={setActiveFSL}
@@ -82,10 +273,26 @@ export default function FrameGenerator() {
               submitNewDPoint={(val) =>
                 setSelectedDPoints((prev) => [...prev, val])
               }
-              handleRemoveConstraints={() => alert('can remove constraints')}
-              handleRemoveDPoints={() => alert('Remove selected dpoints')}
+              handleRemoveConstraints={() => {
+                setIsConfirmDialogOpen(true);
+                setConfirmDialogUsage('constraint');
+              }}
+              handleRemoveDPoints={() => {
+                setIsConfirmDialogOpen(true);
+                setConfirmDialogUsage('dpoints');
+              }}
+              selectedDPoints={selectedDPoints}
+              submitMultipleConstraints={addConstraitToMultipleDPoints}
             />
-            <FramesetList />
+            <FramesetList
+              frameset={frameConfig.framesets}
+              activeFSL={activeFSL}
+              selectedFrames={selectedFrames}
+              manageRules={()=>{
+                setIsConfigOpen(true)
+                
+              }}
+            />
             <Button
               variant="contained"
               color="primary"
@@ -97,6 +304,6 @@ export default function FrameGenerator() {
           </Box>
         </Box>
       </Box>
-    ))
+    </>
   );
 }

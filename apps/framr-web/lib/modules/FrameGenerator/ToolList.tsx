@@ -27,7 +27,6 @@ export default function ToolList({
         gridTemplateRows: 'auto 1fr',
         height: '100%',
         border: '1px solid #D1D5DB',
-        borderRight: 'none',
       }}
     >
       <TextField
