@@ -11,11 +11,19 @@ import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGener
 import {
   DPoint,
   GeneratorConfig,
+  GeneratorConfigRule,
   LWDGeneratorConfigTool,
   MWDGeneratorConfigTool,
   Tool,
 } from '../lib/types';
-import { ConstraintEnum, FrameEnum, ToolEnum } from '../lib/types/enums';
+import {
+  ConstraintEnum,
+  FrameEnum,
+  ToolEnum,
+  WithConstraintRuleEnum,
+} from '../lib/types/enums';
+import { FramrService } from '../lib/services';
+import { getRandomID } from '../lib/services/core/modules/common/common';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
@@ -31,12 +39,12 @@ export default function FrameGenerator() {
 
   const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
 
+  const framrService = new FramrService();
   useEffect(() => {
-    /*TODO: CALL API HERE THAT SORTS SELECTED DPOINTS
-    AND RETURNS THEM BY ORDER OF PRIORITY PER FRAMESETS
-    THEN SET DATAIN FRAMESETS IN frameConfig
-    */
-    console.log(selectedDPoints);
+    if (framrService.generatorConfig) {
+      framrService.addAndDispatchDPoints(activeFSL, selectedDPoints);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDPoints]);
 
   const [selectModeDPoints, setSelectModeDPoints] = useState<DPoint[]>([]);
@@ -47,7 +55,15 @@ export default function FrameGenerator() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   function removeConstraintOnSelectedDPoints(selectModeDPoints: DPoint[]) {
-    //TODO: CALL API HERE TO REMOVE CONSTRAINTS ON SELECT MODE DOINTS
+    frameConfig?.tools.forEach((tool) => {
+      const rules = tool.rules.filter((rule) =>
+        selectModeDPoints.some(
+          (dpoint) => rule.concernedDpoint.id === dpoint.id
+        )
+      );
+      if (tool.rules.length > rules.length)
+        framrService.updateToolRules(tool.id, rules);
+    });
   }
 
   function removeSelectModeDPoints(selectModeDPoints: DPoint[]) {
@@ -61,7 +77,29 @@ export default function FrameGenerator() {
     type: ConstraintEnum;
     dPoints: DPoint[];
   }) {
-    //TODO: CALL API HERE TO ADD CONSTRAINT TO MULTIPLE DPOINTS
+    frameConfig?.tools.forEach((tool) => {
+      const rules = [
+        ...tool.rules,
+        ...val.dPoints
+          .filter(({ tool: { id } }) => id === tool.id)
+          .map<GeneratorConfigRule>((dpoint) => ({
+            description:
+              val.type === ConstraintEnum.DISTANCE
+                ? WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+                : WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+            interval: val.interval,
+            type: val.type,
+            framesets: [],
+            concernedDpoint: dpoint,
+            id: getRandomID(),
+            isActive: true,
+            isGeneric: true,
+            tool,
+          })),
+      ];
+      if (tool.rules.length > rules.length)
+        framrService.updateToolRules(tool.id, rules);
+    });
   }
 
   const [ruleTool, setRuleTool] = useState<
