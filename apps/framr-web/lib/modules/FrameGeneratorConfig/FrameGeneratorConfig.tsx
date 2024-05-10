@@ -17,7 +17,7 @@ import {
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useFormik } from 'formik';
 import Scrollbars from 'rc-scrollbars';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import ManageRulesDialog from '../../../lib/modules/FrameGeneratorConfig/ManageRulesDialog';
 import MoreMenu from '../../../lib/modules/FrameGeneratorConfig/MoreMenu';
@@ -52,10 +52,12 @@ interface ICreateGeneratorConfig {
 interface FrameGeneratorConfigProps {
   data?: GeneratorConfig;
   submitConfig: (data: GeneratorConfig) => void;
+  ruleTool?: IGeneratorConfigTool;
 }
 export default function FrameGeneratorConfig({
   data,
   submitConfig,
+  ruleTool,
 }: FrameGeneratorConfigProps) {
   //TODO: replace this with a call to the API
   const [mwdTools] = useState<MWDTool[]>([
@@ -90,7 +92,7 @@ export default function FrameGeneratorConfig({
   //TODO: replace this with a call to the API
   const [lwdTools] = useState<LWDTool[]>([
     {
-      id: '1',
+      id: 'abcd123',
       long: 'Tornado',
       name: 'Train',
       type: ToolEnum.LWD,
@@ -313,6 +315,13 @@ export default function FrameGeneratorConfig({
       selectedTools ? selectedTools.map(({ id }) => id) : null
     );
   }
+
+  useEffect(() => {
+    if (ruleTool) {
+      setActiveTool(ruleTool);
+      setIsRuleDialogOpen(true);
+    }
+  }, [ruleTool]);
 
   return (
     <>

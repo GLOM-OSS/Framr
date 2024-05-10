@@ -8,7 +8,13 @@ import ToolList from '../lib/modules/FrameGenerator/ToolList';
 import FramesetList from '../lib/modules/FrameGenerator/framesets/FrameList/FramesetList';
 import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHeader';
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
-import { DPoint, GeneratorConfig } from '../lib/types';
+import {
+  DPoint,
+  GeneratorConfig,
+  LWDGeneratorConfigTool,
+  MWDGeneratorConfigTool,
+  Tool,
+} from '../lib/types';
 import { ConstraintEnum, FrameEnum, ToolEnum } from '../lib/types/enums';
 
 export default function FrameGenerator() {
@@ -58,8 +64,21 @@ export default function FrameGenerator() {
     //TODO: CALL API HERE TO ADD CONSTRAINT TO MULTIPLE DPOINTS
   }
 
+  const [ruleTool, setRuleTool] = useState<
+    LWDGeneratorConfigTool | MWDGeneratorConfigTool
+  >();
+  function getActiveTool(tool: Tool, generatorConfig: GeneratorConfig) {
+    if (generatorConfig.MWDTool.id === tool.id)
+      setRuleTool(generatorConfig.MWDTool);
+    else {
+      const toold = generatorConfig.tools.find(({ id }) => id === tool.id);
+      setRuleTool(toold);
+    }
+  }
+
   return isConfigOpen || !frameConfig ? (
     <FrameGeneratorConfig
+      ruleTool={ruleTool}
       data={frameConfig}
       submitConfig={(data) => {
         setFrameConfig({
@@ -288,9 +307,9 @@ export default function FrameGenerator() {
               frameset={frameConfig.framesets}
               activeFSL={activeFSL}
               selectedFrames={selectedFrames}
-              manageRules={()=>{
-                setIsConfigOpen(true)
-                
+              manageRules={(val) => {
+                getActiveTool(val, frameConfig);
+                setIsConfigOpen(true);
               }}
             />
             <Button

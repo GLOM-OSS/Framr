@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { FSL, FSLFrameType, UtilityFrameset } from '../../../../types';
+import { FSL, FSLFrameType, Tool, UtilityFrameset } from '../../../../types';
 import { FrameEnum } from '../../../../types/enums';
 import Frame from './Frame';
 import Scrollbars from 'rc-scrollbars';
@@ -13,11 +13,13 @@ interface FramesetListProps {
   frameset: Frameset;
   activeFSL: number;
   selectedFrames: FrameEnum[];
+  manageRules: (val: Tool) => void;
 }
 export default function FramesetList({
   frameset: { fsl, utility },
   selectedFrames,
   activeFSL,
+  manageRules,
 }: FramesetListProps) {
   const activeFramesetFSL = fsl.find((f) => f.number === activeFSL);
 
@@ -35,12 +37,15 @@ export default function FramesetList({
           .map((framekey, index) => (
             <Scrollbars universal autoHide key={index}>
               <Frame
+                manageRules={manageRules}
                 frame={activeFramesetFSL.framesets[framekey as FSLFrameType]}
               />
             </Scrollbars>
           ))}
 
-      {selectedFrames.includes(FrameEnum.UTIL) && <Frame frame={utility} />}
+      {selectedFrames.includes(FrameEnum.UTIL) && (
+        <Frame manageRules={manageRules} frame={utility} />
+      )}
     </Box>
   );
 }
