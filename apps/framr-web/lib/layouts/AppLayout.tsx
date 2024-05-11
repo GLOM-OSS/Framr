@@ -3,9 +3,11 @@ import { PropsWithChildren } from 'react';
 import Footer from '../modules/layout/footer/Footer';
 import Header from '../modules/layout/header/Header';
 import SideBar from '../modules/layout/sideBar/SideBar';
+import { usePWA } from '@usePWA';
 
 interface AppLayoutProps extends PropsWithChildren {}
 export default function AppLayout({ children }: AppLayoutProps) {
+  usePWA();
   return (
     <Box
       sx={{
