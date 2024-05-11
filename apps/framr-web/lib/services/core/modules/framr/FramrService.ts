@@ -189,6 +189,13 @@ export class FramrService {
     };
   }
 
+  orderFramesets(fslNumber: number) {
+    const { framesets: fslFramesets } = this.getCurrentFSL(fslNumber);
+    for (const frameset in fslFramesets) {
+      this.orderFramesetDPoints(fslNumber, frameset as FSLFrameType);
+    }
+  }
+
   updateToolRules(toolId: string, rules: GeneratorConfigRule[]) {
     if (!this.generatorConfig) {
       throw new FramrServiceError('Service was not initialized');

@@ -23,7 +23,6 @@ import {
 import {
   ConstraintEnum,
   FrameEnum,
-  ToolEnum,
   WithConstraintRuleEnum,
 } from '../lib/types/enums';
 
@@ -117,159 +116,35 @@ export default function FrameGenerator() {
   }
 
   function handleRemoveDPoint(dpoint: FramesetDpoint) {
-    //TODO: call api here to remove dpoint from frameset and readjust frameConfig
+    framrService.removeDPoints(activeFSL, [dpoint.id]);
   }
 
   function handleRemoveConstraint(dpoint: FramesetDpoint) {
-    //TODO: call api here to remove constraint on dpoint and readjusted frameConfig
+    removeSelectModeDPoints([dpoint]);
   }
 
   function handleAddNewConstraint(val: NewConstraint) {
-    //TODO: CALL API HERE TO ADD NEW CONSTRAINT TO DPOINT
+    addConstraitToMultipleDPoints({
+      dPoints: [val.dpoint],
+      interval: val.interval,
+      type: val.type,
+    });
   }
+
+  useEffect(() => {
+    if (framrService.generatorConfig) {
+      framrService.orderFramesets(activeFSL);
+      setFrameConfig(framrService.generatorConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [framrService.generatorConfig]);
 
   return isConfigOpen || !frameConfig ? (
     <FrameGeneratorConfig
       ruleTool={ruleTool}
       data={frameConfig}
       submitConfig={(data) => {
-        setFrameConfig({
-          ...data,
-          framesets: {
-            fsl: [
-              {
-                number: 1,
-                framesets: {
-                  Rotatory: {
-                    dpoints: [
-                      {
-                        id: 'abcd123',
-                        name: 'ADN',
-                        bits: 1,
-                        tool: {
-                          id: 'abcd123',
-                          name: 'ADN',
-                          version: 'V8.5bf8',
-                          long: 'adnVISION 675',
-                          type: ToolEnum.LWD,
-                        },
-                        isBaseInstance: true,
-                        error: 'Cannot work',
-                      },
-                      {
-                        id: 'abcdw213',
-                        name: 'ADN',
-                        bits: 1,
-                        tool: {
-                          id: 'abcd123',
-                          name: 'ADN',
-                          version: 'V8.5bf8',
-                          long: 'adnVISION 675',
-                          type: ToolEnum.LWD,
-                        },
-                        isBaseInstance: true,
-                      },
-                    ],
-                    frame: FrameEnum.ROT,
-                  },
-                  'Magnetic Tool Phase': {
-                    dpoints: [
-                      {
-                        id: 'abcd123',
-                        name: 'ADN',
-                        bits: 1,
-                        tool: {
-                          id: 'abcd123',
-                          name: 'ADN',
-                          version: 'V8.5bf8',
-                          long: 'adnVISION 675',
-                          type: ToolEnum.LWD,
-                        },
-                        isBaseInstance: true,
-                      },
-                      {
-                        id: 'abcdw213',
-                        name: 'ADN',
-                        bits: 1,
-                        tool: {
-                          id: 'abcd123',
-                          name: 'ADN',
-                          version: 'V8.5bf8',
-                          long: 'adnVISION 675',
-                          type: ToolEnum.LWD,
-                        },
-                        isBaseInstance: true,
-                      },
-                    ],
-                    frame: FrameEnum.MTF,
-                  },
-                  'Gravitational Tool Phase': {
-                    dpoints: [
-                      {
-                        id: 'abcd123',
-                        name: 'ADN',
-                        bits: 1,
-                        tool: {
-                          id: 'abcd123',
-                          name: 'ADN',
-                          version: 'V8.5bf8',
-                          long: 'adnVISION 675',
-                          type: ToolEnum.LWD,
-                        },
-                        isBaseInstance: true,
-                      },
-                      {
-                        id: 'abcdw213',
-                        name: 'ADN',
-                        bits: 1,
-                        tool: {
-                          id: 'abcd123',
-                          name: 'ADN',
-                          version: 'V8.5bf8',
-                          long: 'adnVISION 675',
-                          type: ToolEnum.LWD,
-                        },
-                        isBaseInstance: true,
-                      },
-                    ],
-                    frame: FrameEnum.GTF,
-                  },
-                },
-              },
-            ],
-            utility: {
-              dpoints: [
-                {
-                  id: 'abcd123',
-                  name: 'ADN',
-                  bits: 1,
-                  tool: {
-                    id: 'abcd123',
-                    name: 'ADN',
-                    version: 'V8.5bf8',
-                    long: 'adnVISION 675',
-                    type: ToolEnum.LWD,
-                  },
-                  isBaseInstance: true,
-                },
-                {
-                  id: 'abcdw213',
-                  name: 'ADN',
-                  bits: 1,
-                  tool: {
-                    id: 'abcd123',
-                    name: 'ADN',
-                    version: 'V8.5bf8',
-                    long: 'adnVISION 675',
-                    type: ToolEnum.LWD,
-                  },
-                  isBaseInstance: true,
-                },
-              ],
-              frame: FrameEnum.UTIL,
-            },
-          },
-        });
+        setFrameConfig(data);
         setIsConfigOpen(false);
       }}
     />
