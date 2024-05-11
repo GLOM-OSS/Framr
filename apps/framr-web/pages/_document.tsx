@@ -7,9 +7,20 @@ export default class MyDocument extends Document {
         <Head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" />
+          <link rel="manifest" href="/manifest.json" />
           <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
             rel="stylesheet"
+          />
+          <meta
+            name="theme-color"
+            media="(prefers-color-scheme: light)"
+            content="white"
+          />
+          <meta
+            name="theme-color"
+            media="(prefers-color-scheme: dark)"
+            content="black"
           />
           <link rel="icon" type="image/x-icon" href="/assets/favicon.png" />
           <meta
