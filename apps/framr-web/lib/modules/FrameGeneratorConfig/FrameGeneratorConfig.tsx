@@ -88,6 +88,7 @@ export default function FrameGeneratorConfig({
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setRules(data);
+          console.log(data)
         }
       }
     );
@@ -165,6 +166,7 @@ export default function FrameGeneratorConfig({
         MWDTool: selectedMWDTool as MWDGeneratorConfigTool,
         tools: selectedLWDTools,
       };
+      console.log(selectedLWDTools)
 
       submitConfig(framrService.initialize(submitData));
       setSelectedLWDTools([]);

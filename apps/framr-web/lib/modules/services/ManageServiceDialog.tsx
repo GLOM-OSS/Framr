@@ -68,7 +68,7 @@ export default function ManageServiceDialog({
   useEffect(() => {
     if (tool) fetchDPoints(tool.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tool]);
+  }, [isDialogOpen, tool]);
 
   const initialValues: ICreateService | IService = service
     ? {

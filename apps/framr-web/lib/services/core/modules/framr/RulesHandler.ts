@@ -212,19 +212,18 @@ export class RulesHandler {
         (_, index) =>
           _.tool.id === generatorConfig.MWDTool.id && index > cursors.lastIndex
       );
-      if (index !== -1) {
-        mwdDPoints = mwdDPoints.filter(
-          (_) => _.id !== this.orderedDPoints[index].id
-        );
-      } else {
+      if (index === -1) {
         const mwdDPointIndex = cursors.dpointIndex % (mwdDPoints.length - 1);
-        this.orderedDPoints.push({
-          ...mwdDPoints[mwdDPointIndex],
-          isBaseInstance:
-            Math.floor(cursors.dpointIndex / (mwdDPoints.length - 1)) <= 1,
-        });
-        cursors.lastIndex = this.orderedDPoints.length - 1;
-        cursors.dpointIndex++;
+        const dpoint = mwdDPoints[mwdDPointIndex];
+        if (dpoint) {
+          this.orderedDPoints.push({
+            ...dpoint,
+            isBaseInstance:
+              Math.floor(cursors.dpointIndex / (mwdDPoints.length - 1)) <= 1,
+          });
+          cursors.lastIndex = this.orderedDPoints.length - 1;
+          cursors.dpointIndex++;
+        }
       }
     }
     return { cursors, mwdDPoints };

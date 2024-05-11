@@ -33,11 +33,13 @@ export class FramrService {
     this.rulesHandler.orderedDPoints = value;
   }
 
-  constructor() {
+  constructor(config?: GeneratorConfig) {
     this.xmlIO = new XmlIO();
     this.rulesHandler = new RulesHandler();
+    if (config) {
+      this.generatorConfig = config;
+    }
   }
-
   initialize(config: CreateGeneratorConfig) {
     if (this.generatorConfig) {
       throw new FramrServiceError('Service was already initialized');
@@ -169,7 +171,6 @@ export class FramrService {
       },
       framesets: fslFramesets,
     } = this.getCurrentFSL(fslNumber);
-
     // order DPoints and populate the orderedDPoints array
     this.orderDPoints(frame, dpoints, generatorConfig);
 
@@ -181,7 +182,10 @@ export class FramrService {
           fslInstance.number === fslNumber
             ? {
                 number: fslNumber,
-                framesets: { ...fslFramesets, [frame]: this.orderedDPoints },
+                framesets: {
+                  ...fslFramesets,
+                  [frame]: { frame, dpoints: this.orderedDPoints },
+                },
               }
             : fslInstance
         ),

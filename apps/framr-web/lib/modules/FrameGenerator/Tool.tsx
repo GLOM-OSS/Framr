@@ -115,6 +115,7 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
         ...removePrevServicesSelectedDPoints(prev),
       ];
     });
+    getDPoints(selectedDPoints, prevSelectedDPoints);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedServices]);
 
@@ -143,11 +144,6 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelected, mandatoryDPoints]);
-
-  useEffect(() => {
-    getDPoints(selectedDPoints, prevSelectedDPoints);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDPoints]);
 
   return (
     <Box>
