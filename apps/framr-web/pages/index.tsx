@@ -133,7 +133,9 @@ export default function FrameGenerator() {
   }
 
   useEffect(() => {
+    console.log(framrService.generatorConfig);
     if (framrService.generatorConfig) {
+      console.log(selectedDPoints);
       framrService.addAndDispatchDPoints(activeFSL, selectedDPoints);
       framrService.orderFramesets(activeFSL);
       setFrameConfig(framrService.generatorConfig);
