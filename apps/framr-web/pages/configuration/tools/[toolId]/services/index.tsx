@@ -11,19 +11,18 @@ import { ConfirmDialog } from '../../../../../components/sharedComponents/confir
 import ManageServiceDialog from '../../../../../lib/modules/services/ManageServiceDialog';
 import MoreMenu from '../../../../../lib/modules/services/MoreMenu';
 import ServiceDetailDialog from '../../../../../lib/modules/services/ServiceDetailDialog';
-import { theme } from '../../../../../lib/theme';
-import { CreateService, Service, Tool } from '../../../../../lib/types';
-import { ToolEnum } from '../../../../../lib/types/enums';
-import {
-  EventBus,
-  EventBusChannelStatus,
-} from '../../../../../lib/services/libs/event-bus';
 import {
   ServicesEventChannel,
   ServicesService,
   ToolsEventChannel,
   ToolsService,
 } from '../../../../../lib/services';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../../../lib/services/libs/event-bus';
+import { theme } from '../../../../../lib/theme';
+import { CreateService, Service, Tool } from '../../../../../lib/types';
 
 export default function ToolManagement() {
   const {
@@ -34,13 +33,7 @@ export default function ToolManagement() {
   const eventBus = new EventBus();
   const toolsService = new ToolsService();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [tool, setTool] = useState<Tool>({
-    id: 'abcd132',
-    name: 'ADN',
-    version: 'V8.5bf8',
-    long: 'adnVISION 675',
-    type: ToolEnum.LWD,
-  });
+  const [tool, setTool] = useState<Tool>();
 
   function fetchTool(toolId: string) {
     eventBus.once<Tool>(
@@ -185,19 +178,21 @@ export default function ToolManagement() {
           />
         </>
       )}
-      <ManageServiceDialog
-        closeDialog={() => {
-          setIsCreateNewToolDialogOpen(false);
-          setIsEditDialogOpen(false);
-          setActiveService(undefined);
-        }}
-        isDialogOpen={isEditDialogOpen || isCreateNewToolDialogOpen}
-        isSubmitting={false}
-        handleCreate={handleCreate}
-        handleEdit={handleEdit}
-        data={activeService}
-        tool={tool}
-      />
+      {tool && (
+        <ManageServiceDialog
+          closeDialog={() => {
+            setIsCreateNewToolDialogOpen(false);
+            setIsEditDialogOpen(false);
+            setActiveService(undefined);
+          }}
+          isDialogOpen={isEditDialogOpen || isCreateNewToolDialogOpen}
+          isSubmitting={false}
+          handleCreate={handleCreate}
+          handleEdit={handleEdit}
+          data={activeService}
+          tool={tool}
+        />
+      )}
       {/* <ManageToolDialog
         closeDialog={() => {
           setIsCreateNewToolDialogOpen(false);
