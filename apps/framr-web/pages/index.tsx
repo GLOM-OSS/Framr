@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '../components/sharedComponents/confirmDialog';
 import GeneratorHeader from '../lib/modules/FrameGenerator/GeneratorHeader';
 import ToolList from '../lib/modules/FrameGenerator/ToolList';
+import { NewConstraint } from '../lib/modules/FrameGenerator/framesets/FrameList/Frame';
 import FramesetList from '../lib/modules/FrameGenerator/framesets/FrameList/FramesetList';
 import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHeader';
 import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
@@ -17,7 +18,6 @@ import {
   Tool,
 } from '../lib/types';
 import { ConstraintEnum, FrameEnum, ToolEnum } from '../lib/types/enums';
-import { NewConstraint } from '../lib/modules/FrameGenerator/framesets/FrameList/Frame';
 
 export default function FrameGenerator() {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
