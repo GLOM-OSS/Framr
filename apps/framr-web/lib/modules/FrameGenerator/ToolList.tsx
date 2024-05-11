@@ -58,7 +58,7 @@ export default function ToolList({
                     .map(({ id }) => id)
                     .includes(dpoint.id);
                 });
-
+                console.log({ selectedDPoints, prevSelectedDPoints });
                 return [...selectedDPoints, ...tt];
               })
             }
