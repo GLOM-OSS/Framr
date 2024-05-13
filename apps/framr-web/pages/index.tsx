@@ -55,7 +55,11 @@ export default function FrameGenerator() {
       const rules = tool.rules.filter(
         (rule) =>
           !selectModeDPoints.some(
-            (dpoint) => rule.concernedDpoint.id === dpoint.id
+            (dpoint) =>
+              rule.concernedDpoint.id === dpoint.id &&
+              (rule.description ===
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
           )
       );
       framrService.updateToolRules(tool.id, rules);
