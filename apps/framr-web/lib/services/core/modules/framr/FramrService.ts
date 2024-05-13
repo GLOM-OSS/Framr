@@ -12,7 +12,12 @@ import { FrameEnum, StandAloneRuleEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { XmlIO } from '../../../libs/xml-io';
 import { getRandomID } from '../common/common';
-import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
+import {
+  RulesHandler,
+  SpreadingCursors,
+  getFramesetDPoint,
+  partition,
+} from './RulesHandler';
 
 export class FramrService {
   private readonly xmlIO: XmlIO;
@@ -58,7 +63,7 @@ export class FramrService {
             const dpointsToAdd = [
               rule.concernedDpoint,
               ...((rule as RuleWithOtherDPoint).otherDpoints ?? []),
-            ].map((dpoint) => ({ isBaseInstance: true, ...dpoint }));
+            ].map<FramesetDpoint>((dpoint) => getFramesetDPoint(dpoint));
             return [...dps, ...dpointsToAdd];
           }, []),
       };
@@ -104,15 +109,14 @@ export class FramrService {
                 frame: currentFrameset.frame,
                 dpoints: [
                   ...currentFrameset.dpoints,
-                  { ...dpoint, isBaseInstance: true },
+                  getFramesetDPoint(dpoint),
                 ],
               };
             }
           } else if (frame === FrameEnum.UTIL) {
-            generatorConfig.framesets.utility.dpoints.push({
-              ...dpoint,
-              isBaseInstance: true,
-            });
+            generatorConfig.framesets.utility.dpoints.push(
+              getFramesetDPoint(dpoint)
+            );
           }
         }
       }

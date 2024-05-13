@@ -14,6 +14,7 @@ import {
   WithConstraintRuleEnum,
   WithOtherDPointRuleEnum,
 } from '../../../../types/enums';
+import { getRandomID } from '../common/common';
 
 type BitConstraintDPoint = {
   lastCount: number;
@@ -51,6 +52,15 @@ export function partition<T>(
     }
   });
   return [trueArray, falseArray];
+}
+
+export function getFramesetDPoint(dpoint: DPoint): FramesetDpoint {
+  return {
+    ...dpoint,
+    isBaseInstance: true,
+    id: getRandomID(),
+    dpointId: dpoint.id,
+  };
 }
 
 export class RulesHandler {
@@ -217,7 +227,7 @@ export class RulesHandler {
         const dpoint = mwdDPoints[mwdDPointIndex];
         if (dpoint) {
           this.orderedDPoints.push({
-            ...dpoint,
+            ...getFramesetDPoint(dpoint),
             isBaseInstance:
               Math.floor(cursors.dpointIndex / (mwdDPoints.length - 1)) <= 1,
           });
@@ -404,11 +414,8 @@ export class RulesHandler {
     sequentialRule: RuleWithOtherDPoint,
     rules: GeneratorConfigRule[]
   ): void {
-    const otherDPoints = sequentialRule.otherDpoints.map<FramesetDpoint>(
-      (dp) => ({
-        ...dp,
-        isBaseInstance: true,
-      })
+    const otherDPoints = sequentialRule.otherDpoints.map<FramesetDpoint>((dp) =>
+      getFramesetDPoint(dp)
     );
     if (otherDPoints.length > 0) {
       const concernedDpointId = sequentialRule.concernedDpoint.id;
@@ -460,10 +467,7 @@ export class RulesHandler {
 
     if (shouldInsertAfter || shouldInsertBefore) {
       const otherDPoints = setOnlyRuleOtherDPoints.map<FramesetDpoint>(
-        (dpoint) => ({
-          ...dpoint,
-          isBaseInstance: true,
-        })
+        (dpoint) => getFramesetDPoint(dpoint)
       );
       if (otherDPoints.length > 0) {
         const orderedOtherDPoints = this.handleOtherDPointsRules(
