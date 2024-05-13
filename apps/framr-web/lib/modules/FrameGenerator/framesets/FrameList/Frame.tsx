@@ -240,7 +240,7 @@ export default function Frame({
       )}
 
       <DataGrid
-        rows={dpoints}
+        rows={dpoints} //FIXME: update to a key object where key can be unique dispite the id not been unique
         columns={toolColumns}
         hideFooter
         autoPageSize

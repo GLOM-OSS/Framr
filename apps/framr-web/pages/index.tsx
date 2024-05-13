@@ -52,13 +52,13 @@ export default function FrameGenerator() {
 
   function removeConstraintOnSelectedDPoints(selectModeDPoints: DPoint[]) {
     frameConfig?.tools.forEach((tool) => {
-      const rules = tool.rules.filter((rule) =>
-        selectModeDPoints.some(
-          (dpoint) => rule.concernedDpoint.id === dpoint.id
-        )
+      const rules = tool.rules.filter(
+        (rule) =>
+          !selectModeDPoints.some(
+            (dpoint) => rule.concernedDpoint.id === dpoint.id
+          )
       );
-      if (tool.rules.length > rules.length)
-        framrService.updateToolRules(tool.id, rules);
+      framrService.updateToolRules(tool.id, rules);
     });
     if (framrService.generatorConfig)
       setFrameConfig(framrService.generatorConfig);
@@ -115,16 +115,19 @@ export default function FrameGenerator() {
   }
 
   function handleRemoveDPoint(dpoint: FramesetDpoint) {
+    console.log('Remove dpoint: ', dpoint);
     framrService.removeDPoints(activeFSL, [dpoint.id]);
     if (framrService.generatorConfig)
       setFrameConfig(framrService.generatorConfig);
   }
 
   function handleRemoveConstraint(dpoint: FramesetDpoint) {
+    console.log('Remove dpoint constraint: ', dpoint);
     removeConstraintOnSelectedDPoints([dpoint]);
   }
 
   function handleAddNewConstraint(val: NewConstraint) {
+    console.log('Add new constraint: ', val);
     addConstraitToMultipleDPoints({
       dPoints: [val.dpoint],
       interval: val.interval,
@@ -133,6 +136,7 @@ export default function FrameGenerator() {
   }
 
   useEffect(() => {
+    //FIXME: make a difference between added and remove dpoint to be to call respective methods
     if (framrService.generatorConfig) {
       console.log(selectedDPoints);
       framrService.addAndDispatchDPoints(activeFSL, selectedDPoints);
