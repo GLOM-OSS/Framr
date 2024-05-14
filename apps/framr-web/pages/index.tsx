@@ -43,7 +43,9 @@ export default function FrameGenerator() {
     [frameConfig]
   );
   const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
-  const [selectModeDPoints, setSelectModeDPoints] = useState<FramesetDpoint[]>([]);
+  const [selectModeDPoints, setSelectModeDPoints] = useState<FramesetDpoint[]>(
+    []
+  );
 
   const [confirmDialogUsage, setConfirmDialogUsage] = useState<
     'constraint' | 'dpoints'
@@ -142,11 +144,8 @@ export default function FrameGenerator() {
   }
 
   useEffect(() => {
-    //FIXME: make a difference between added and remove dpoint to be to call respective methods
     if (framrService.generatorConfig) {
-      console.log(selectedDPoints);
-      framrService.addAndDispatchDPoints(activeFSL, selectedDPoints);
-      framrService.orderFramesets(activeFSL);
+      framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
       setFrameConfig(framrService.generatorConfig);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

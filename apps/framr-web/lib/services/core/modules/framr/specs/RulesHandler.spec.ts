@@ -111,7 +111,7 @@ describe('RulesHandler', () => {
   it('Should dispatch dpoint to various framesets', () => {
     const fslNumber = 1;
     const { tool, dpoints } = sampleService;
-    framr.addAndDispatchDPoints(fslNumber, tool.id, dpoints);
+    framr.dispatchAndOrderDPoints(fslNumber, tool.id, dpoints);
     sampleDPoints.push(...dpoints);
     const fsl = framr.generatorConfig?.framesets.fsl.find(
       (_) => _.number === fslNumber
@@ -126,7 +126,7 @@ describe('RulesHandler', () => {
   it('Should order framset dpoints', () => {
     const fslNumber = 1;
     const { tool } = sampleService;
-    framr.addAndDispatchDPoints(fslNumber, tool.id, sampleDPoints);
+    framr.dispatchAndOrderDPoints(fslNumber, tool.id, sampleDPoints);
 
     const cdpIndex = Math.floor(Math.random() * sampleDPoints.length);
     const concernedDpoint = sampleDPoints[cdpIndex];

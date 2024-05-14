@@ -89,36 +89,39 @@ export class FramrService {
     return this.generatorConfig;
   }
 
-  addAndDispatchDPoints(fslNumber: number, dpoints: DPoint[], toolId?: string) {
+  dispatchAndOrderDPoints(
+    fslNumber: number,
+    dpoints: DPoint[],
+    toolId?: string
+  ) {
     const rules = this.getRules(toolId);
     const currentFSL = this.getCurrentFSL(fslNumber);
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
 
-    for (const dpoint of dpoints) {
-      const dpointRule = rules.find((_) => _.concernedDpoint.id === dpoint.id);
-      if (dpointRule) {
-        for (const frame of dpointRule.framesets) {
-          if (
-            frame === FrameEnum.MTF ||
-            frame === FrameEnum.ROT ||
-            frame === FrameEnum.GTF
-          ) {
-            const currentFrameset = currentFSL.framesets[frame];
-            if (!currentFrameset.dpoints.some((_) => _.dpointId === dpoint.id)) {
-              currentFSL.framesets[frame] = {
-                frame: currentFrameset.frame,
-                dpoints: [
-                  ...currentFrameset.dpoints,
-                  getFramesetDPoint(dpoint),
-                ],
-              };
-            }
-          } else if (frame === FrameEnum.UTIL) {
-            generatorConfig.framesets.utility.dpoints.push(
-              getFramesetDPoint(dpoint)
-            );
-          }
-        }
+    for (const frame of [
+      FrameEnum.GTF,
+      FrameEnum.MTF,
+      FrameEnum.ROT,
+      FrameEnum.UTIL,
+    ]) {
+      const framesetDPoints = dpoints
+        .filter((dpoint) =>
+          rules.some(
+            (_) =>
+              _.concernedDpoint.id === dpoint.id && _.framesets.includes(frame)
+          )
+        )
+        .map((dpoint) => getFramesetDPoint(dpoint));
+      if (frame !== FrameEnum.UTIL) {
+        currentFSL.framesets[frame] = {
+          frame,
+          dpoints: framesetDPoints,
+        };
+      } else {
+        generatorConfig.framesets.utility = {
+          frame,
+          dpoints: framesetDPoints,
+        };
       }
     }
 
@@ -131,6 +134,8 @@ export class FramrService {
         ),
       },
     };
+
+    this.orderFramesets(fslNumber);
   }
 
   removeDPoints(fslNumber: number, dpointIds: string[]) {
