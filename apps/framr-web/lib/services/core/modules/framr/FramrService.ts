@@ -104,7 +104,7 @@ export class FramrService {
             frame === FrameEnum.GTF
           ) {
             const currentFrameset = currentFSL.framesets[frame];
-            if (!currentFrameset.dpoints.some((_) => _.id === dpoint.id)) {
+            if (!currentFrameset.dpoints.some((_) => _.dpointId === dpoint.id)) {
               currentFSL.framesets[frame] = {
                 frame: currentFrameset.frame,
                 dpoints: [

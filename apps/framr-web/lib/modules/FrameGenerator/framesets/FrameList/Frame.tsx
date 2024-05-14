@@ -13,7 +13,6 @@ import {
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
 import {
-  DPoint,
   FSLFrameset,
   FramesetDpoint,
   GeneratorConfig,
@@ -42,8 +41,8 @@ interface FrameProps {
   handleRemoveConstraint: (val: FramesetDpoint) => void;
   handleRemoveDPoint: (val: FramesetDpoint) => void;
   isSelectMode: boolean;
-  selectModeDPoints: DPoint[];
-  handleSelect: (val: DPoint[]) => void;
+  selectModeDPoints: FramesetDpoint[];
+  handleSelect: (val: FramesetDpoint[]) => void;
 }
 export default function Frame({
   frame: { dpoints, frame },
@@ -233,14 +232,14 @@ export default function Frame({
           handleAddConstraint={(val: {
             type: ConstraintEnum;
             interval: number;
-          }) => handleAddNewConstraint({ dpoint: activeDPoint, ...val })}
+          }) => handleAddNewConstraint({ ...val, dpoint: activeDPoint })}
           isMenuOpen={!!anchorEl}
           usage={newConstraintType}
         />
       )}
 
       <DataGrid
-        rows={dpoints} //FIXME: update to a key object where key can be unique dispite the id not been unique
+        rows={dpoints}
         columns={toolColumns}
         hideFooter
         autoPageSize

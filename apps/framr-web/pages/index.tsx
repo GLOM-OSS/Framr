@@ -43,20 +43,22 @@ export default function FrameGenerator() {
     [frameConfig]
   );
   const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
-  const [selectModeDPoints, setSelectModeDPoints] = useState<DPoint[]>([]);
+  const [selectModeDPoints, setSelectModeDPoints] = useState<FramesetDpoint[]>([]);
 
   const [confirmDialogUsage, setConfirmDialogUsage] = useState<
     'constraint' | 'dpoints'
   >();
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
-  function removeConstraintOnSelectedDPoints(selectModeDPoints: DPoint[]) {
+  function removeConstraintOnSelectedDPoints(
+    selectModeDPoints: FramesetDpoint[]
+  ) {
     frameConfig?.tools.forEach((tool) => {
       const rules = tool.rules.filter(
         (rule) =>
           !selectModeDPoints.some(
             (dpoint) =>
-              rule.concernedDpoint.id === dpoint.id &&
+              rule.concernedDpoint.id === dpoint.dpointId &&
               (rule.description ===
                 WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
               WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)

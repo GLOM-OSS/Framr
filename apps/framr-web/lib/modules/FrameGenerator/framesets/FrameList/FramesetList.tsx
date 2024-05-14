@@ -1,13 +1,12 @@
 import { Box } from '@mui/material';
 import Scrollbars from 'rc-scrollbars';
 import {
-  DPoint,
   FSL,
   FSLFrameType,
   FramesetDpoint,
   GeneratorConfig,
   Tool,
-  UtilityFrameset,
+  UtilityFrameset
 } from '../../../../types';
 import { FrameEnum } from '../../../../types/enums';
 import Frame, { NewConstraint } from './Frame';
@@ -27,8 +26,8 @@ interface FramesetListProps {
   handleRemoveConstraint: (val: FramesetDpoint) => void;
   handleRemoveDPoint: (val: FramesetDpoint) => void;
   isSelectMode: boolean;
-  selectModeDPoints: DPoint[];
-  handleSelect: (val: DPoint[]) => void;
+  selectModeDPoints: FramesetDpoint[];
+  handleSelect: (val: FramesetDpoint[]) => void;
 }
 export default function FramesetList({
   frameset: { fsl, utility },
