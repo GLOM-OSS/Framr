@@ -8,7 +8,11 @@ import {
   GeneratorConfigRule,
   RuleWithOtherDPoint,
 } from '../../../../types';
-import { FrameEnum, StandAloneRuleEnum } from '../../../../types/enums';
+import {
+  FrameEnum,
+  StandAloneRuleEnum,
+  WithConstraintRuleEnum,
+} from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { XmlIO } from '../../../libs/xml-io';
 import { getRandomID } from '../common/common';
@@ -220,6 +224,39 @@ export class FramrService {
         tool.id === toolId ? { ...tool, rules } : tool
       ),
     };
+  }
+
+  removeDPointsConstraints(fslNumber: number, dpoints: FramesetDpoint[]) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+    const activeFsl = this.getCurrentFSL(fslNumber);
+
+    // const fslInstance = this.generatorConfig.framesets.fsl[fslNumber];
+    for (const frame in activeFsl.framesets) {
+      activeFsl.framesets[frame as FSLFrameType].dpoints.filter(
+        ({ dpointId, isBaseInstance }) =>
+          !isBaseInstance &&
+          dpoints.some((dpoint) => dpoint.dpointId === dpointId)
+      );
+    }
+    this.generatorConfig.framesets.fsl.map((fslInstance) =>
+      activeFsl.number === fslNumber ? activeFsl : fslInstance
+    );
+
+    this.generatorConfig.tools.forEach((tool) => {
+      const rules = tool.rules.filter(
+        (rule) =>
+          !dpoints.some(
+            (dpoint) =>
+              rule.concernedDpoint.id === dpoint.dpointId &&
+              (rule.description ===
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
+          )
+      );
+      this.updateToolRules(tool.id, rules);
+    });
   }
 
   exportGeneratorConfig() {

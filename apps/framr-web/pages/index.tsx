@@ -55,19 +55,7 @@ export default function FrameGenerator() {
   function removeConstraintOnSelectedDPoints(
     selectModeDPoints: FramesetDpoint[]
   ) {
-    frameConfig?.tools.forEach((tool) => {
-      const rules = tool.rules.filter(
-        (rule) =>
-          !selectModeDPoints.some(
-            (dpoint) =>
-              rule.concernedDpoint.id === dpoint.dpointId &&
-              (rule.description ===
-                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
-          )
-      );
-      framrService.updateToolRules(tool.id, rules);
-    });
+    framrService.removeDPointsConstraints(activeFSL, selectModeDPoints);
     if (framrService.generatorConfig)
       setFrameConfig(framrService.generatorConfig);
   }
