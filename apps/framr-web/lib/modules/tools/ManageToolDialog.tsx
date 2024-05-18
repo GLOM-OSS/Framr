@@ -40,8 +40,8 @@ export default function ManageToolDialog({
     version: '',
     long: '',
     type: ToolEnum.LWD,
-    max_bits: 1,
-    max_dpoints: 1,
+    maxBits: 1,
+    maxDPoints: 1,
   };
 
   const validationSchema = Yup.object().shape({
@@ -52,14 +52,14 @@ export default function ManageToolDialog({
     type: Yup.mixed<ToolEnum>()
       .oneOf(Object.values(ToolEnum), 'Select tool type in list')
       .required('Type is required'),
-    max_bits: Yup.number()
+    maxBits: Yup.number()
       .min(1, 'Max bits must be greater than 0')
       .when('type', (type, schema) => {
         return (type as unknown) === ToolEnum.MWD
           ? schema.required('Max bits is required')
           : schema.optional();
       }),
-    max_dpoints: Yup.number()
+    maxDPoints: Yup.number()
       .min(1, 'Max dpoints must be greater than 0')
       .when('type', (type, schema) => {
         return (type as unknown) === ToolEnum.MWD
@@ -188,8 +188,8 @@ export default function ManageToolDialog({
               <>
                 <FormControl
                   error={
-                    formik.touched.max_dpoints &&
-                    Boolean(formik.errors.max_dpoints)
+                    formik.touched.maxDPoints &&
+                    Boolean(formik.errors.maxDPoints)
                   }
                 >
                   <FormLabel>Max Dpoints</FormLabel>
@@ -197,17 +197,17 @@ export default function ManageToolDialog({
                     type="number"
                     inputProps={{ min: 1 }}
                     placeholder="Enter tool max dpoints"
-                    {...formik.getFieldProps('max_dpoints')}
+                    {...formik.getFieldProps('maxDPoints')}
                     disabled={isSubmitting}
                     size="small"
                   />
                   <FormHelperText>
-                    {formik.touched.max_dpoints && formik.errors.max_dpoints}
+                    {formik.touched.maxDPoints && formik.errors.maxDPoints}
                   </FormHelperText>
                 </FormControl>
                 <FormControl
                   error={
-                    formik.touched.max_bits && Boolean(formik.errors.max_bits)
+                    formik.touched.maxBits && Boolean(formik.errors.maxBits)
                   }
                 >
                   <FormLabel>Max bits</FormLabel>
@@ -215,12 +215,12 @@ export default function ManageToolDialog({
                     type="number"
                     inputProps={{ min: 1 }}
                     placeholder="Enter tool max bits"
-                    {...formik.getFieldProps('max_bits')}
+                    {...formik.getFieldProps('maxBits')}
                     disabled={isSubmitting}
                     size="small"
                   />
                   <FormHelperText>
-                    {formik.touched.max_bits && formik.errors.max_bits}
+                    {formik.touched.maxBits && formik.errors.maxBits}
                   </FormHelperText>
                 </FormControl>
               </>

@@ -1,4 +1,4 @@
-import { CreateTool, MWDTool } from '../../../../types';
+import { CreateTool } from '../../../../types';
 import { ToolEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
@@ -31,7 +31,11 @@ export class ToolsService implements ToolInterface {
     const newTool: ToolRecord = {
       value: {
         ...(createTool.type === ToolEnum.MWD
-          ? { ...(createTool as MWDTool), type: ToolEnum.MWD }
+          ? {
+              ...createTool,
+              maxBits: Number(createTool.maxBits),
+              maxDPoints: Number(createTool.maxDPoints),
+            }
           : { ...createTool, type: ToolEnum.LWD }),
         id: getRandomID(),
       },

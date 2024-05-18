@@ -5,8 +5,8 @@ export interface CreateTool {
   version: string;
   long: string;
   type: ToolEnum;
-  max_bits?: number;
-  max_dpoints?: number;
+  maxBits?: number;
+  maxDPoints?: number;
 }
 
 export interface ITool extends CreateTool {

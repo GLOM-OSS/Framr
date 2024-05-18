@@ -25,6 +25,7 @@ export class DPointsService implements DPointInterface {
       value: {
         ...createDpoint,
         id: getRandomID(),
+        bits: Number(createDpoint.bits),
       },
     };
 
