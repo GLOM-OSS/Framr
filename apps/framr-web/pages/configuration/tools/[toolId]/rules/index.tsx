@@ -95,7 +95,7 @@ export default function RuleManagement() {
   }
 
   function fetchRules(toolId: string) {
-    eventBus.once<Rule[]>(
+    eventBus.on<Rule[]>(
       RulesEventChannel.FIND_ALL_RULES_CHANNEL,
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {

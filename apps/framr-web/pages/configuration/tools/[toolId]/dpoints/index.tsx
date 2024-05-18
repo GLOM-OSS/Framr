@@ -42,7 +42,7 @@ export default function ToolManagement() {
   });
 
   function fetchTool(toolId: string) {
-    eventBus.once<Tool>(
+    eventBus.on<Tool>(
       ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
@@ -57,7 +57,7 @@ export default function ToolManagement() {
   const [dPoints, setDPoints] = useState<DPoint[]>([]);
 
   function fetchDPoints(toolId: string) {
-    eventBus.once<DPoint[]>(
+    eventBus.on<DPoint[]>(
       DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {

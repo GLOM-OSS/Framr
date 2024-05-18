@@ -36,7 +36,7 @@ export default function ToolManagement() {
   const [tool, setTool] = useState<Tool>();
 
   function fetchTool(toolId: string) {
-    eventBus.once<Tool>(
+    eventBus.on<Tool>(
       ToolsEventChannel.FIND_ONE_TOOLS_CHANNEL,
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
@@ -50,7 +50,7 @@ export default function ToolManagement() {
   const servicesService = new ServicesService();
   const [services, setServices] = useState<Service[]>([]);
   function fetchServices(toolId: string) {
-    eventBus.once<Service[]>(
+    eventBus.on<Service[]>(
       ServicesEventChannel.FIND_ALL_SERVICES_CHANNEL,
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {

@@ -22,7 +22,7 @@ export default function ToolManagement() {
   const [tools, setTools] = useState<Tool[]>([]);
 
   function fetchTools() {
-    eventBus.once<Tool[]>(
+    eventBus.on<Tool[]>(
       ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL,
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
