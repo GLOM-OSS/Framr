@@ -25,7 +25,7 @@ import {
   CreateGeneratorConfig,
   GeneratorConfig,
   GeneratorConfigRule,
-  IGeneratorConfigTool,
+  GeneratorConfigTool,
   LWDGeneratorConfigTool,
   LWDTool,
   MWDGeneratorConfigTool,
@@ -55,7 +55,7 @@ interface ICreateGeneratorConfig {
 interface FrameGeneratorConfigProps {
   data?: GeneratorConfig;
   submitConfig: (data: GeneratorConfig) => void;
-  ruleTool?: IGeneratorConfigTool;
+  ruleTool?: GeneratorConfigTool;
 }
 export default function FrameGeneratorConfig({
   data,
@@ -88,7 +88,6 @@ export default function FrameGeneratorConfig({
       ({ data, status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setRules(data);
-          console.log(data)
         }
       }
     );
@@ -166,7 +165,6 @@ export default function FrameGeneratorConfig({
         MWDTool: selectedMWDTool as MWDGeneratorConfigTool,
         tools: selectedLWDTools,
       };
-      console.log(selectedLWDTools)
 
       submitConfig(framrService.initialize(submitData));
       setSelectedLWDTools([]);
@@ -176,19 +174,17 @@ export default function FrameGeneratorConfig({
   });
 
   function computeGeneratorConfigTools(tools: Tool[]) {
-    const newGeneratorConfigTools: IGeneratorConfigTool[] = tools.map(
-      (tool) => {
-        const configTool: IGeneratorConfigTool = {
-          ...tool,
-          rules: rules
-            .filter((_) => _.tool.id === tool.id)
-            .map((rule) => {
-              return { ...rule, isActive: true, isGeneric: true };
-            }),
-        };
-        return configTool;
-      }
-    );
+    const newGeneratorConfigTools: GeneratorConfigTool[] = tools.map((tool) => {
+      const configTool: GeneratorConfigTool = {
+        ...tool,
+        rules: rules
+          .filter((_) => _.tool.id === tool.id)
+          .map((rule) => {
+            return { ...rule, isActive: true, isGeneric: true };
+          }),
+      };
+      return configTool;
+    });
     return newGeneratorConfigTools;
   }
 
@@ -205,10 +201,10 @@ export default function FrameGeneratorConfig({
   }
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [activeTool, setActiveTool] = useState<IGeneratorConfigTool>();
+  const [activeTool, setActiveTool] = useState<GeneratorConfigTool>();
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState<boolean>(false);
 
-  const toolColumns: GridColDef<IGeneratorConfigTool>[] = [
+  const toolColumns: GridColDef<GeneratorConfigTool>[] = [
     { field: 'name', headerName: 'Tool Name', flex: 1 },
     {
       field: 'action',
@@ -230,7 +226,7 @@ export default function FrameGeneratorConfig({
   ];
 
   function handleSaveConfigRules(
-    tool: IGeneratorConfigTool,
+    tool: GeneratorConfigTool,
     rules: GeneratorConfigRule[]
   ) {
     const newSelectedTools = selectedLWDTools.map((selectedTool) => {

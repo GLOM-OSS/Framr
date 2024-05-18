@@ -7,10 +7,10 @@ import {
   ServicesService,
 } from '../../services';
 import { EventBus, EventBusChannelStatus } from '../../services/libs/event-bus';
-import { DPoint, IGeneratorConfigTool, Service } from '../../types';
+import { DPoint, GeneratorConfigTool, Service } from '../../types';
 import { ToolCard } from './ToolCard';
 interface ToolProps {
-  tool: IGeneratorConfigTool;
+  tool: GeneratorConfigTool;
   getDPoints: (
     selectedDPoints: DPoint[],
     prevSelectedDPoints: DPoint[]

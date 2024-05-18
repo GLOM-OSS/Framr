@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react';
 import { Box, InputAdornment, TextField } from '@mui/material';
 import Scrollbars from 'rc-scrollbars';
 import { useEffect, useState } from 'react';
-import { DPoint, GeneratorConfig, IGeneratorConfigTool } from '../../types';
+import { DPoint, GeneratorConfig, GeneratorConfigTool } from '../../types';
 import Tool from './Tool';
 
 interface ToolListProps {
@@ -14,7 +14,7 @@ export default function ToolList({
   data: { MWDTool, tools },
   getDPoints,
 }: ToolListProps) {
-  const toolList: IGeneratorConfigTool[] = [MWDTool, ...tools];
+  const toolList: GeneratorConfigTool[] = [MWDTool, ...tools];
   const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
 
   useEffect(() => {

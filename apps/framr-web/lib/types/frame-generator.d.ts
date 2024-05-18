@@ -30,7 +30,7 @@ export interface MWDGeneratorConfigTool extends MWDTool {
   rules: GeneratorConfigRule[];
 }
 
-export type IGeneratorConfigTool =
+export type GeneratorConfigTool =
   | MWDGeneratorConfigTool
   | LWDGeneratorConfigTool;
 
