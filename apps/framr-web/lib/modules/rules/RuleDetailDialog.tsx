@@ -158,7 +158,7 @@ export default function RuleDetailDialog({
                   Primary DPoint
                 </Typography>
                 <Typography sx={{ fontWeight: 500, color: '#2F3A45' }}>
-                  {data.tool.name}
+                  {data.concernedDpoint.name}
                 </Typography>
               </Box>
 
