@@ -56,11 +56,13 @@ interface FrameGeneratorConfigProps {
   data?: GeneratorConfig;
   submitConfig: (data: GeneratorConfig) => void;
   ruleTool?: GeneratorConfigTool;
+  framrService: FramrService;
 }
 export default function FrameGeneratorConfig({
   data,
   submitConfig,
   ruleTool,
+  framrService,
 }: FrameGeneratorConfigProps) {
   const eventBus = new EventBus();
   const toolsService = new ToolsService();
@@ -142,8 +144,6 @@ export default function FrameGeneratorConfig({
   const [selectedMWDTool, setSelectedMWDTool] = useState<
     MWDGeneratorConfigTool | undefined
   >(data?.MWDTool);
-
-  const framrService = new FramrService();
 
   const formik = useFormik({
     initialValues,

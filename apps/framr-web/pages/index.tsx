@@ -132,19 +132,12 @@ export default function FrameGenerator() {
   }
 
   useEffect(() => {
-    if (framrService.generatorConfig) {
+    if (framrService.generatorConfig && selectedDPoints.length > 0) {
       framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
       setFrameConfig(framrService.generatorConfig);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDPoints]);
-
-  useEffect(() => {
-    if (framrService.generatorConfig) {
-      framrService.orderFramesets(activeFSL);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameConfig]);
 
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
@@ -155,6 +148,7 @@ export default function FrameGenerator() {
       <FrameGeneratorConfig
         ruleTool={ruleTool}
         data={frameConfig}
+        framrService={framrService}
         submitConfig={(data) => {
           setFrameConfig(data);
           setIsConfigOpen(false);
