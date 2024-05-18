@@ -6,11 +6,13 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
+  GeneratorConfigTool,
   RuleWithOtherDPoint,
 } from '../../../../types';
 import {
   FrameEnum,
   StandAloneRuleEnum,
+  ToolEnum,
   WithConstraintRuleEnum,
 } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
@@ -25,7 +27,7 @@ import {
 
 export class FramrService {
   private readonly xmlIO: XmlIO;
-  private rulesHandler: RulesHandler;
+  // private rulesHandler: RulesHandler;
 
   private _generatorConfig: GeneratorConfig | null = null;
   public get generatorConfig(): GeneratorConfig | null {
@@ -35,25 +37,14 @@ export class FramrService {
     this._generatorConfig = value;
   }
 
-  public get orderedDPoints(): FramesetDpoint[] {
-    return this.rulesHandler.orderedDPoints;
-  }
-  public set orderedDPoints(value: FramesetDpoint[]) {
-    this.rulesHandler.orderedDPoints = value;
-  }
-
   constructor(config?: GeneratorConfig) {
     this.xmlIO = new XmlIO();
-    this.rulesHandler = new RulesHandler();
+    // this.rulesHandler = new RulesHandler();
     if (config) {
       this.generatorConfig = config;
     }
   }
   initialize(config: CreateGeneratorConfig) {
-    if (this.generatorConfig) {
-      throw new FramrServiceError('Service was already initialized');
-    }
-
     const initializeFramesets = (frameType: FSLFrameType | FrameEnum.UTIL) => {
       return {
         frame: frameType,
@@ -116,13 +107,13 @@ export class FramrService {
           )
         )
         .map((dpoint) => getFramesetDPoint(dpoint));
-      if (frame !== FrameEnum.UTIL) {
-        currentFSL.framesets[frame] = {
+      if (frame === FrameEnum.UTIL) {
+        generatorConfig.framesets.utility = {
           frame,
           dpoints: framesetDPoints,
         };
       } else {
-        generatorConfig.framesets.utility = {
+        currentFSL.framesets[frame] = {
           frame,
           dpoints: framesetDPoints,
         };
@@ -185,7 +176,7 @@ export class FramrService {
       framesets: fslFramesets,
     } = this.getCurrentFSL(fslNumber);
     // order DPoints and populate the orderedDPoints array
-    this.orderDPoints(frame, dpoints, generatorConfig);
+    const orderedDPoints = this.orderDPoints(frame, dpoints, generatorConfig);
 
     this.generatorConfig = {
       ...generatorConfig,
@@ -197,7 +188,7 @@ export class FramrService {
                 number: fslNumber,
                 framesets: {
                   ...fslFramesets,
-                  [frame]: { frame, dpoints: this.orderedDPoints },
+                  [frame]: { frame, dpoints: orderedDPoints },
                 },
               }
             : fslInstance
@@ -315,11 +306,10 @@ export class FramrService {
       )
     );
 
-    this.rulesHandler = new RulesHandler(frame);
+    const rulesHandler = new RulesHandler(frame);
 
     // Add first data points to the ordered list, handling conflicts
-    this.rulesHandler.handleFirstDPoints(firstDPoints, rules);
-
+    rulesHandler.handleFirstDPoints(firstDPoints, rules);
     const remainingValidDPoints = remainingDPoints.filter(
       (remainingDPoint) =>
         !rules.some(
@@ -330,7 +320,7 @@ export class FramrService {
     );
 
     const { bitConstraintDPoints, nonConstraintDPoints } =
-      this.rulesHandler.filterAndBuildBitConstraintData(
+      rulesHandler.filterAndBuildBitConstraintData(
         remainingValidDPoints,
         rules,
         generatorConfig
@@ -354,12 +344,12 @@ export class FramrService {
 
     // Process non constraint remaining data points and apply rules
     for (const dpoint of nonConstraintDPoints) {
-      const bitsCount = this.orderedDPoints.reduce(
+      const bitsCount = rulesHandler.orderedDPoints.reduce(
         (bitsCount, _) => bitsCount + _.bits,
         0
       );
       if (bitsCount > 0) {
-        ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
+        ({ cursors, mwdDPoints } = rulesHandler.handle80BitsRule(
           mwdDPoints,
           { ...cursors, bitsCount },
           generatorConfig
@@ -367,35 +357,37 @@ export class FramrService {
       }
 
       // Handle rule with bit constraints
-      this.rulesHandler.handleBitContraintRule(
+      rulesHandler.handleBitContraintRule(
         bitConstraintDPoints,
         bitsCount,
         rules
       );
 
       // Handle all other rules
-      const dpointSet = this.rulesHandler.handleDPointRules(dpoint, rules);
-
-      // Add the data point to the ordered list
-      const dpointPosition = this.rulesHandler.addDPointSetToOrderedList(
-        dpoint,
-        rules,
-        dpointSet
-      );
-
-      // handle should not rules
-      this.rulesHandler.handleProhibitiveRules(dpointPosition, dpoint, rules);
+      rulesHandler.handleDPointRules(dpoint, rules);
 
       // Handle frameset overloading dpoints
-      this.rulesHandler.handleOverloadingDPoints(generatorConfig);
+      rulesHandler.handleOverloadingDPoints(generatorConfig);
     }
+
+    return rulesHandler.orderedDPoints;
   }
 
   // private getRules(toolId?: string) {
   getRules(toolId?: string) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
     const rules: GeneratorConfigRule[] = [];
+    const mainTool: GeneratorConfigTool = {
+      ...this.generatorConfig.MWDTool,
+      type: ToolEnum.LWD,
+    };
+
+    const tools = this.generatorConfig.tools.concat(mainTool);
     if (toolId) {
-      const toolRules = this.generatorConfig?.tools
+      const toolRules = tools
         .find((_) => _.id === toolId)
         ?.rules.filter((_) => _.isActive);
       if (!toolRules) {
@@ -403,7 +395,7 @@ export class FramrService {
       }
       rules.push(...toolRules);
     } else {
-      for (const tool of this.generatorConfig?.tools ?? []) {
+      for (const tool of tools) {
         rules.push(...tool.rules.filter((_) => _.isActive));
       }
     }

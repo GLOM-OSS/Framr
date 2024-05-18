@@ -80,7 +80,7 @@ export class RulesHandler {
     this._orderedDPoints = value;
   }
 
-  constructor(private readonly frame?: FrameEnum) {}
+  constructor(private readonly frame: FrameEnum) {}
 
   /**
    * Handles the ordering of data points intended to be first, considering conflicts and applying rules.
@@ -133,9 +133,28 @@ export class RulesHandler {
    * Handles rules related to an individual data point, including constraints and sequencing.
    * @param dpoint The data point to handle.
    * @param rules Generator config rules.
-   * @returns 0 if conflicting rules apply, 1 otherwise.
    */
-  handleDPointRules(
+  handleDPointRules(dpoint: FramesetDpoint, rules: GeneratorConfigRule[]) {
+    const dpointSet = this.handleDPointSequencingRules(dpoint, rules);
+
+    // Add the data point to the ordered list
+    const dpointPosition = this.addDPointSetToOrderedList(
+      dpoint,
+      rules,
+      dpointSet
+    );
+
+    // handle should not rules
+    this.handleProhibitiveRules(dpointPosition, dpoint, rules);
+  }
+
+  /**
+   * Handles data point sequencing (preceded by, followed by, set only) rules.
+   * @param dpoint The data point to handle.
+   * @param rules Generator config rules.
+   * @returns an array containing the dpoint and if applicable its other dpoints.
+   */
+  handleDPointSequencingRules(
     dpoint: FramesetDpoint,
     rules: GeneratorConfigRule[]
   ): FramesetDpoint[] {
@@ -145,6 +164,7 @@ export class RulesHandler {
         WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
       ])
     ) as RuleWithOtherDPoint | undefined;
+
     const followedByRule = rules.find((rule) =>
       this.rulePredicate(rule, dpoint.id, [
         WithOtherDPointRuleEnum.SHOULD_BE_FOLLOWED_BY_OTHER,
@@ -152,7 +172,15 @@ export class RulesHandler {
       ])
     ) as RuleWithOtherDPoint | undefined;
 
-    if (
+    const shouldBeSetOnly = rules.find((rule) =>
+      this.rulePredicate(rule, dpoint.id, [
+        WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY,
+      ])
+    ) as RuleWithOtherDPoint | undefined;
+
+    if (!followedByRule && !precededByRule && !shouldBeSetOnly) {
+      return [dpoint];
+    } else if (
       precededByRule &&
       followedByRule &&
       precededByRule.otherDpoints.some((otherDPoint) =>
@@ -213,12 +241,6 @@ export class RulesHandler {
         //   }
         // }
       }
-
-      const shouldBeSetOnly = rules.find((rule) =>
-        this.rulePredicate(rule, dpoint.id, [
-          WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY,
-        ])
-      ) as RuleWithOtherDPoint | undefined;
 
       if (shouldBeSetOnly) {
         dpointSet.push(
@@ -344,14 +366,14 @@ export class RulesHandler {
     bitsCount: number,
     rules: GeneratorConfigRule[]
   ) {
-    const otherDPoints: FramesetDpoint[] = [];
     dpoints
       .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
       .forEach((cdp) => {
         const originalIndex = dpoints.findIndex(
           (_) => _.dpoint.id === cdp.dpoint.id
         );
-        otherDPoints.push(cdp.dpoint);
+        const dpointSet = this.handleDPointSequencingRules(cdp.dpoint, rules);
+        this.orderedDPoints.push(...dpointSet);
         dpoints[originalIndex] = {
           ...cdp,
           lastCount: this.orderedDPoints.reduce(
@@ -360,17 +382,13 @@ export class RulesHandler {
           ),
         };
       });
-    if (otherDPoints.length > 0) {
-      const orderedDPoints = this.handleOtherDPointsRules(otherDPoints, rules);
-      this.orderedDPoints.push(...orderedDPoints);
-    }
   }
 
   handleOverloadingDPoints(generatorConfig: GeneratorConfig) {
     const { maxBits, maxDPoints } = generatorConfig.MWDTool;
     let bitsCount = 0;
     this.orderedDPoints = this.orderedDPoints.map((dpoint, i) => {
-      bitsCount += dpoint.bits;
+      bitsCount += Number(dpoint.bits);
       return {
         ...dpoint,
         error:
@@ -542,25 +560,6 @@ export class RulesHandler {
         },
       ];
     }
-  }
-
-  /**
-   * Handles rules associated with other data points (nested within another rule),
-   * recursively applying rules.
-   * @param otherDPoints
-   * @param rules
-   * @returns an ordered list of dpoints
-   */
-  private handleOtherDPointsRules(
-    otherDPoints: FramesetDpoint[],
-    rules: GeneratorConfigRule[],
-    concernedDpointId?: string
-  ) {
-    const nestedRuleHandler = new RulesHandler(this.frame);
-    otherDPoints
-      .filter((_) => _.id !== concernedDpointId)
-      .forEach((dpoint) => nestedRuleHandler.handleDPointRules(dpoint, rules));
-    return nestedRuleHandler.orderedDPoints;
   }
 
   private rulePredicate(
