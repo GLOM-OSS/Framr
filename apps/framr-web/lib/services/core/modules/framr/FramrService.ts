@@ -374,7 +374,17 @@ export class FramrService {
       );
 
       // Handle all other rules
-      this.rulesHandler.handleDPointRules(dpoint, rules);
+      const dpointSet = this.rulesHandler.handleDPointRules(dpoint, rules);
+
+      // Add the data point to the ordered list
+      const dpointPosition = this.rulesHandler.addDPointSetToOrderedList(
+        dpoint,
+        rules,
+        dpointSet
+      );
+
+      // handle should not rules
+      this.rulesHandler.handleProhibitiveRules(dpointPosition, dpoint, rules);
 
       // Handle frameset overloading dpoints
       this.rulesHandler.handleOverloadingDPoints(generatorConfig);

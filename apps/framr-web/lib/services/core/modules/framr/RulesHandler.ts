@@ -135,7 +135,10 @@ export class RulesHandler {
    * @param rules Generator config rules.
    * @returns 0 if conflicting rules apply, 1 otherwise.
    */
-  handleDPointRules(dpoint: FramesetDpoint, rules: GeneratorConfigRule[]) {
+  handleDPointRules(
+    dpoint: FramesetDpoint,
+    rules: GeneratorConfigRule[]
+  ): FramesetDpoint[] {
     const precededByRule = rules.find((rule) =>
       this.rulePredicate(rule, dpoint.id, [
         WithOtherDPointRuleEnum.SHOULD_BE_PRECEDED_BY_OTHER,
@@ -157,28 +160,58 @@ export class RulesHandler {
       )
     ) {
       // If both preceded by and followed by rules exist, mark the data point with an error
-      this.orderedDPoints.push({
-        ...dpoint,
-        error: `Dpoint cannot be both preceded by and followed by the same other DPoint`,
-      });
-      return 0;
+      return [
+        {
+          ...dpoint,
+          error: `Dpoint cannot be both preceded by and followed by the same other DPoint`,
+        },
+      ];
     } else {
-      // Add the data point to the ordered list if no conflicting rule applies
-      if (!this.orderedDPoints.some((dp) => dp.id === dpoint.id)) {
-        this.orderedDPoints.push(dpoint);
-      }
-      const dpointPosition = this.orderedDPoints.findIndex(
-        (dp) => dp.id === dpoint.id
-      );
-      const result = this.handleProhibitiveRules(dpointPosition, dpoint, rules);
-      if (result === 0) return 0;
+      const dpointSet: FramesetDpoint[] = [];
+      // // Add the data point to the ordered list if no conflicting rule applies
+      // if (!this.orderedDPoints.some((dp) => dp.id === dpoint.id)) {
+      //   this.orderedDPoints.push(dpoint);
+      // }
+      // const dpointPosition = this.orderedDPoints.findIndex(
+      //   (dp) => dp.id === dpoint.id
+      // );
+      // const result = this.handleProhibitiveRules(dpointPosition, dpoint, rules);
+      // if (result === 0) return 0;
 
       if (followedByRule) {
-        this.handleSequentialRule(dpointPosition + 1, followedByRule, rules);
+        dpointSet.push(
+          dpoint,
+          ...followedByRule.otherDpoints.map((dpoint) =>
+            getFramesetDPoint(dpoint)
+          )
+        );
+        // const [otherDPoint] = followedByRule.otherDpoints;
+        // if (otherDPoint) {
+        //   const otherDPointPosition = this.orderedDPoints.findIndex(
+        //     (dp) => dp.dpointId === otherDPoint.id
+        //   );
+        //   if (otherDPointPosition !== -1) {
+        //     this.orderedDPoints.splice(otherDPointPosition + 1, 0, dpoint);
+        //   }
+        // }
       }
 
       if (precededByRule) {
-        this.handleSequentialRule(dpointPosition, precededByRule, rules);
+        dpointSet.push(
+          ...precededByRule.otherDpoints.map((dpoint) =>
+            getFramesetDPoint(dpoint)
+          ),
+          dpoint
+        );
+        // const [otherDPoint] = precededByRule.otherDpoints;
+        // if (otherDPoint) {
+        //   const otherDPointPosition = this.orderedDPoints.findIndex(
+        //     (dp) => dp.dpointId === otherDPoint.id
+        //   );
+        //   if (otherDPointPosition !== -1) {
+        //     this.orderedDPoints.splice(otherDPointPosition, 0, dpoint);
+        //   }
+        // }
       }
 
       const shouldBeSetOnly = rules.find((rule) =>
@@ -188,16 +221,16 @@ export class RulesHandler {
       ) as RuleWithOtherDPoint | undefined;
 
       if (shouldBeSetOnly) {
-        return this.handleSetOnlyRule(
-          dpointPosition,
-          dpoint,
-          shouldBeSetOnly,
-          rules,
-          precededByRule,
-          followedByRule
+        dpointSet.push(
+          ...this.handleSetOnlyRule(
+            dpoint,
+            shouldBeSetOnly,
+            precededByRule,
+            followedByRule
+          )
         );
       }
-      return 1;
+      return dpointSet;
     }
   }
 
@@ -256,7 +289,7 @@ export class RulesHandler {
       (dpoint) =>
         rules.some((rule) =>
           this.rulePredicate(rule, dpoint.id, [
-            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
             WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
           ])
         )
@@ -357,7 +390,7 @@ export class RulesHandler {
    * @param rules generator config rule
    * @returns 0 if the dpoint has an error and 1 if everything went well
    */
-  private handleProhibitiveRules(
+  handleProhibitiveRules(
     dpointPosition: number,
     dpoint: FramesetDpoint,
     rules: GeneratorConfigRule[]
@@ -403,29 +436,61 @@ export class RulesHandler {
     return 1;
   }
 
-  /**
-   * Handles rules requiring sequential placement of data points relative to each other.
-   * @param dpointPosition The position where dpoint should insert
-   * @param sequentialRule This can either be a followed by or a preceded by rule
-   * @param rules generator config rule
-   */
-  private handleSequentialRule(
-    dpointPosition: number,
-    sequentialRule: RuleWithOtherDPoint,
-    rules: GeneratorConfigRule[]
-  ): void {
-    const otherDPoints = sequentialRule.otherDpoints.map<FramesetDpoint>((dp) =>
-      getFramesetDPoint(dp)
-    );
-    if (otherDPoints.length > 0) {
-      const concernedDpointId = sequentialRule.concernedDpoint.id;
-      const orderedOtherDPoints = this.handleOtherDPointsRules(
-        otherDPoints,
-        rules,
-        concernedDpointId
-      );
-      this.orderedDPoints.splice(dpointPosition, 0, ...orderedOtherDPoints);
+  addDPointSetToOrderedList(
+    dpoint: FramesetDpoint,
+    rules: GeneratorConfigRule[],
+    dpointSet: FramesetDpoint[]
+  ) {
+    if (!this.orderedDPoints.some((dp) => dp.id === dpoint.id)) {
+      this.orderedDPoints.push(dpoint);
     }
+
+    // order dpoints
+    let i = this.orderedDPoints.length;
+    while (i > 1) {
+      i--;
+
+      const curentDPoint = this.orderedDPoints[i];
+      const previousDPoint = this.orderedDPoints[i - 1];
+      if (
+        rules.some(
+          (rule) =>
+            rule.concernedDpoint.id === previousDPoint.dpointId &&
+            StandAloneRuleEnum.SHOULD_BE_THE_FIRST === rule.description
+        )
+      ) {
+        break;
+      } else if (
+        rules.some(
+          (rule) =>
+            (this.rulePredicate(rule, previousDPoint.dpointId, [
+              WithOtherDPointRuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER,
+              WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER,
+            ]) &&
+              (rule as RuleWithOtherDPoint).otherDpoints.some(
+                (_) => _.id === curentDPoint.dpointId
+              )) ||
+            (this.rulePredicate(rule, curentDPoint.dpointId, [
+              WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
+              WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
+            ]) &&
+              (rule as RuleWithOtherDPoint).otherDpoints.some(
+                (_) => _.id === previousDPoint.dpointId
+              ))
+        )
+      ) {
+        // moves the point one steps up if there is a rule that forbits
+        // that it should be preceded by the previous or that the previous should
+        // should be followed by the current dpoint
+        this.orderedDPoints[i] = previousDPoint;
+        this.orderedDPoints[i - 1] = curentDPoint;
+      }
+    }
+    const dpointPosition = this.orderedDPoints.findIndex(
+      (dp) => dp.id === dpoint.id
+    );
+    this.orderedDPoints.splice(dpointPosition, 1, ...dpointSet);
+    return dpointPosition;
   }
 
   /**
@@ -439,13 +504,11 @@ export class RulesHandler {
    * @returns 0 if the dpoint has an error and 1 if everything went well
    */
   private handleSetOnlyRule(
-    dpointPosition: number,
     dpoint: FramesetDpoint,
     setOnlyRule: RuleWithOtherDPoint,
-    rules: GeneratorConfigRule[],
     precededByRule?: RuleWithOtherDPoint,
     followedByRule?: RuleWithOtherDPoint
-  ) {
+  ): FramesetDpoint[] {
     const [precededByRuleCommonDPoints, uncommonOtherDPoints1] = partition(
       setOnlyRule.otherDpoints,
       (otherDPoint) =>
@@ -469,30 +532,16 @@ export class RulesHandler {
       const otherDPoints = setOnlyRuleOtherDPoints.map<FramesetDpoint>(
         (dpoint) => getFramesetDPoint(dpoint)
       );
-      if (otherDPoints.length > 0) {
-        const orderedOtherDPoints = this.handleOtherDPointsRules(
-          otherDPoints,
-          rules,
-          dpoint.id
-        );
-        this.orderedDPoints.splice(
-          dpointPosition +
-            (shouldInsertAfter
-              ? followedByRuleCommonDPoints.length + 1
-              : -precededByRuleCommonDPoints.length),
-          0,
-          ...orderedOtherDPoints
-        );
-      }
+      return [dpoint, ...otherDPoints];
     } else {
-      this.orderedDPoints.splice(dpointPosition, 1, {
-        ...dpoint,
-        error:
-          'DPoints following or preceding DPoint are conflicting with DPoint set',
-      });
-      return 0;
+      return [
+        {
+          ...dpoint,
+          error:
+            'DPoints following or preceding DPoint are conflicting with DPoint set',
+        },
+      ];
     }
-    return 1;
   }
 
   /**
