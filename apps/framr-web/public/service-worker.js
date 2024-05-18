@@ -12,8 +12,8 @@ const fetchBaseHref = async () => {
     response = await cache.match(manifestUrl);
   }
 
-  const manifest = await response?.json();
-  const baseHref = manifest?.start_url;
+  const manifest = await response.json();
+  const baseHref = manifest.start_url;
 
   return baseHref;
 };
@@ -23,29 +23,24 @@ const addResourcesToCache = async (resources) => {
   await cache.addAll(resources);
 };
 
-const putInCache = async (request, response) => {
+const cacheResponse = async (request, response) => {
   const cache = await caches.open('v2');
-  // only cache requests from http or https,
-  // this originated as extension requests
-  // will also be cached and
-  // creates problems on the cache.put command
-  if (request.url.startsWith('http') || request.url.startsWith('https'))
+  if (request.url.startsWith('http') || request.url.startsWith('https')) {
     await cache.put(request, response);
+  }
 };
 
-const cacheFirst = async (request) => {
-  // Try to get the resource from the cache
-  const responseFromCache = await caches.match(request);
-  if (responseFromCache) {
-    return responseFromCache;
-  }
+const networkErrorResponse = new Response('Network error happened', {
+  status: 408,
+  headers: { 'Content-Type': 'text/plain' },
+});
 
-  // Try to get the resource from the network
+async function fetchAndCache(request) {
   try {
-    const responseFromNetwork = await fetch(request);
+    const networkResponse = await fetch(request);
     // response can only be used once so we clone a copy for cache
-    putInCache(request, responseFromNetwork.clone());
-    return responseFromNetwork;
+    cacheResponse(request, networkResponse.clone());
+    return networkResponse;
   } catch (error) {
     const fallbackResponse = await caches.match(await fetchBaseHref());
     if (fallbackResponse) {
@@ -53,12 +48,30 @@ const cacheFirst = async (request) => {
     }
 
     // Even when the fallback response is not available,
-    // we must always return a Response object
-    return new Response('Network error happened', {
-      status: 408,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+    // return a predefined network error response
+    return networkErrorResponse;
   }
+}
+
+/**
+ * This function gets a requests, and if the network is open
+ * fetches the response from the network,
+ * else verifies if the cache has the resource and returns that
+ * else returns a custom error response
+ *
+ * @param request
+ * @returns Response to request
+ */
+const fetchRequestResponse = async (request) => {
+  if (navigator.onLine) {
+    return await fetchAndCache(request);
+  }
+  // Try to get the resource from the cache
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  return networkErrorResponse;
 };
 
 // Enable navigation preload
@@ -69,15 +82,19 @@ const enableNavigationPreload = async () => {
 };
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(enableNavigationPreload());
+  event.waitUntil(
+    (async () => {
+      enableNavigationPreload();
+    })()
+  );
 });
 
 self.addEventListener('install', (event) => {
   event.waitUntil(async () => {
-    addResourcesToCache([await fetchBaseHref()]);
+    await addResourcesToCache([await fetchBaseHref()]);
   });
 });
 
 self.addEventListener('fetch', (event) => {
-  event.respondWith(cacheFirst(event.request));
+  event.respondWith(fetchRequestResponse(event.request));
 });
