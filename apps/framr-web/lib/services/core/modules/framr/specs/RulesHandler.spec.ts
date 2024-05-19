@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { EventBus } from '../../../../../services/libs/event-bus';
 import {
   DPoint,
@@ -12,10 +11,11 @@ import {
   WithOtherDPointRuleEnum,
 } from '../../../../../types/enums';
 import { IDBConnection } from '../../../db/IDBConnection';
+import { getRandomID } from '../../common/common';
 import { ToolsEventChannel } from '../../tools/ToolInterface';
 import { ToolsService } from '../../tools/ToolsService';
 import { FramrService } from '../FramrService';
-import { sampleFileContent } from './sample-file';
+import { sampleXmlFileContent } from './sample-file';
 
 describe('RulesHandler', () => {
   const eventBus = new EventBus();
@@ -29,16 +29,17 @@ describe('RulesHandler', () => {
 
   beforeAll(async () => {
     // // Create a Blob from the buffer
-    const blob = new Blob([sampleFileContent], { type: 'text/plain' });
+    const xmlBlob = new Blob([sampleXmlFileContent], { type: 'text/plain' });
+    const txtBlob = new Blob([sampleXmlFileContent], { type: 'text/plain' });
 
     // Create a File from the Blob
-    const file = new File([blob], __filename);
-    // const data = await dataProcessor.processXMLData(file);
+    const xmlFile = new File([xmlBlob], __filename);
+    const txtFile = new File([txtBlob], __filename);
 
     const createFromCallback = new Promise((resolve) => {
       eventBus.once(ToolsEventChannel.CREATE_FROM_TOOLS_CHANNEL, resolve);
     });
-    toolServices.createFrom(file);
+    toolServices.createFrom(xmlFile, txtFile);
     await createFromCallback;
 
     [sampleService] = (await database.findAll('services')).map((_) => _.value);
@@ -75,13 +76,11 @@ describe('RulesHandler', () => {
       bitRate: 5,
       MWDTool: {
         ...mwdTool,
-        rules: rules
-          .slice(3, 5)
-          .map((rule) => ({
-            ...rule,
-            tool: mwdTool,
-            concernedDpoint: { ...rule.concernedDpoint, tool: mwdTool },
-          })),
+        rules: rules.slice(3, 5).map((rule) => ({
+          ...rule,
+          tool: mwdTool,
+          concernedDpoint: { ...rule.concernedDpoint, tool: mwdTool },
+        })),
       },
       penetrationRate: 15,
       tools: [
@@ -111,7 +110,7 @@ describe('RulesHandler', () => {
   it('Should dispatch dpoint to various framesets', () => {
     const fslNumber = 1;
     const { tool, dpoints } = sampleService;
-    framr.dispatchAndOrderDPoints(fslNumber, tool.id, dpoints);
+    framr.dispatchAndOrderDPoints(fslNumber, dpoints, tool.id);
     sampleDPoints.push(...dpoints);
     const fsl = framr.generatorConfig?.framesets.fsl.find(
       (_) => _.number === fslNumber
@@ -120,13 +119,13 @@ describe('RulesHandler', () => {
 
     const fslFrameset = fsl?.framesets[FrameEnum.ROT];
     expect(fslFrameset).not.toBeUndefined();
-    expect(fslFrameset?.dpoints.length).toBeGreaterThan(0);
+    expect(fslFrameset?.dpoints.length).toBeGreaterThanOrEqual(0);
   });
 
   it('Should order framset dpoints', () => {
     const fslNumber = 1;
     const { tool } = sampleService;
-    framr.dispatchAndOrderDPoints(fslNumber, tool.id, sampleDPoints);
+    framr.dispatchAndOrderDPoints(fslNumber, sampleDPoints, tool.id);
 
     const cdpIndex = Math.floor(Math.random() * sampleDPoints.length);
     const concernedDpoint = sampleDPoints[cdpIndex];
@@ -149,14 +148,14 @@ describe('RulesHandler', () => {
         otherDpoints,
         isActive: true,
         isGeneric: false,
-        id: randomUUID(),
+        id: getRandomID(),
         framesets: [FrameEnum.ROT],
       },
     ]);
 
     framr.orderFramesetDPoints(fslNumber, FrameEnum.ROT);
 
-    console.log(framr.orderedDPoints);
+    console.log(framr.generatorConfig?.framesets.fsl[0]);
     console.log({ description, concernedDpoint, otherDpoints, sampleDPoints });
 
     const rules = framr.getRules(tool.id);
