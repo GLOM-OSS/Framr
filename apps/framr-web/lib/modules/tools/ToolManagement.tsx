@@ -40,9 +40,10 @@ export default function ToolManagement() {
   const [activeTool, setActiveTool] = useState<Tool>();
 
   const toolColumns: GridColDef<Tool>[] = [
-    { field: 'version', headerName: 'Version', width: 100 },
     { field: 'name', headerName: 'Tools Name', flex: 1 },
     { field: 'long', headerName: 'Long', flex: 1 },
+    { field: 'version', headerName: 'Version', width: 100 },
+    { field: 'type', headerName: 'Type', width: 100 },
     {
       field: 'action',
       headerName: '',
@@ -260,7 +261,7 @@ export default function ToolManagement() {
         <DataGrid
           rows={tools}
           columns={toolColumns}
-          hideFooter
+          // hideFooter
           autoPageSize
           disableColumnMenu
           hideFooterSelectedRowCount
