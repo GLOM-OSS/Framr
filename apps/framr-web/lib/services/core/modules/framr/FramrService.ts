@@ -301,7 +301,7 @@ export class FramrService {
     const [firstDPoints, remainingDPoints] = partition(dpoints, (dpoint) =>
       rules.some(
         (rule) =>
-          rule.concernedDpoint.id === dpoint.id &&
+          rule.concernedDpoint.id === dpoint.dpointId &&
           rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
       )
     );
@@ -314,7 +314,7 @@ export class FramrService {
       (remainingDPoint) =>
         !rules.some(
           (rule) =>
-            rule.concernedDpoint.id === remainingDPoint.id &&
+            rule.concernedDpoint.id === remainingDPoint.dpointId &&
             rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
         )
     );
@@ -344,6 +344,9 @@ export class FramrService {
 
     // Process non constraint remaining data points and apply rules
     for (const dpoint of nonConstraintDPoints) {
+      // Handle all other rules
+      rulesHandler.handleDPointRules(dpoint, rules);
+
       const bitsCount = rulesHandler.orderedDPoints.reduce(
         (bitsCount, _) => bitsCount + _.bits,
         0
@@ -363,11 +366,11 @@ export class FramrService {
         rules
       );
 
-      // Handle all other rules
-      rulesHandler.handleDPointRules(dpoint, rules);
-
       // Handle frameset overloading dpoints
       rulesHandler.handleOverloadingDPoints(generatorConfig);
+      // console.log({
+      //   orderedDPoints: rulesHandler.orderedDPoints,
+      // });
     }
 
     return rulesHandler.orderedDPoints;
