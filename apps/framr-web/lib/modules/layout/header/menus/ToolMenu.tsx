@@ -48,7 +48,7 @@ export default function ToolMenu({
   const changeTool = (toolId: string) => {
     const paths = pathname.split('/');
     paths[3] = toolId;
-    push(`/${paths.join('/')}`);
+    push(`${paths.join('/')}`);
     setAnchorEl(null);
   };
 
