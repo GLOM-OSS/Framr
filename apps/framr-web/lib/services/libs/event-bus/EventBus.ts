@@ -9,7 +9,7 @@ import { EventBusHandler, EventBusPayload } from './EventBus.types';
 
     eventBus.emit(EventBusChannelEnum.CREATE_TOOL, {
         data: {
-            id: crypto.randomUUID(),
+            id: getRandonID(),
             long: 'tool long name',
             max_bits: 1,
             name: 'my first tools',

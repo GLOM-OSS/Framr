@@ -115,7 +115,6 @@ export default function FrameGenerator() {
   }
 
   function handleRemoveConstraint(dpoint: FramesetDpoint) {
-    console.log('Remove dpoint constraint: ', dpoint);
     removeConstraintOnSelectedDPoints([dpoint]);
   }
 
@@ -130,15 +129,15 @@ export default function FrameGenerator() {
 
   useEffect(() => {
     if (framrService.generatorConfig && selectedDPoints.length > 0) {
-      console.log(selectedDPoints)
+      console.log(selectedDPoints);
       framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
-      setFrameConfig(framrService.generatorConfig);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDPoints]);
 
   useEffect(() => {
-    // if (framrService.generatorConfig)
+    if (framrService.generatorConfig)
+      setFrameConfig(framrService.generatorConfig);
   }, [framrService.generatorConfig]);
 
   const [isClient, setIsClient] = useState(false);
