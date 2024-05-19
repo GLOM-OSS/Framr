@@ -246,7 +246,7 @@ export default function ManageServiceDialog({
               disabled={isSubmitting}
               endIcon={isSubmitting && <CircularProgress size={20} />}
             >
-              {service ? 'Save' : 'Create Tool'}
+              {service ? 'Save' : 'Create Service'}
             </Button>
           </Box>
         </Box>
