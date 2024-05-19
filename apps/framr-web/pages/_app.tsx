@@ -2,11 +2,15 @@ import { ThemeProvider } from '@mui/material';
 import { InstallPWAContextProvider } from '@usePWA';
 import { AppProps } from 'next/app';
 import Head from 'next/head';
+import { useEffect } from 'react';
 import AppLayout from '../lib/layouts/AppLayout';
 import { generateTheme } from '../lib/theme';
 import './style.css';
 
 function CustomApp({ Component, pageProps }: AppProps) {
+  useEffect((): void => {
+    registerServiceWorker();
+  }, []);
   return (
     <InstallPWAContextProvider
       component={'banner'}
@@ -26,7 +30,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
   );
 }
 
-const registerServiceWorker = async () => {
+async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register(
@@ -46,8 +50,6 @@ const registerServiceWorker = async () => {
       console.error(`Registration failed with ${error}`);
     }
   }
-};
-
-registerServiceWorker();
+}
 
 export default CustomApp;
