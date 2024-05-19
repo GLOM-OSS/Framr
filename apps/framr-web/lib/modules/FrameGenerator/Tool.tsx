@@ -23,25 +23,8 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   const [prevSelectedDPoints, setPrevSelectedDPoints] = useState<DPoint[]>([]);
   const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
   const [mandatoryDPoints, setMandatoryDPoints] = useState<DPoint[]>();
-  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
 
   const eventBus = new EventBus();
-  const dpointsService = new DPointsService();
-  function fetchToolMandatoryDpoints() {
-    eventBus.once<DPoint[]>(
-      DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
-      ({ data, status }) => {
-        if (status === EventBusChannelStatus.SUCCESS) {
-          const mandDpoints = mandatoryDPoints ?? data;
-          if (!mandatoryDPoints)
-            setMandatoryDPoints((prev) => {
-              return mandDpoints;
-            });
-        }
-      }
-    );
-    dpointsService.findAll({ toolId: tool.id, mandatory: true });
-  }
 
   const servicesService = new ServicesService();
   function fetchToolServices() {
@@ -57,10 +40,7 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   }
 
   function handleSelectTool() {
-    setIsSelected((prev) => {
-      fetchToolMandatoryDpoints();
-      return !prev;
-    });
+    setIsSelected((prev) => !prev);
     if (!isOpen) setIsOpen(true);
     if (!services) {
       fetchToolServices();
@@ -74,42 +54,51 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
     }
   }
 
-  function handleSelectService(service: Service) {
-    if (selectedServices.map(({ id }) => id).includes(service.id)) {
-      setSelectedServices((prev) => {
-        return prev.filter(({ id }) => id !== service.id);
-      });
-    } else {
-      setSelectedServices((prev) => {
-        return [...prev, service];
-      });
+  useEffect(() => {
+    const dpointsService = new DPointsService();
+
+    function fetchToolMandatoryDpoints() {
+      eventBus.once<DPoint[]>(
+        DPointsEventChannel.FIND_ALL_DPOINT_CHANNEL,
+        ({ data, status }) => {
+          if (status === EventBusChannelStatus.SUCCESS) {
+            setMandatoryDPoints((prev) => prev ?? data);
+          }
+        }
+      );
+      dpointsService.findAll({ toolId: tool.id, mandatory: true });
     }
+
+    if (isOpen) fetchToolMandatoryDpoints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  function removeNewDPointsFromPrevList(
+    prevSelectedDPoints: DPoint[],
+    newSelectedDPoints: DPoint[]
+  ) {
+    const tt = prevSelectedDPoints.filter(({ id }) => {
+      return !newSelectedDPoints.map(({ id }) => id).includes(id);
+    });
+    return [...tt, ...newSelectedDPoints];
   }
 
-  useEffect(() => {
-    function removePrevServicesSelectedDPoints(
-      prevSelectedDPoints: DPoint[],
-      newSelectedDPoints: DPoint[]
-    ) {
-      return prevSelectedDPoints.filter((dpoint) => {
-        return !newSelectedDPoints.map(({ id }) => id).includes(dpoint.id);
-      });
-    }
-
-    const newSelectedDPoints = selectedServices
-      .map(({ dpoints }) => dpoints)
-      .flat();
-
+  function handleSelectService(service: Service) {
+    const serviceDpoints = service.dpoints;
+    const concernedServiceDPointIds = serviceDpoints.map(({ id }) => id);
+    const tt = concernedServiceDPointIds.map((serviceDPointId) =>
+      selectedDPoints.map(({ id }) => id).includes(serviceDPointId)
+    );
     setSelectedDPoints((prev) => {
       setPrevSelectedDPoints(prev);
-      return [
-        ...newSelectedDPoints,
-        ...removePrevServicesSelectedDPoints(prev, newSelectedDPoints),
-      ];
+      if (tt.includes(false)) {
+        //MEANS SERVICE WAS NO SELECTED
+        return removeNewDPointsFromPrevList(prev, serviceDpoints);
+      } else {
+        return prev.filter(({ id }) => !concernedServiceDPointIds.includes(id));
+      }
     });
-    getDPoints(selectedDPoints, prevSelectedDPoints);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedServices]);
+  }
 
   useEffect(() => {
     function removePreviousMandatoryDPoints(
@@ -142,6 +131,20 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSelected, mandatoryDPoints]);
 
+  useEffect(() => {
+    getDPoints(selectedDPoints, prevSelectedDPoints);
+
+    setIsSelected(() => {
+      if (!mandatoryDPoints || !mandatoryDPoints.length) return false;
+      const mandatoryDpointIds = mandatoryDPoints.map(({ id }) => id);
+      const tt = mandatoryDpointIds.map((id) =>
+        selectedDPoints.map(({ id }) => id).includes(id)
+      );
+      return !tt.includes(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDPoints]);
+
   return (
     <Box>
       <ToolCard
@@ -157,9 +160,13 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
             <ToolCard
               name={service.name}
               handleSelect={() => handleSelectService(service)}
-              isSelected={selectedServices
-                .map(({ id }) => id)
-                .includes(service.id)}
+              isSelected={(() => {
+                const serviceDpointIds = service.dpoints.map(({ id }) => id);
+                const tt = serviceDpointIds.map((id) =>
+                  selectedDPoints.map(({ id }) => id).includes(id)
+                );
+                return !tt.includes(false);
+              })()}
             />
           </Box>
         ))}
