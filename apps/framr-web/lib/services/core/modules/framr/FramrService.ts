@@ -5,8 +5,7 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  GeneratorConfigTool,
-  RuleWithOtherDPoint,
+  GeneratorConfigTool
 } from '../../../../types';
 import {
   FrameEnum,
@@ -47,19 +46,7 @@ export class FramrService {
     const initializeFramesets = (frameType: FSLFrameType | FrameEnum.UTIL) => {
       return {
         frame: frameType,
-        dpoints: config.MWDTool.rules
-          .filter(
-            (rule) =>
-              rule.description === StandAloneRuleEnum.SHOULD_BE_PRESENT &&
-              rule.framesets.includes(frameType)
-          )
-          .reduce<FramesetDpoint[]>((dps, rule) => {
-            const dpointsToAdd = [
-              rule.concernedDpoint,
-              ...((rule as RuleWithOtherDPoint).otherDpoints ?? []),
-            ].map<FramesetDpoint>((dpoint) => getFramesetDPoint(dpoint));
-            return [...dps, ...dpointsToAdd];
-          }, []),
+        dpoints: [],
       };
     };
 
