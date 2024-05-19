@@ -2,12 +2,11 @@ import {
   CreateGeneratorConfig,
   DPoint,
   FSLFrameType,
-  FSLFrameset,
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
   GeneratorConfigTool,
-  RuleWithOtherDPoint,
+  RuleWithOtherDPoint
 } from '../../../../types';
 import {
   FrameEnum,
@@ -137,14 +136,15 @@ export class FramrService {
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
     const currentFSL = this.getCurrentFSL(fslNumber);
 
-    const updatedFramesets = Object.fromEntries(
-      Object.entries(currentFSL.framesets).map(([key, { dpoints, frame }]) => [
-        key as FSLFrameType,
-        {
-          dpoints: dpoints.filter((dpoint) => dpointIds.includes(dpoint.id)),
+    const updatedFramesets = Object.values(currentFSL.framesets).reduce(
+      (fslFrame, { dpoints, frame }) => ({
+        ...fslFrame,
+        [frame]: {
+          dpoints: dpoints.filter((dpoint) => !dpointIds.includes(dpoint.id)),
           frame,
         },
-      ])
+      }),
+      currentFSL.framesets
     );
 
     this.generatorConfig = {
@@ -155,10 +155,7 @@ export class FramrService {
           fsl.number === fslNumber
             ? {
                 ...fsl,
-                framesets: updatedFramesets as Record<
-                  FSLFrameType,
-                  FSLFrameset
-                >,
+                framesets: updatedFramesets,
               }
             : fsl
         ),
