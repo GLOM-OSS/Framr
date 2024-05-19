@@ -28,6 +28,10 @@ import {
 import DPointMenu from './DPointMenu';
 import AddConstraintMenu from './NewConstraintMenu';
 
+interface IDPointConstraint {
+  interval: number;
+  type: ConstraintEnum;
+}
 export interface NewConstraint {
   type: ConstraintEnum;
   interval: number;
@@ -62,28 +66,37 @@ export default function Frame({
     }
   }
 
-  function getDPointConstraint(tool: Tool) {
+  function getDPointConstraint(tool: Tool): IDPointConstraint | undefined {
     const rules = getDPointRules(tool);
     const constraint: { interval: number; type: ConstraintEnum } | undefined =
       undefined;
     if (!rules) return constraint;
 
-    return {
-      interval: (rules[0] as RuleWithConstraint).interval,
-      type:
-        rules[0].description ===
+    const rulesDescriptions = rules.map(({ description }) => description);
+    if (
+      rulesDescriptions.includes(
         WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
-          ? ConstraintEnum.DISTANCE
-          : ConstraintEnum.TIME,
-    };
+      ) ||
+      rulesDescriptions.includes(
+        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+      )
+    ) {
+      return {
+        interval: (rules[0] as RuleWithConstraint).interval,
+        type:
+          (rules[0] as RuleWithConstraint).description ===
+          WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+            ? ConstraintEnum.DISTANCE
+            : ConstraintEnum.TIME,
+      };
+    } else return constraint;
   }
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [activeDPoint, setActiveDPoint] = useState<FramesetDpoint>();
-  const [activeDPointRules, setActiveDPointRules] = useState<{
-    interval: number;
-    type: ConstraintEnum;
-  }>();
+  const [activeDPointRules, setActiveDPointRules] = useState<
+    IDPointConstraint | undefined
+  >();
 
   const [newConstraintType, setNewConstraintType] = useState<
     'distance' | 'time'
