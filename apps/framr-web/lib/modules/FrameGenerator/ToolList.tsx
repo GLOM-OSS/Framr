@@ -18,8 +18,11 @@ export default function ToolList({
   const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
 
   useEffect(() => {
+    console.log('Tool list', selectedDPoints);
     getDPoints(selectedDPoints);
-  }, [getDPoints, selectedDPoints]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDPoints]);
   return (
     <Box
       sx={{
@@ -58,7 +61,6 @@ export default function ToolList({
                     .map(({ id }) => id)
                     .includes(dpoint.id);
                 });
-                console.log({ selectedDPoints, prevSelectedDPoints });
                 return [...selectedDPoints, ...tt];
               })
             }

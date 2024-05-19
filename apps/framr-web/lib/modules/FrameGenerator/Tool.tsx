@@ -22,11 +22,7 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [prevSelectedDPoints, setPrevSelectedDPoints] = useState<DPoint[]>([]);
   const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
-  const [prevMandatoryDPoints, setPrevMandatoryDPoints] = useState<DPoint[]>();
   const [mandatoryDPoints, setMandatoryDPoints] = useState<DPoint[]>();
-  const [prevSelectedServices, setPrevSelectedServices] = useState<Service[]>(
-    []
-  );
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
 
   const eventBus = new EventBus();
@@ -39,7 +35,6 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
           const mandDpoints = mandatoryDPoints ?? data;
           if (!mandatoryDPoints)
             setMandatoryDPoints((prev) => {
-              setPrevMandatoryDPoints(prev);
               return mandDpoints;
             });
         }
@@ -82,25 +77,22 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   function handleSelectService(service: Service) {
     if (selectedServices.map(({ id }) => id).includes(service.id)) {
       setSelectedServices((prev) => {
-        setPrevSelectedServices(prev);
         return prev.filter(({ id }) => id !== service.id);
       });
     } else {
       setSelectedServices((prev) => {
-        setPrevSelectedServices(prev);
         return [...prev, service];
       });
     }
   }
 
   useEffect(() => {
-    function removePrevServicesSelectedDPoints(selectedDPoints: DPoint[]) {
-      return selectedDPoints.filter((dpoint) => {
-        return !prevSelectedServices
-          .map(({ dpoints }) => dpoints)
-          .flat()
-          .map(({ id }) => id)
-          .includes(dpoint.id);
+    function removePrevServicesSelectedDPoints(
+      prevSelectedDPoints: DPoint[],
+      newSelectedDPoints: DPoint[]
+    ) {
+      return prevSelectedDPoints.filter((dpoint) => {
+        return !newSelectedDPoints.map(({ id }) => id).includes(dpoint.id);
       });
     }
 
@@ -112,7 +104,7 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
       setPrevSelectedDPoints(prev);
       return [
         ...newSelectedDPoints,
-        ...removePrevServicesSelectedDPoints(prev),
+        ...removePrevServicesSelectedDPoints(prev, newSelectedDPoints),
       ];
     });
     getDPoints(selectedDPoints, prevSelectedDPoints);
@@ -120,10 +112,12 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   }, [selectedServices]);
 
   useEffect(() => {
-    function removePreviousMandatoryDPoints(selectedDPoints: DPoint[]) {
-      if (!prevMandatoryDPoints) return selectedDPoints;
+    function removePreviousMandatoryDPoints(
+      selectedDPoints: DPoint[],
+      mandatoryDPoints: DPoint[]
+    ) {
       return selectedDPoints.filter((dpoint) => {
-        return !prevMandatoryDPoints.map(({ id }) => id).includes(dpoint.id);
+        return !mandatoryDPoints.map(({ id }) => id).includes(dpoint.id);
       });
     }
 
@@ -131,7 +125,10 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
       if (isSelected) {
         setSelectedDPoints((prev) => {
           setPrevSelectedDPoints(prev);
-          return [...removePreviousMandatoryDPoints(prev), ...mandatoryDPoints];
+          return [
+            ...removePreviousMandatoryDPoints(prev, mandatoryDPoints),
+            ...mandatoryDPoints,
+          ];
         });
       } else {
         setSelectedDPoints((prev) => {
