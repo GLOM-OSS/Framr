@@ -58,12 +58,16 @@ export default function FrameGenerator() {
     framrService.removeDPointsConstraints(activeFSL, selectModeDPoints);
     if (framrService.generatorConfig)
       setFrameConfig(framrService.generatorConfig);
+    setIsConfigOpen(false);
   }
 
   function removeSelectModeDPoints(selectModeDPoints: DPoint[]) {
     setSelectedDPoints((prev) =>
-      prev.filter((dpoint) => !selectModeDPoints.includes(dpoint))
+      prev.filter(
+        (dpoint) => !selectModeDPoints.some((dp) => dp.id === dpoint.id)
+      )
     );
+    setIsConfigOpen(false);
   }
 
   function addConstraitToMultipleDPoints(val: {
@@ -132,6 +136,7 @@ export default function FrameGenerator() {
   }
 
   useEffect(() => {
+    console.log({ selectedDPoints });
     if (framrService.generatorConfig && selectedDPoints.length > 0) {
       framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
       setFrameConfig(framrService.generatorConfig);
