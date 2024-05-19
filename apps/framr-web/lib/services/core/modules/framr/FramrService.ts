@@ -6,7 +6,7 @@ import {
   GeneratorConfig,
   GeneratorConfigRule,
   GeneratorConfigTool,
-  RuleWithOtherDPoint
+  RuleWithOtherDPoint,
 } from '../../../../types';
 import {
   FrameEnum,
@@ -220,7 +220,6 @@ export class FramrService {
     }
     const activeFsl = this.getCurrentFSL(fslNumber);
 
-    // const fslInstance = this.generatorConfig.framesets.fsl[fslNumber];
     for (const frame in activeFsl.framesets) {
       activeFsl.framesets[frame as FSLFrameType].dpoints.filter(
         ({ dpointId, isBaseInstance }) =>
@@ -295,7 +294,7 @@ export class FramrService {
     const rules = this.getRules();
 
     // Partition the data points based on whether they should be at the beginning
-    const [firstDPoints, remainingDPoints] = partition(dpoints, (dpoint) =>
+    const [firstDPoints, dpointRest] = partition(dpoints, (dpoint) =>
       rules.some(
         (rule) =>
           rule.concernedDpoint.id === dpoint.dpointId &&
@@ -307,7 +306,7 @@ export class FramrService {
 
     // Add first data points to the ordered list, handling conflicts
     rulesHandler.handleFirstDPoints(firstDPoints, rules);
-    const remainingValidDPoints = remainingDPoints.filter(
+    const nonForbiddenDPoints = dpointRest.filter(
       (remainingDPoint) =>
         !rules.some(
           (rule) =>
@@ -316,12 +315,25 @@ export class FramrService {
         )
     );
 
-    const { bitConstraintDPoints, nonConstraintDPoints } =
-      rulesHandler.filterAndBuildBitConstraintData(
-        remainingValidDPoints,
-        rules,
-        generatorConfig
-      );
+    // partition dpoints with or without constraints
+    const [constraintDPoints, dpointsWithoutConstraints] = partition(
+      nonForbiddenDPoints,
+      (dpoint) =>
+        rules.some(
+          (rule) =>
+            rule.concernedDpoint.id === dpoint.dpointId &&
+            (rule.description ===
+              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
+        )
+    );
+
+    // converting dpoints with update rate and density rate interval to dpoints with bit interval
+    const dpointsWithConstraints = rulesHandler.resolveDPointConstraints(
+      constraintDPoints,
+      rules,
+      generatorConfig
+    );
 
     // Get available MWD Tool DPoints
     let mwdDPoints = generatorConfig.MWDTool.rules
@@ -340,7 +352,7 @@ export class FramrService {
     };
 
     // Process non constraint remaining data points and apply rules
-    for (const dpoint of nonConstraintDPoints) {
+    for (const dpoint of dpointsWithoutConstraints) {
       // Handle all other rules
       rulesHandler.handleDPointRules(dpoint, rules);
 
@@ -356,19 +368,17 @@ export class FramrService {
         ));
       }
 
-      // Handle rule with bit constraints
-      rulesHandler.handleBitContraintRule(
-        bitConstraintDPoints,
+      // Handle dpoints with constraints having intervals now mesured in bit
+      rulesHandler.handleDPointsWithContraint(
+        dpointsWithConstraints,
         bitsCount,
         rules
       );
-
-      // Handle frameset overloading dpoints
-      rulesHandler.handleOverloadingDPoints(generatorConfig);
-      // console.log({
-      //   orderedDPoints: rulesHandler.orderedDPoints,
-      // });
     }
+
+    // Handle frameset overloading dpoints
+    const { maxBits, maxDPoints } = generatorConfig.MWDTool;
+    rulesHandler.handleOverloadingDPoints(maxBits, maxDPoints);
 
     return rulesHandler.orderedDPoints;
   }
