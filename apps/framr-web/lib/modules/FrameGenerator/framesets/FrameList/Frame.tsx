@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Scrollbars from 'rc-scrollbars';
 import { useState } from 'react';
 import {
   FSLFrameset,
@@ -251,25 +252,26 @@ export default function Frame({
         />
       )}
 
-      <DataGrid
-        rows={dpoints}
-        columns={toolColumns}
-        hideFooter
-        autoPageSize
-        disableColumnMenu
-        hideFooterSelectedRowCount
-        sx={{
-          minHeight: '130px',
-          '& .MuiDataGrid-container--top [role=row]': {
-            bgcolor: 'rgba(229, 231, 235, 1)',
-          },
-          '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
-            fontWeight: 700,
-            fontSize: '12px',
-            lineHeight: '16px',
-          },
-        }}
-      />
+      <Scrollbars universal autoHide>
+        <DataGrid
+          rows={dpoints}
+          columns={toolColumns}
+          hideFooter
+          disableColumnMenu
+          hideFooterSelectedRowCount
+          sx={{
+            minHeight: '130px',
+            '& .MuiDataGrid-container--top [role=row]': {
+              bgcolor: 'rgba(229, 231, 235, 1)',
+            },
+            '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
+              fontWeight: 700,
+              fontSize: '12px',
+              lineHeight: '16px',
+            },
+          }}
+        />
+      </Scrollbars>
     </Box>
   );
 }
