@@ -237,9 +237,10 @@ export class FramrService {
           !dpoints.some(
             (dpoint) =>
               rule.concernedDpoint.id === dpoint.dpointId &&
-              (rule.description ===
+              [
                 WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+              ].includes(rule.description as WithConstraintRuleEnum)
           )
       );
       this.updateToolRules(tool.id, rules);
@@ -262,9 +263,13 @@ export class FramrService {
     const { jobName, wellName, framesets, MWDTool } = this.generatorConfig;
     framesets.fsl.forEach(({ framesets, number: fslNumber }) => {
       [FrameEnum.MTF, FrameEnum.GTF, FrameEnum.ROT].forEach((frame, i) => {
+        const object = Object.entries(FrameEnum).find(
+          ([_, value]) => value === frame
+        ) as [key: string, string];
+
         dataString +=
           `\nSTARTOFFRAME` +
-          `\nFRM_TYPE:${frame}` +
+          `\nFRM_TYPE:${object[0]}` +
           `\nMTF_FRM#${frameNumber}` +
           `\nGTF_FRM#${frameNumber + 1}` +
           `\nROT_FRM#${frameNumber + 2}` +
@@ -275,15 +280,19 @@ export class FramrService {
           dataString += `\n${dpoint.name}`;
         });
 
-        dataString += `\nNULL` + `\n37321` + `ENDOFFRAME\n`;
+        dataString += `\nNULL` + `\n37321` + `\nENDOFFRAME\n`;
       });
       frameNumber++;
     });
+    const fileName = `${new Date().toISOString()}_${jobName}_${wellName}_${
+      MWDTool.name
+    }`
+      // remove special characters
+      .replace(/[^a-zA-Z0-9 ]/g, '')
+      // replace space with _
+      .replace(/ /g, '_');
 
-    this.xmlIO.downloadFile(
-      dataString,
-      `${new Date().toISOString()}_${jobName}_${wellName}_${MWDTool.name}.udl`
-    );
+    this.xmlIO.downloadFile(dataString, `${fileName}.udl`);
   }
 
   private orderDPoints(
@@ -322,9 +331,10 @@ export class FramrService {
         rules.some(
           (rule) =>
             rule.concernedDpoint.id === dpoint.dpointId &&
-            (rule.description ===
+            [
               WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT)
+              WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+            ].includes(rule.description as WithConstraintRuleEnum)
         )
     );
 

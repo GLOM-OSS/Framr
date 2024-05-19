@@ -56,8 +56,6 @@ export default function FrameGenerator() {
     selectModeDPoints: FramesetDpoint[]
   ) {
     framrService.removeDPointsConstraints(activeFSL, selectModeDPoints);
-    if (framrService.generatorConfig)
-      setFrameConfig(framrService.generatorConfig);
     setIsConfigOpen(false);
   }
 
@@ -98,8 +96,6 @@ export default function FrameGenerator() {
       if (tool.rules.length > rules.length)
         framrService.updateToolRules(tool.id, rules);
     });
-    if (framrService.generatorConfig)
-      setFrameConfig(framrService.generatorConfig);
   }
 
   const [ruleTool, setRuleTool] = useState<
@@ -115,10 +111,7 @@ export default function FrameGenerator() {
   }
 
   function handleRemoveDPoint(dpoint: FramesetDpoint) {
-    console.log('Remove dpoint: ', dpoint);
     framrService.removeDPoints(activeFSL, [dpoint.id]);
-    if (framrService.generatorConfig)
-      setFrameConfig(framrService.generatorConfig);
   }
 
   function handleRemoveConstraint(dpoint: FramesetDpoint) {
@@ -136,13 +129,17 @@ export default function FrameGenerator() {
   }
 
   useEffect(() => {
-    console.log({ selectedDPoints });
     if (framrService.generatorConfig && selectedDPoints.length > 0) {
+      console.log(selectedDPoints)
       framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
       setFrameConfig(framrService.generatorConfig);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDPoints]);
+
+  useEffect(() => {
+    // if (framrService.generatorConfig)
+  }, [framrService.generatorConfig]);
 
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
@@ -262,6 +259,7 @@ export default function FrameGenerator() {
                 color="primary"
                 sx={{ justifySelf: 'end' }}
                 startIcon={<Icon icon={download} />}
+                onClick={() => framrService.exportGeneratorConfig()}
               >
                 Export Framesets
               </Button>
