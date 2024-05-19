@@ -74,7 +74,7 @@ export default function ToolManagement() {
       ({ status }) => {
         if (status === EventBusChannelStatus.SUCCESS) {
           setActiveTool(undefined);
-          fetchTools()
+          fetchTools();
         }
       }
     );
@@ -101,11 +101,47 @@ export default function ToolManagement() {
         if (status === EventBusChannelStatus.SUCCESS) {
           setIsDeleteDialogOpen(false);
           setActiveTool(undefined);
-          fetchTools()
+          fetchTools();
         }
       }
     );
     toolsService.delete(tool.id);
+  }
+
+  function handleFilesImport(files: FileList | null) {
+    if (files && files.length === 2) {
+      let xmlFile: File | null = null;
+      let txtFile: File | null = null;
+
+      for (let i = 0; i < files.length; i++) {
+        if (files[i].type === 'text/xml' || files[i].name.endsWith('.xml')) {
+          xmlFile = files[i];
+        } else if (
+          files[i].type === 'text/plain' ||
+          files[i].name.endsWith('.txt')
+        ) {
+          txtFile = files[i];
+        }
+      }
+
+      if (xmlFile && txtFile) {
+        // import tools from xml
+        eventBus.once<Tool>(
+          ToolsEventChannel.CREATE_FROM_TOOLS_CHANNEL,
+          ({ status }) => {
+            if (status === EventBusChannelStatus.SUCCESS) {
+              setActiveTool(undefined);
+              fetchTools();
+            }
+          }
+        );
+        toolsService.createFrom(xmlFile, txtFile);
+      } else {
+        alert('Please upload one XML file and one TXT file.');
+      }
+    } else {
+      alert('Please select exactly two files: one XML and one TXT.');
+    }
   }
 
   return (
@@ -202,7 +238,15 @@ export default function ToolManagement() {
               color="inherit"
               startIcon={<Icon icon={AttachIcon} />}
             >
-              Import Tool
+              <input
+                hidden
+                multiple
+                type="file"
+                id="fileInput"
+                accept=".txt,.xml"
+                onChange={(e) => handleFilesImport(e.target.files)}
+              />
+              <label htmlFor="fileInput">Import Tool</label>
             </Button>
             <Button
               variant="contained"
