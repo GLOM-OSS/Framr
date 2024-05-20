@@ -253,7 +253,10 @@ export class FramrService {
       jobName,
       wellName,
       MWDTool: { name: mwdName, version: nwdVersion },
-      framesets: { fsl: fslFramesets, utility: utilityFrameset },
+      framesets: {
+        fsl: [fslFramesets],
+        utility: utilityFrameset,
+      },
     } = this.generatorConfig;
     const utilityDataString =
       fslDataString.replace('REPEATING', 'UTILITY') +
@@ -267,7 +270,7 @@ export class FramrService {
       getDPointList(utilityFrameset.dpoints);
 
     let frameNumber = 2000;
-    fslFramesets.forEach(({ framesets, number: fslNumber }) => {
+    [fslFramesets].forEach(({ framesets, number: fslNumber }) => {
       [FrameEnum.MTF, FrameEnum.GTF, FrameEnum.ROT].forEach((frame, i) => {
         const { dpoints } = framesets[frame as FSLFrameType];
 
@@ -357,6 +360,12 @@ export class FramrService {
       generatorConfig
     );
 
+    console.log({
+      nonForbiddenDPoints,
+      dpointsWithConstraints,
+      dpointsWithoutConstraints,
+      rules: generatorConfig.tools.map((_) => _.rules),
+    });
     // Get available MWD Tool DPoints
     const mwdDPoints = generatorConfig.MWDTool.rules
       .filter(
