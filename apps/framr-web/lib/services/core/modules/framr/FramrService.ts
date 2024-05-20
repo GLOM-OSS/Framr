@@ -410,7 +410,7 @@ export class FramrService {
           cursors,
           generatorConfig.MWDTool.id,
           nextDPointset,
-          currentDPointset.reduce((count, dpoint) => count + dpoint.bits, 0)
+          currentDPointset
         );
       }
     });

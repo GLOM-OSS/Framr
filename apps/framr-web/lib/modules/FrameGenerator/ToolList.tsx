@@ -5,6 +5,8 @@ import Scrollbars from 'rc-scrollbars';
 import { useEffect, useState } from 'react';
 import { DPoint, GeneratorConfig, GeneratorConfigTool } from '../../types';
 import Tool from './Tool';
+import { partition } from '../../services';
+import { ToolEnum } from '../../types/enums';
 
 interface ToolListProps {
   data: GeneratorConfig;
@@ -19,7 +21,11 @@ export default function ToolList({
 
   useEffect(() => {
     console.log('Tool list', selectedDPoints);
-    getDPoints(selectedDPoints);
+    const [mwdDPoints, lwdDPoints] = partition(
+      selectedDPoints,
+      (dpoint) => dpoint.tool.type === ToolEnum.MWD
+    );
+    getDPoints([...mwdDPoints, ...lwdDPoints]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDPoints]);

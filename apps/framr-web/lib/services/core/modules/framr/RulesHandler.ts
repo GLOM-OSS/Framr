@@ -166,11 +166,9 @@ export class RulesHandler {
     );
 
     // handle should not rules
-    this.handleProhibitiveRules(
-      dpointPosition,
-      this.orderedDPoints[dpointPosition],
-      rules
-    );
+    const currentDPoint = this.orderedDPoints[dpointPosition];
+    if (currentDPoint)
+      this.handleProhibitiveRules(dpointPosition, currentDPoint, rules);
   }
 
   /**
@@ -304,26 +302,39 @@ export class RulesHandler {
     cursors: SpreadingCursors,
     mwdToolId: string,
     nextDPointset: DPointsetDPoint[],
-    currentDPointsetBitCount: number
+    currentDPointset: DPointsetDPoint[]
   ) {
     const BITS_LIMIT = 80;
+
+    const currentDPointsetBitCount = currentDPointset.reduce(
+      (count, dpoint) => count + dpoint.bits,
+      0
+    );
+    const currentDPointsetLastDPointIndex = currentDPointset.length - 1;
+    const dpointsetLastDPointIndex = this.orderedDPoints.findIndex(
+      (dpoint) =>
+        dpoint.id === currentDPointset[currentDPointsetLastDPointIndex]?.id
+    );
     // checks that there's no mwd dpoint in the current 80 bit block
     const orderedMWDDPointIndex = this.orderedDPoints.findIndex(
-      (_, index) => _.tool.id === mwdToolId && index > cursors.lastIndex
+      (_, index) =>
+        _.tool.id === mwdToolId &&
+        index > cursors.lastIndex &&
+        index <= dpointsetLastDPointIndex
     );
-    console.log({ orderedMWDDPointIndex });
+    // console.log({ orderedMWDDPointIndex });
     if (orderedMWDDPointIndex === -1) {
       // get next dpoint set bit count
       const nextDPointsetBitCount = nextDPointset.reduce(
         (count, dpoint) => dpoint.bits + count,
         0
       );
-      console.log({
-        orderedMWDDPointIndex,
-        nextDPointsetBitCount,
-        ...cursors,
-        BITS_LIMIT,
-      });
+      // console.log({
+      //   orderedMWDDPointIndex,
+      //   nextDPointsetBitCount,
+      //   ...cursors,
+      //   BITS_LIMIT,
+      // });
       if (cursors.bitsCount + nextDPointsetBitCount >= BITS_LIMIT) {
         // get bit count to next mwd dpoint
         let bitCountToNextMWDPoint = 0;
@@ -353,7 +364,37 @@ export class RulesHandler {
         }
       }
     }
-    cursors.bitsCount = cursors.bitsCount + currentDPointsetBitCount;
+    const newBitsCount = cursors.bitsCount + currentDPointsetBitCount;
+    if (newBitsCount >= BITS_LIMIT) {
+      console.log({ newBitsCount, currentDPointsetBitCount, ...cursors });
+      if (newBitsCount === BITS_LIMIT) {
+        cursors.lastIndex = dpointsetLastDPointIndex;
+      } else {
+        let currentsetLastValidDPointData: {
+          dpoint: DPointsetDPoint | undefined;
+          count: number;
+        } = {
+          dpoint: undefined,
+          count: cursors.bitsCount,
+        };
+        for (const dpoint of currentDPointset) {
+          const ttt = currentsetLastValidDPointData.count + dpoint.bits;
+          if (ttt > BITS_LIMIT) {
+            break;
+          } else if (ttt === BITS_LIMIT) {
+            currentsetLastValidDPointData = { dpoint, count: ttt };
+            break;
+          } else {
+            currentsetLastValidDPointData = { dpoint, count: ttt };
+          }
+        }
+
+        cursors.lastIndex = this.orderedDPoints.findIndex(
+          (dpoint) => dpoint.id === currentsetLastValidDPointData.dpoint?.id
+        );
+      }
+      cursors.bitsCount = 0;
+    } else cursors.bitsCount = newBitsCount;
   }
 
   /**
