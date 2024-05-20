@@ -407,7 +407,7 @@ export default function RuleManagement() {
         <DataGrid
           rows={rules}
           columns={ruleColumns}
-          hideFooter
+          // hideFooter
           autoPageSize
           disableColumnMenu
           hideFooterSelectedRowCount

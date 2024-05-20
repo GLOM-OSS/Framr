@@ -75,31 +75,34 @@ export default function FrameGenerator() {
     interval: number;
     type: ConstraintEnum;
     dPoints: DPoint[];
+    framesets: FrameEnum[];
   }) {
     frameConfig?.tools.forEach((tool) => {
       const rules = [
         ...tool.rules,
         ...val.dPoints
           .filter(({ tool: { id } }) => id === tool.id)
-          .map<GeneratorConfigRule>((dpoint) => ({
+          .map<GeneratorConfigRule>(({ ...dpoint }) => ({
             description:
               val.type === ConstraintEnum.DISTANCE
                 ? WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
                 : WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
             interval: val.interval,
             type: val.type,
-            framesets: [],
-            concernedDpoint: dpoint,
+            framesets: val.framesets,
+            concernedDpoint: { ...dpoint },
             id: getRandomID(),
             isActive: true,
             isGeneric: true,
             tool,
           })),
       ];
-      if (tool.rules.length > rules.length)
+      // if (tool.rules.length > rules.length)
+      if (framrService.generatorConfig) {
         framrService.updateToolRules(tool.id, rules);
-      if (framrService.generatorConfig)
+        framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
         setFrameConfig(framrService.generatorConfig);
+      }
     });
   }
 
@@ -125,12 +128,16 @@ export default function FrameGenerator() {
     removeConstraintOnSelectedDPoints([dpoint]);
   }
 
-  function handleAddNewConstraint(val: NewConstraint) {
+  function handleAddNewConstraint({
+    dpoint: { dpointId, isBaseInstance, error, ...dpoint },
+    ...val
+  }: NewConstraint) {
     console.log('Add new constraint: ', val);
     addConstraitToMultipleDPoints({
-      dPoints: [val.dpoint],
+      dPoints: [{ ...dpoint, id: dpointId }],
       interval: val.interval,
       type: val.type,
+      framesets: [val.frame],
     });
   }
 
