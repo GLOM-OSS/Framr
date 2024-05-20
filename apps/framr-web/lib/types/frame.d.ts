@@ -7,6 +7,10 @@ export interface FramesetDpoint extends DPoint {
   error?: string;
 }
 
+export interface DPointsetDPoint extends FramesetDpoint {
+  dpointsetId: string;
+}
+
 interface Frameset {
   dpoints: FramesetDpoint[];
 }

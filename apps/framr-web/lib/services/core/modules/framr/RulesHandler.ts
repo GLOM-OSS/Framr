@@ -1,5 +1,6 @@
 import {
   DPoint,
+  DPointsetDPoint,
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
@@ -11,6 +12,7 @@ import {
   FrameEnum,
   RuleEnumType,
   StandAloneRuleEnum,
+  ToolEnum,
   WithConstraintRuleEnum,
   WithOtherDPointRuleEnum,
 } from '../../../../types/enums';
@@ -28,7 +30,6 @@ type DPointWithConstraint = {
 export type SpreadingCursors = {
   bitsCount: number;
   lastIndex: number;
-  dpointIndex: number;
 };
 
 /**
@@ -64,19 +65,19 @@ export function getFramesetDPoint(dpoint: DPoint): FramesetDpoint {
 }
 
 export class RulesHandler {
-  private _orderedDPoints: FramesetDpoint[] = [];
+  private _orderedDPoints: DPointsetDPoint[] = [];
 
   /**
    * Gets the ordered data points.
    */
-  public get orderedDPoints(): FramesetDpoint[] {
+  public get orderedDPoints(): DPointsetDPoint[] {
     return this._orderedDPoints;
   }
 
   /**
    * Sets the ordered data points.
    */
-  public set orderedDPoints(value: FramesetDpoint[]) {
+  public set orderedDPoints(value: DPointsetDPoint[]) {
     this._orderedDPoints = value;
   }
 
@@ -125,8 +126,13 @@ export class RulesHandler {
             : undefined,
       });
     });
-
-    this.orderedDPoints = [...orderedFirstDPoints];
+    const dpointsetId = getRandomID();
+    this.orderedDPoints = [
+      ...orderedFirstDPoints.map((dpoint) => ({
+        ...dpoint,
+        dpointsetId,
+      })),
+    ];
   }
 
   /**
@@ -160,7 +166,11 @@ export class RulesHandler {
     );
 
     // handle should not rules
-    this.handleProhibitiveRules(dpointPosition, dpoint, rules);
+    this.handleProhibitiveRules(
+      dpointPosition,
+      this.orderedDPoints[dpointPosition],
+      rules
+    );
   }
 
   /**
@@ -172,7 +182,7 @@ export class RulesHandler {
   handleDPointSequencingRules(
     dpoint: FramesetDpoint,
     rules: GeneratorConfigRule[]
-  ): FramesetDpoint[] {
+  ): DPointsetDPoint[] {
     const precededByRule = rules.find((rule) =>
       this.rulePredicate(rule, dpoint.dpointId, [
         WithOtherDPointRuleEnum.SHOULD_BE_PRECEDED_BY_OTHER,
@@ -207,7 +217,9 @@ export class RulesHandler {
             (_) => _.id === dpoint.dpointId
           )
       );
-      return shouldBePartOfSet ? [] : [dpoint];
+      return shouldBePartOfSet
+        ? []
+        : [{ ...dpoint, dpointsetId: getRandomID() }];
     } else if (
       precededByRule &&
       followedByRule &&
@@ -219,6 +231,7 @@ export class RulesHandler {
       return [
         {
           ...dpoint,
+          dpointsetId: getRandomID(),
           error: `Dpoint cannot be both preceded by and followed by the same other DPoint`,
         },
       ];
@@ -264,51 +277,83 @@ export class RulesHandler {
           return [
             {
               ...dpoint,
+              dpointsetId: getRandomID(),
               error:
                 'DPoints following or preceding DPoint are conflicting with DPoint set',
             },
           ];
         }
       }
-      return dpointSet;
+      const dpointsetId = getRandomID();
+      return dpointSet.map((dpoint) => ({
+        ...dpoint,
+        dpointsetId,
+      }));
     }
   }
 
   /**
    * Handles rules related to 80 bit constraints for MWD data points.
-   * @param mwdDPoints Array of MWD data points.
+   * @param mwdSeparator Array of MWD data points.
    * @param cursors Spreading cursors containing bit count, last index, and data point index.
    * @param generatorConfig Generator configuration.
    * @returns Object containing updated cursors and MWD data points.
    */
   handle80BitsRule(
-    mwdDPoints: DPoint[],
+    mwdSeparator: DPoint,
     cursors: SpreadingCursors,
-    generatorConfig: GeneratorConfig
+    mwdToolId: string,
+    nextDPointset: DPointsetDPoint[],
+    currentDPointsetBitCount: number
   ) {
     const BITS_LIMIT = 80;
-
-    const closestBitLimitMultiple =
-      Math.round(cursors.bitsCount / BITS_LIMIT) * BITS_LIMIT;
-    if (closestBitLimitMultiple <= cursors.bitsCount) {
-      const index = this.orderedDPoints.findIndex(
-        (_, index) =>
-          _.tool.id === generatorConfig.MWDTool.id && index > cursors.lastIndex
+    // checks that there's no mwd dpoint in the current 80 bit block
+    const orderedMWDDPointIndex = this.orderedDPoints.findIndex(
+      (_, index) => _.tool.id === mwdToolId && index > cursors.lastIndex
+    );
+    console.log({ orderedMWDDPointIndex });
+    if (orderedMWDDPointIndex === -1) {
+      // get next dpoint set bit count
+      const nextDPointsetBitCount = nextDPointset.reduce(
+        (count, dpoint) => dpoint.bits + count,
+        0
       );
-      if (index === -1) {
-        const mwdDPointIndex = cursors.dpointIndex % mwdDPoints.length;
-        const dpoint = mwdDPoints[mwdDPointIndex];
-        if (dpoint) {
-          this.orderedDPoints.push({
-            ...getFramesetDPoint(dpoint),
-            isBaseInstance: cursors.dpointIndex / mwdDPoints.length < 1,
+      console.log({
+        orderedMWDDPointIndex,
+        nextDPointsetBitCount,
+        ...cursors,
+        BITS_LIMIT,
+      });
+      if (cursors.bitsCount + nextDPointsetBitCount >= BITS_LIMIT) {
+        // get bit count to next mwd dpoint
+        let bitCountToNextMWDPoint = 0;
+        let nextDPointsetHasMWDDPoint = false;
+        for (const dpoint of nextDPointset) {
+          bitCountToNextMWDPoint += dpoint.bits;
+          if (dpoint.tool.type === ToolEnum.MWD) {
+            nextDPointsetHasMWDDPoint = true;
+            break;
+          }
+        }
+
+        if (
+          !nextDPointsetHasMWDDPoint ||
+          cursors.bitsCount + bitCountToNextMWDPoint > BITS_LIMIT
+        ) {
+          const nextDPointsetFirstDPointPosition =
+            this.orderedDPoints.findIndex(
+              (dpoint) => nextDPointset[0]?.id === dpoint.id
+            );
+          this.orderedDPoints.splice(nextDPointsetFirstDPointPosition, 0, {
+            ...getFramesetDPoint(mwdSeparator),
+            dpointsetId: getRandomID(),
           });
-          cursors.lastIndex = this.orderedDPoints.length - 1;
-          cursors.dpointIndex++;
+          cursors.bitsCount = 0;
+          cursors.lastIndex = nextDPointsetFirstDPointPosition;
         }
       }
     }
-    return { cursors, mwdDPoints };
+    cursors.bitsCount = cursors.bitsCount + currentDPointsetBitCount;
   }
 
   /**
@@ -415,7 +460,7 @@ export class RulesHandler {
    */
   handleProhibitiveRules(
     dpointPosition: number,
-    dpoint: FramesetDpoint,
+    dpoint: DPointsetDPoint,
     rules: GeneratorConfigRule[]
   ) {
     const shouldNotBePrecededByOther = rules.some(

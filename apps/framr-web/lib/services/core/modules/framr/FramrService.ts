@@ -1,6 +1,7 @@
 import {
   CreateGeneratorConfig,
   DPoint,
+  DPointsetDPoint,
   FSLFrameType,
   FramesetDpoint,
   GeneratorConfig,
@@ -184,6 +185,7 @@ export class FramrService {
   orderFramesets(fslNumber: number) {
     const { framesets: fslFramesets } = this.getCurrentFSL(fslNumber);
     for (const frameset in fslFramesets) {
+      console.log('New frameset ', frameset);
       this.orderFramesetDPoints(fslNumber, frameset as FSLFrameType);
     }
   }
@@ -193,12 +195,13 @@ export class FramrService {
       throw new FramrServiceError('Service was not initialized');
     }
 
-    this.generatorConfig = {
-      ...this.generatorConfig,
-      tools: this.generatorConfig.tools.map((tool) =>
+    if (toolId === this.generatorConfig.MWDTool.id) {
+      this.generatorConfig.MWDTool.rules = rules;
+    } else {
+      this.generatorConfig.tools = this.generatorConfig.tools.map((tool) =>
         tool.id === toolId ? { ...tool, rules } : tool
-      ),
-    };
+      );
+    }
   }
 
   removeDPointsConstraints(fslNumber: number, dpoints: FramesetDpoint[]) {
@@ -281,7 +284,7 @@ export class FramrService {
           `\n${jobName} FSL ${fslNumber} ${frame}` +
           `\nFRAME#${frameNumber + i}\n`;
         // if (dpoints.length > 0) {
-          fslDataString += getDPointList(dpoints);
+        fslDataString += getDPointList(dpoints);
         // }
       });
       frameNumber++;
@@ -355,20 +358,15 @@ export class FramrService {
     );
 
     // Get available MWD Tool DPoints
-    let mwdDPoints = generatorConfig.MWDTool.rules
+    const mwdDPoints = generatorConfig.MWDTool.rules
       .filter(
         (_) =>
           _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
           _.framesets.includes(frame)
       )
       .map((_) => _.concernedDpoint)
-      .sort((a, b) => b.bits - a.bits);
-
-    let cursors: SpreadingCursors = {
-      bitsCount: 0,
-      lastIndex: -1,
-      dpointIndex: 0,
-    };
+      .sort((a, b) => a.bits - b.bits);
+    const mwdSeparator = mwdDPoints[0];
 
     // Process non constraint remaining data points and apply rules
     for (const dpoint of dpointsWithoutConstraints) {
@@ -379,13 +377,6 @@ export class FramrService {
         (bitsCount, _) => bitsCount + _.bits,
         0
       );
-      if (bitsCount > 0) {
-        ({ cursors, mwdDPoints } = rulesHandler.handle80BitsRule(
-          mwdDPoints,
-          { ...cursors, bitsCount },
-          generatorConfig
-        ));
-      }
 
       // Handle dpoints with constraints having intervals now mesured in bit
       rulesHandler.handleDPointsWithContraint(
@@ -394,6 +385,35 @@ export class FramrService {
         rules
       );
     }
+
+    const orderedDPointsClone = structuredClone(rulesHandler.orderedDPoints);
+
+    const orderedDPointsetsPerDPointsetId: Record<string, DPointsetDPoint[]> =
+      {};
+    for (const dpoint of orderedDPointsClone) {
+      if (orderedDPointsetsPerDPointsetId[dpoint.dpointsetId]) {
+        orderedDPointsetsPerDPointsetId[dpoint.dpointsetId].push(dpoint);
+      } else orderedDPointsetsPerDPointsetId[dpoint.dpointsetId] = [dpoint];
+    }
+
+    const orderedDPointsets = Object.values(orderedDPointsetsPerDPointsetId);
+
+    const cursors: SpreadingCursors = {
+      bitsCount: 0,
+      lastIndex: -1,
+    };
+    orderedDPointsets.forEach((currentDPointset, index) => {
+      const nextDPointset = orderedDPointsets[index + 1];
+      if (nextDPointset) {
+        rulesHandler.handle80BitsRule(
+          mwdSeparator,
+          cursors,
+          generatorConfig.MWDTool.id,
+          nextDPointset,
+          currentDPointset.reduce((count, dpoint) => count + dpoint.bits, 0)
+        );
+      }
+    });
 
     // Handle frameset overloading dpoints
     const { maxBits, maxDPoints } = generatorConfig.MWDTool;
