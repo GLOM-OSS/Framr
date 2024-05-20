@@ -23,6 +23,7 @@ import {
 } from '../../../../../lib/types';
 import {
   ConstraintEnum,
+  FrameEnum,
   ToolEnum,
   WithConstraintRuleEnum,
 } from '../../../../../lib/types/enums';
@@ -37,6 +38,7 @@ export interface NewConstraint {
   type: ConstraintEnum;
   interval: number;
   dpoint: FramesetDpoint;
+  frame: FrameEnum;
 }
 interface FrameProps {
   frame: FSLFrameset | UtilityFrameset;
@@ -246,7 +248,7 @@ export default function Frame({
           handleAddConstraint={(val: {
             type: ConstraintEnum;
             interval: number;
-          }) => handleAddNewConstraint({ ...val, dpoint: activeDPoint })}
+          }) => handleAddNewConstraint({ ...val, dpoint: activeDPoint, frame })}
           isMenuOpen={!!anchorEl}
           usage={newConstraintType}
         />

@@ -2,19 +2,19 @@ import up from '@iconify/icons-fluent/arrow-sort-up-24-regular';
 import watch from '@iconify/icons-fluent/timer-24-regular';
 import { Icon } from '@iconify/react';
 import {
-    Autocomplete,
-    Box,
-    Button,
-    FormControl,
-    FormLabel,
-    Menu,
-    TextField,
-    Typography,
-    capitalize,
+  Autocomplete,
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Menu,
+  TextField,
+  Typography,
+  capitalize,
 } from '@mui/material';
 import { useState } from 'react';
 import { DPoint } from '../../../../lib/types';
-import { ConstraintEnum } from '../../../../lib/types/enums';
+import { ConstraintEnum, FrameEnum } from '../../../../lib/types/enums';
 
 interface MultipleConstraintsMenuProps {
   isMenuOpen: boolean;
@@ -26,6 +26,7 @@ interface MultipleConstraintsMenuProps {
     interval: number;
     type: ConstraintEnum;
     dPoints: DPoint[];
+    framesets: FrameEnum[];
   }) => void;
 }
 export default function AddMultipleConstraintsMenu({
@@ -145,6 +146,7 @@ export default function AddMultipleConstraintsMenu({
                 interval,
                 type: ConstraintEnum[usage === 'time' ? 'TIME' : 'DISTANCE'],
                 dPoints: selectedDPoints,
+                framesets: [],
               })
             }
           >

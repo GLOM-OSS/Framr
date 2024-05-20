@@ -28,6 +28,7 @@ interface FramesetHeaderProps {
   submitMultipleConstraints: (val: {
     interval: number;
     type: ConstraintEnum;
+    framesets: FrameEnum[];
     dPoints: DPoint[];
   }) => void;
 }
