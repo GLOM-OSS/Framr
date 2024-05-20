@@ -161,14 +161,14 @@ export class RulesHandler {
         }
       }
     }
-    const dpointPosition = this.orderedDPoints.findIndex(
-      (dp) => dp.id === dpoint.id
-    );
+    // const dpointPosition = this.orderedDPoints.findIndex(
+    //   (dp) => dp.id === dpoint.id
+    // );
 
     // handle should not rules
-    const currentDPoint = this.orderedDPoints[dpointPosition];
-    if (currentDPoint)
-      this.handleProhibitiveRules(dpointPosition, currentDPoint, rules);
+    // const currentDPoint = this.orderedDPoints[dpointPosition];
+    // if (currentDPoint)
+    //   this.handleProhibitiveRules(dpointPosition, currentDPoint, rules);
   }
 
   /**
@@ -201,6 +201,8 @@ export class RulesHandler {
       ])
     ) as RuleWithOtherDPoint | undefined;
 
+    // console.log({ followedByRule, precededByRule, shouldBeSetOnly });
+
     if (!followedByRule && !precededByRule && !shouldBeSetOnly) {
       const shouldBePartOfSet = rules.some(
         (rule) =>
@@ -218,38 +220,52 @@ export class RulesHandler {
       return shouldBePartOfSet
         ? []
         : [{ ...dpoint, dpointsetId: getRandomID() }];
-    } else if (
-      precededByRule &&
-      followedByRule &&
-      precededByRule.otherDpoints.some((otherDPoint) =>
-        followedByRule.otherDpoints.some((_) => _.id === otherDPoint.id)
-      )
-    ) {
-      // If both preceded by and followed by rules exist, mark the data point with an error
+    } else if (precededByRule && followedByRule) {
+      const dpointsetId = getRandomID();
       return [
-        {
-          ...dpoint,
-          dpointsetId: getRandomID(),
-          error: `Dpoint cannot be both preceded by and followed by the same other DPoint`,
-        },
-      ];
+        ...precededByRule.otherDpoints.map((dpoint) =>
+          getFramesetDPoint(dpoint)
+        ),
+        dpoint,
+        ...followedByRule.otherDpoints.map((dpoint) =>
+          getFramesetDPoint(dpoint)
+        ),
+      ].map((dpoint) => ({
+        ...dpoint,
+        dpointsetId,
+      }));
     } else {
       const dpointSet: FramesetDpoint[] = [];
 
       if (followedByRule) {
         dpointSet.push(
           dpoint,
-          ...followedByRule.otherDpoints.map((dpoint) =>
-            getFramesetDPoint(dpoint)
-          )
+          ...followedByRule.otherDpoints
+            .filter(
+              (dpoint) =>
+                !rules.some((rule) =>
+                  this.rulePredicate(rule, dpoint.id, [
+                    WithOtherDPointRuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER,
+                    WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER,
+                  ])
+                )
+            )
+            .map((dpoint) => getFramesetDPoint(dpoint))
         );
       }
 
       if (precededByRule) {
         dpointSet.push(
-          ...precededByRule.otherDpoints.map((dpoint) =>
-            getFramesetDPoint(dpoint)
-          ),
+          ...precededByRule.otherDpoints
+            .filter((dpoint) =>
+              rules.some((rule) =>
+                this.rulePredicate(rule, dpoint.id, [
+                  WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
+                  WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
+                ])
+              )
+            )
+            .map((dpoint) => getFramesetDPoint(dpoint)),
           dpoint
         );
       }
