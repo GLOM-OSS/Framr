@@ -5,7 +5,7 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  GeneratorConfigTool
+  GeneratorConfigTool,
 } from '../../../../types';
 import {
   FrameEnum,
@@ -239,47 +239,69 @@ export class FramrService {
       throw new FramrServiceError('Service was not initialized');
     }
 
-    let dataString =
+    let fslDataString =
       `LIBTYPE:${this.generatorConfig.MWDTool.long}` +
       `\nFRMTYPE:REPEATING` +
       `\nUSER FRAME LIBRARY` +
       `\nFrameBuilderWizard Version : TnAShared2022_1_001 built on ${new Date().toISOString()}` +
       `\nLast modified: ${new Date().toISOString()}`;
 
+    const {
+      jobName,
+      wellName,
+      MWDTool: { name: mwdName, version: nwdVersion },
+      framesets: { fsl: fslFramesets, utility: utilityFrameset },
+    } = this.generatorConfig;
+    const utilityDataString =
+      fslDataString.replace('REPEATING', 'UTILITY') +
+      `\nSTARTOFFRAME` +
+      `\nFRM_TYPE:UTIL` +
+      `\nMTF_FRM#${0}` +
+      `\nGTF_FRM#${0}` +
+      `\nROT_FRM#${0}` +
+      `\n${jobName} ${wellName} ${FrameEnum.UTIL}` +
+      `\nFRAME#6000\n` +
+      getDPointList(utilityFrameset.dpoints);
+
     let frameNumber = 2000;
-    const { jobName, wellName, framesets, MWDTool } = this.generatorConfig;
-    framesets.fsl.forEach(({ framesets, number: fslNumber }) => {
+    fslFramesets.forEach(({ framesets, number: fslNumber }) => {
       [FrameEnum.MTF, FrameEnum.GTF, FrameEnum.ROT].forEach((frame, i) => {
+        const { dpoints } = framesets[frame as FSLFrameType];
+
         const object = Object.entries(FrameEnum).find(
           ([_, value]) => value === frame
         ) as [key: string, string];
 
-        dataString +=
+        fslDataString +=
           `\nSTARTOFFRAME` +
           `\nFRM_TYPE:${object[0]}` +
           `\nMTF_FRM#${frameNumber}` +
           `\nGTF_FRM#${frameNumber + 1}` +
           `\nROT_FRM#${frameNumber + 2}` +
-          `\nFSL ${fslNumber} ${wellName}` +
-          `\nFRAME#${frameNumber + i}`;
-        const { dpoints } = framesets[frame as FSLFrameType];
-        dpoints.forEach((dpoint) => {
-          dataString += `\n${dpoint.name}`;
-        });
-
-        dataString += `\nNULL` + `\n37321` + `\nENDOFFRAME\n`;
+          `\n${jobName} FSL ${fslNumber} ${frame}` +
+          `\nFRAME#${frameNumber + i}\n`;
+        // if (dpoints.length > 0) {
+          fslDataString += getDPointList(dpoints);
+        // }
       });
       frameNumber++;
     });
-    const fileName = `${new Date().toISOString()}_${jobName}_${wellName}_${
-      MWDTool.name
-    }`
-      // remove special characters
-      .replace(/[^a-zA-Z0-9 ]/g, '')
-      // replace space with _
-      .replace(/ /g, '_');
+    const repeatingFileName = `${jobName}_${mwdName}${nwdVersion}_Repeating`
+      // reaplce special characters including space
+      .replace(/[^a-zA-Z0-9_.]/g, '-');
+    const utilityFileName = repeatingFileName.replace('Repeating', 'Utility');
 
-    this.xmlIO.downloadFile(dataString, `${fileName}.udl`);
+    this.xmlIO.downloadFile(fslDataString, `${repeatingFileName}.udl`);
+    this.xmlIO.downloadFile(utilityDataString, `${utilityFileName}.udl`);
+
+    function getDPointList(dpoints: FramesetDpoint[]) {
+      let dpointsString = '';
+      dpoints.forEach((dpoint) => {
+        dpointsString += `\n${dpoint.name}`;
+      });
+
+      return (dpointsString += `\nNULL` + `\n37321` + `\nENDOFFRAME\n`);
+    }
   }
 
   private orderDPoints(
