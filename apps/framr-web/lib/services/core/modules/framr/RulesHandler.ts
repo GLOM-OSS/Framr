@@ -289,20 +289,19 @@ export class RulesHandler {
     const BITS_LIMIT = 80;
 
     const closestBitLimitMultiple =
-      Math.floor(cursors.bitsCount / BITS_LIMIT) * BITS_LIMIT;
+      Math.round(cursors.bitsCount / BITS_LIMIT) * BITS_LIMIT;
     if (closestBitLimitMultiple <= cursors.bitsCount) {
       const index = this.orderedDPoints.findIndex(
         (_, index) =>
           _.tool.id === generatorConfig.MWDTool.id && index > cursors.lastIndex
       );
       if (index === -1) {
-        const mwdDPointIndex = cursors.dpointIndex % (mwdDPoints.length - 1);
+        const mwdDPointIndex = cursors.dpointIndex % mwdDPoints.length;
         const dpoint = mwdDPoints[mwdDPointIndex];
         if (dpoint) {
           this.orderedDPoints.push({
             ...getFramesetDPoint(dpoint),
-            isBaseInstance:
-              Math.floor(cursors.dpointIndex / (mwdDPoints.length - 1)) <= 1,
+            isBaseInstance: cursors.dpointIndex / mwdDPoints.length < 1,
           });
           cursors.lastIndex = this.orderedDPoints.length - 1;
           cursors.dpointIndex++;
