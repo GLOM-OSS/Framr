@@ -5,6 +5,7 @@ import { DialogTransition } from '../../../components/sharedComponents/dialog-tr
 import IOSSwitch from '../../../components/sharedComponents/iosSwitch';
 import { GeneratorConfigRule } from '../../types';
 import { FrameEnum } from '../../types/enums';
+import Scrollbars from 'rc-scrollbars';
 
 interface ManageRulesDialogProps {
   isDialogOpen: boolean;
@@ -109,28 +110,31 @@ export default function ManageRulesDialog({
           display: 'grid',
           rowGap: 2,
           minHeight: '500px',
+          gridTemplateRows: 'auto 1fr auto',
         }}
       >
         <Typography variant="h4">Rule Details</Typography>
-        <DataGrid
-          rows={tempRules}
-          columns={ruleColumns}
-          hideFooter
-          density="compact"
-          autoPageSize
-          disableColumnMenu
-          hideFooterSelectedRowCount
-          sx={{
-            '& .MuiDataGrid-container--top [role=row]': {
-              bgcolor: 'rgba(229, 231, 235, 1)',
-            },
-            '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 700,
-              fontSize: '12px',
-              lineHeight: '16px',
-            },
-          }}
-        />
+        <Scrollbars universal autoHide>
+          <DataGrid
+            rows={tempRules}
+            columns={ruleColumns}
+            hideFooter
+            density="compact"
+            // autoPageSize
+            disableColumnMenu
+            hideFooterSelectedRowCount
+            sx={{
+              '& .MuiDataGrid-container--top [role=row]': {
+                bgcolor: 'rgba(229, 231, 235, 1)',
+              },
+              '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 700,
+                fontSize: '12px',
+                lineHeight: '16px',
+              },
+            }}
+          />
+        </Scrollbars>
         <Box
           py={2}
           sx={{
