@@ -23,6 +23,7 @@ import {
 } from '../../../../../lib/services/libs/event-bus';
 import { theme } from '../../../../../lib/theme';
 import { CreateService, Service, Tool } from '../../../../../lib/types';
+import Scrollbars from 'rc-scrollbars';
 
 export default function ToolManagement() {
   const {
@@ -267,24 +268,26 @@ export default function ToolManagement() {
             </Button>
           </Box>
         </Box>
-        <DataGrid
-          rows={services}
-          columns={serviceColumns}
-          hideFooter
-          autoPageSize
-          disableColumnMenu
-          hideFooterSelectedRowCount
-          sx={{
-            '& .MuiDataGrid-container--top [role=row]': {
-              bgcolor: 'rgba(229, 231, 235, 1)',
-            },
-            '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 700,
-              fontSize: '12px',
-              lineHeight: '16px',
-            },
-          }}
-        />
+        <Scrollbars universal autoHide>
+          <DataGrid
+            rows={services}
+            columns={serviceColumns}
+            hideFooter
+            // autoPageSize
+            disableColumnMenu
+            hideFooterSelectedRowCount
+            sx={{
+              '& .MuiDataGrid-container--top [role=row]': {
+                bgcolor: 'rgba(229, 231, 235, 1)',
+              },
+              '& .css-t89xny-MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 700,
+                fontSize: '12px',
+                lineHeight: '16px',
+              },
+            }}
+          />
+        </Scrollbars>
       </Box>
     </>
   );
