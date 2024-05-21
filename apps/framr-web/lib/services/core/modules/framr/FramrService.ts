@@ -368,11 +368,7 @@ export class FramrService {
     });
     // Get available MWD Tool DPoints
     const mwdDPoints = generatorConfig.MWDTool.rules
-      .filter(
-        (_) =>
-          _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
-          _.framesets.includes(frame)
-      )
+      .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
       .map((_) => _.concernedDpoint)
       .sort((a, b) => a.bits - b.bits);
     const mwdSeparator = mwdDPoints[0];
