@@ -135,6 +135,17 @@ export class DataProcessor {
               ...dpoint,
               bits: Number(numberOfBits),
             };
+
+            framrBulkData.services = framrBulkData.services.map((service) => ({
+              ...service,
+              dpoints: service.dpoints.map((dpoint) => ({
+                ...dpoint,
+                bits:
+                  dpoint.name === dpointName
+                    ? Number(numberOfBits)
+                    : dpoint.bits,
+              })),
+            }));
           }
 
           const toolIndex = framrBulkData.tools.findIndex(
