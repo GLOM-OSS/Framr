@@ -346,6 +346,7 @@ export class FramrService {
         rules.some(
           (rule) =>
             rule.concernedDpoint.id === dpoint.dpointId &&
+            rule.framesets.includes(frame) &&
             [
               WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
               WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
