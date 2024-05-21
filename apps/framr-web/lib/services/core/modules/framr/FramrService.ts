@@ -391,34 +391,36 @@ export class FramrService {
       );
     }
 
-    const orderedDPointsClone = structuredClone(rulesHandler.orderedDPoints);
+    if (mwdSeparator) {
+      const orderedDPointsClone = structuredClone(rulesHandler.orderedDPoints);
 
-    const orderedDPointsetsPerDPointsetId: Record<string, DPointsetDPoint[]> =
-      {};
-    for (const dpoint of orderedDPointsClone) {
-      if (orderedDPointsetsPerDPointsetId[dpoint.dpointsetId]) {
-        orderedDPointsetsPerDPointsetId[dpoint.dpointsetId].push(dpoint);
-      } else orderedDPointsetsPerDPointsetId[dpoint.dpointsetId] = [dpoint];
-    }
-
-    const orderedDPointsets = Object.values(orderedDPointsetsPerDPointsetId);
-
-    const cursors: SpreadingCursors = {
-      bitsCount: 0,
-      lastIndex: -1,
-    };
-    orderedDPointsets.forEach((currentDPointset, index) => {
-      const nextDPointset = orderedDPointsets[index + 1];
-      if (nextDPointset) {
-        rulesHandler.handle80BitsRule(
-          mwdSeparator,
-          cursors,
-          generatorConfig.MWDTool.id,
-          nextDPointset,
-          currentDPointset
-        );
+      const orderedDPointsetsPerDPointsetId: Record<string, DPointsetDPoint[]> =
+        {};
+      for (const dpoint of orderedDPointsClone) {
+        if (orderedDPointsetsPerDPointsetId[dpoint.dpointsetId]) {
+          orderedDPointsetsPerDPointsetId[dpoint.dpointsetId].push(dpoint);
+        } else orderedDPointsetsPerDPointsetId[dpoint.dpointsetId] = [dpoint];
       }
-    });
+
+      const orderedDPointsets = Object.values(orderedDPointsetsPerDPointsetId);
+
+      const cursors: SpreadingCursors = {
+        bitsCount: 0,
+        lastIndex: -1,
+      };
+      orderedDPointsets.forEach((currentDPointset, index) => {
+        const nextDPointset = orderedDPointsets[index + 1];
+        if (nextDPointset) {
+          rulesHandler.handle80BitsRule(
+            mwdSeparator,
+            cursors,
+            generatorConfig.MWDTool.id,
+            nextDPointset,
+            currentDPointset
+          );
+        }
+      });
+    }
 
     // Handle frameset overloading dpoints
     const { maxBits, maxDPoints } = generatorConfig.MWDTool;
