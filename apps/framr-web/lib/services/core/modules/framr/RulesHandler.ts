@@ -368,15 +368,15 @@ export class RulesHandler {
           cursors.bitsCount + bitCountToNextMWDPoint > BITS_LIMIT
         ) {
           const nextDPointsetFirstDPointPosition =
-            this.orderedDPoints.findIndex(
-              (dpoint) => nextDPointset[0]?.id === dpoint.id
-            );
-          this.orderedDPoints.splice(nextDPointsetFirstDPointPosition, 0, {
+          this.orderedDPoints.findIndex(
+            (dpoint) => nextDPointset[0]?.id === dpoint.id
+          );
+          this.orderedDPoints.splice(nextDPointsetFirstDPointPosition-1, 0, {
             ...getFramesetDPoint(mwdSeparator),
             dpointsetId: getRandomID(),
           });
           cursors.bitsCount = 0;
-          cursors.lastIndex = nextDPointsetFirstDPointPosition;
+          cursors.lastIndex = nextDPointsetFirstDPointPosition-1;
         }
       }
     }
