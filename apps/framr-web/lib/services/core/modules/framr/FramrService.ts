@@ -337,7 +337,7 @@ export class FramrService {
 
     // partition dpoints with or without constraints
     const [constraintDPoints, dpointsWithoutConstraints] = partition(
-      dpointRest,
+      dpoints,
       (dpoint) =>
         rules.some(
           (rule) =>
@@ -348,6 +348,16 @@ export class FramrService {
               WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
             ].includes(rule.description as WithConstraintRuleEnum)
         )
+    );
+
+    const firstDPointIds = firstDPoints.map((_) => _.id);
+    rulesHandler.orderedDPoints.push(
+      ...constraintDPoints
+        .filter((_) => !firstDPointIds.includes(_.id))
+        .map((dpoint) =>
+          rulesHandler.handleDPointSequencingRules(dpoint, rules)
+        )
+        .flat()
     );
 
     // converting dpoints with update rate and density rate interval to dpoints with bit interval
@@ -371,7 +381,9 @@ export class FramrService {
     const mwdSeparator = mwdDPoints[0];
 
     // Process non constraint remaining data points and apply rules
-    for (const dpoint of dpointsWithoutConstraints) {
+    for (const dpoint of dpointsWithoutConstraints.filter(
+      (_) => !firstDPointIds.includes(_.id)
+    )) {
       // Handle all other rules
       rulesHandler.handleDPointRules(dpoint, rules);
 
