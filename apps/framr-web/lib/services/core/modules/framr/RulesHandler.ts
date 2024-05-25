@@ -181,6 +181,7 @@ export class RulesHandler {
     dpoint: FramesetDpoint,
     rules: GeneratorConfigRule[]
   ): DPointsetDPoint[] {
+    let newDPointSet: DPointsetDPoint[] = [];
     const precededByRule = rules.find((rule) =>
       this.rulePredicate(rule, dpoint.dpointId, [
         WithOtherDPointRuleEnum.SHOULD_BE_PRECEDED_BY_OTHER,
@@ -201,8 +202,6 @@ export class RulesHandler {
       ])
     ) as RuleWithOtherDPoint | undefined;
 
-    // console.log({ followedByRule, precededByRule, shouldBeSetOnly });
-
     if (!followedByRule && !precededByRule && !shouldBeSetOnly) {
       const shouldBePartOfSet = rules.some(
         (rule) =>
@@ -217,12 +216,12 @@ export class RulesHandler {
             (_) => _.id === dpoint.dpointId
           )
       );
-      return shouldBePartOfSet
+      newDPointSet = shouldBePartOfSet
         ? []
         : [{ ...dpoint, dpointsetId: getRandomID() }];
     } else if (precededByRule && followedByRule) {
       const dpointsetId = getRandomID();
-      return [
+      newDPointSet = [
         ...precededByRule.otherDpoints.map((dpoint) =>
           getFramesetDPoint(dpoint)
         ),
@@ -236,6 +235,7 @@ export class RulesHandler {
       }));
     } else {
       const dpointSet: FramesetDpoint[] = [];
+      const dpointsetId = getRandomID();
 
       if (followedByRule) {
         dpointSet.push(
@@ -253,6 +253,7 @@ export class RulesHandler {
             .map((dpoint) => getFramesetDPoint(dpoint))
         );
       }
+
 
       if (precededByRule) {
         dpointSet.push(
@@ -283,27 +284,43 @@ export class RulesHandler {
         const otherDPoints = setOnlyRuleOtherDPoints.map<FramesetDpoint>(
           (dpoint) => getFramesetDPoint(dpoint)
         );
-        if (shouldInsertAfter) {
-          dpointSet.push(...otherDPoints);
-        } else if (shouldInsertBefore) {
-          dpointSet.unshift(...otherDPoints);
+        if (shouldInsertAfter || shouldInsertBefore) {
+          if (shouldInsertAfter) {
+            dpointSet.push(...otherDPoints);
+          } else {
+            dpointSet.unshift(...otherDPoints);
+          }
+          newDPointSet = dpointSet.map((dpoint) => ({
+            ...dpoint,
+            dpointsetId,
+          }));
         } else {
-          return [
+          newDPointSet = [
             {
               ...dpoint,
-              dpointsetId: getRandomID(),
+              dpointsetId,
               error:
                 'DPoints following or preceding DPoint are conflicting with DPoint set',
             },
           ];
         }
       }
-      const dpointsetId = getRandomID();
-      return dpointSet.map((dpoint) => ({
+      else newDPointSet = dpointSet.map((dpoint) => ({
         ...dpoint,
         dpointsetId,
       }));
     }
+
+    // console.log(new)
+
+    return newDPointSet.filter(
+      (dpoint) =>
+        !rules.some((rule) =>
+          this.rulePredicate(rule, dpoint.id, [
+            StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT,
+          ])
+        )
+    );
   }
 
   /**
@@ -382,7 +399,6 @@ export class RulesHandler {
     }
     const newBitsCount = cursors.bitsCount + currentDPointsetBitCount;
     if (newBitsCount >= BITS_LIMIT) {
-      console.log({ newBitsCount, currentDPointsetBitCount, ...cursors });
       if (newBitsCount === BITS_LIMIT) {
         cursors.lastIndex = dpointsetLastDPointIndex;
       } else {
@@ -451,7 +467,7 @@ export class RulesHandler {
       }
 
       return {
-        lastCount: -1,
+        lastCount: 0,
         bitInterval,
         dpoint: {
           ...cdp,
@@ -471,7 +487,8 @@ export class RulesHandler {
     bitsCount: number,
     rules: GeneratorConfigRule[]
   ) {
-    dpoints
+    const clonedDpoints = structuredClone(dpoints);
+    clonedDpoints
       .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
       .forEach((cdp) => {
         const originalIndex = dpoints.findIndex(
@@ -485,7 +502,9 @@ export class RulesHandler {
           ...dpointSet.map((dpoint) => {
             return {
               ...dpoint,
-              isBaseInstance: cdp.lastCount === -1,
+              isBaseInstance: !this.orderedDPoints.some(
+                (_) => _.dpointId === dpoint.dpointId && _.isBaseInstance
+              ),
             };
           })
         );
@@ -497,6 +516,8 @@ export class RulesHandler {
           ),
         };
       });
+
+    console.log(clonedDpoints);
   }
 
   handleOverloadingDPoints(maxBits: number, maxDPoints: number) {
