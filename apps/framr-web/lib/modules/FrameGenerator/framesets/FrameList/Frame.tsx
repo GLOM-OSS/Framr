@@ -72,7 +72,9 @@ export default function Frame({
 
     return concernedRules.filter(
       (r) =>
-        r.concernedDpoint.id === dpoint.dpointId && r.framesets.includes(frame)
+        r.concernedDpoint.id === dpoint.dpointId &&
+        r.framesets.includes(frame) &&
+        r.isActive
     );
   }
 
