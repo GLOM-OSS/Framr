@@ -93,7 +93,7 @@ export default function FrameGenerator() {
             concernedDpoint: { ...dpoint },
             id: getRandomID(),
             isActive: true,
-            isGeneric: true,
+            isGeneric: false,
             tool,
           })),
       ];
