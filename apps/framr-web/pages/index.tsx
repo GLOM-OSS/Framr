@@ -77,7 +77,10 @@ export default function FrameGenerator() {
     dPoints: DPoint[];
     framesets: FrameEnum[];
   }) {
-    frameConfig?.tools.forEach((tool) => {
+    [
+      ...(frameConfig?.tools || []),
+      ...(frameConfig?.MWDTool ? [frameConfig.MWDTool] : []),
+    ].forEach((tool) => {
       const rules = [
         ...tool.rules,
         ...val.dPoints
