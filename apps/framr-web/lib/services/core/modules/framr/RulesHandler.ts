@@ -161,14 +161,6 @@ export class RulesHandler {
         }
       }
     }
-    // const dpointPosition = this.orderedDPoints.findIndex(
-    //   (dp) => dp.id === dpoint.id
-    // );
-
-    // handle should not rules
-    // const currentDPoint = this.orderedDPoints[dpointPosition];
-    // if (currentDPoint)
-    //   this.handleProhibitiveRules(dpointPosition, currentDPoint, rules);
   }
 
   /**
@@ -352,19 +344,12 @@ export class RulesHandler {
         index > cursors.lastIndex &&
         index <= dpointsetLastDPointIndex
     );
-    // console.log({ orderedMWDDPointIndex });
     if (orderedMWDDPointIndex === -1) {
       // get next dpoint set bit count
       const nextDPointsetBitCount = nextDPointset.reduce(
         (count, dpoint) => dpoint.bits + count,
         0
       );
-      // console.log({
-      //   orderedMWDDPointIndex,
-      //   nextDPointsetBitCount,
-      //   ...cursors,
-      //   BITS_LIMIT,
-      // });
       if (cursors.bitsCount + nextDPointsetBitCount >= BITS_LIMIT) {
         // get bit count to next mwd dpoint
         let bitCountToNextMWDPoint = 0;
