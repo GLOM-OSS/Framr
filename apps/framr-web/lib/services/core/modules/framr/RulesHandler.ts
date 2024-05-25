@@ -498,8 +498,6 @@ export class RulesHandler {
           ),
         };
       });
-
-    console.log(clonedDpoints);
   }
 
   handleOverloadingDPoints(maxBits: number, maxDPoints: number) {
