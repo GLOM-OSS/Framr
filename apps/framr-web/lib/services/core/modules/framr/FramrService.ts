@@ -242,17 +242,18 @@ export class FramrService {
 
     [...this.generatorConfig.tools, ...[this.generatorConfig.MWDTool]].forEach(
       (tool) => {
-        const rules = tool.rules.filter(
-          (rule) =>
-            !dpoints.some(
-              (dpoint) =>
-                rule.concernedDpoint.id === dpoint.dpointId &&
-                rule.framesets.includes(frame) &&
-                [
-                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
-                ].includes(rule.description as WithConstraintRuleEnum)
-            )
+        const rules = tool.rules.map((rule) =>
+          dpoints.some(
+            (dpoint) =>
+              rule.concernedDpoint.id === dpoint.dpointId &&
+              rule.framesets.includes(frame) &&
+              [
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+              ].includes(rule.description as WithConstraintRuleEnum)
+          )
+            ? { ...rule, isActive: false }
+            : rule
         );
         this.updateToolRules(tool.id, rules);
       }
