@@ -205,7 +205,12 @@ export default function FrameGeneratorConfig({
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState<boolean>(false);
 
   const toolColumns: GridColDef<GeneratorConfigTool>[] = [
-    { field: 'name', headerName: 'Tool Name', flex: 1 },
+    {
+      field: 'name',
+      headerName: 'Tool Name',
+      flex: 1,
+      renderCell: ({ row }) => `${row.name} (${row.version})`,
+    },
     {
       field: 'action',
       headerName: '',
@@ -448,13 +453,11 @@ export default function FrameGeneratorConfig({
               options={lwdTools}
               autoHighlight
               size="small"
-              getOptionLabel={({ name }) => name}
+              getOptionLabel={({ name, version }) => `${name} (${version})`}
               onChange={(_, selectedTools) =>
                 handleLWDToolListChange(selectedTools)
               }
-              value={lwdTools.filter(({ id }) =>
-                formik.values.tools.includes(id)
-              )}
+              value={selectedLWDTools}
               renderInput={(params) => (
                 <FormControl
                   fullWidth

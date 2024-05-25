@@ -148,7 +148,7 @@ export default function Tool({ tool, getDPoints }: ToolProps) {
   return (
     <Box>
       <ToolCard
-        name={tool.name}
+        name={`${tool.name} (${tool.version})`}
         isOpen={isOpen}
         handleSelect={handleSelectTool}
         isSelected={isSelected}
