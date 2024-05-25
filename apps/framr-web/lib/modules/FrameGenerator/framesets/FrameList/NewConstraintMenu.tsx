@@ -84,9 +84,9 @@ export default function AddConstraintMenu({
                 </Typography>
               ),
             }}
-            inputProps={{
-              min: 1,
-            }}
+            // inputProps={{
+            //   min: 1,
+            // }}
           />
         </FormControl>
 
@@ -107,7 +107,7 @@ export default function AddConstraintMenu({
           <Button
             variant="contained"
             color="primary"
-            disabled={!interval}
+            // disabled={!interval}
             onClick={() => {
               handleAddConstraint({
                 interval,
