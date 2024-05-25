@@ -157,6 +157,29 @@ export default function RuleManagement() {
         </Box>
       ),
     },
+    {
+      field: 'otherDpoints',
+      headerName: 'Other Dpoints',
+      flex: 1,
+      renderCell: ({ row }) => (
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 1,
+            gridAutoFlow: 'column',
+            alignItems: 'center',
+            height: '100%',
+            justifyContent: 'start',
+          }}
+        >
+          <Typography>
+            {(row as RuleWithOtherDPoint).otherDpoints
+              ?.map(({ name }) => name)
+              .join(', ')}
+          </Typography>
+        </Box>
+      ),
+    },
     { field: 'name', headerName: 'Rule Name', flex: 1 },
     {
       field: 'action',
