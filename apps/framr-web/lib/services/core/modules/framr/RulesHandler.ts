@@ -254,7 +254,6 @@ export class RulesHandler {
         );
       }
 
-
       if (precededByRule) {
         dpointSet.push(
           ...precededByRule.otherDpoints
@@ -304,22 +303,20 @@ export class RulesHandler {
             },
           ];
         }
-      }
-      else newDPointSet = dpointSet.map((dpoint) => ({
-        ...dpoint,
-        dpointsetId,
-      }));
+      } else
+        newDPointSet = dpointSet.map((dpoint) => ({
+          ...dpoint,
+          dpointsetId,
+        }));
     }
 
-    // console.log(new)
-
-    return newDPointSet.filter(
-      (dpoint) =>
-        !rules.some((rule) =>
-          this.rulePredicate(rule, dpoint.dpointId, [
-            StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT,
-          ])
-        )
+    return newDPointSet.filter((dpoint) =>
+      rules.some((rule) => {
+        return (
+          rule.concernedDpoint.id !== dpoint.dpointId ||
+          rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
+        );
+      })
     );
   }
 
