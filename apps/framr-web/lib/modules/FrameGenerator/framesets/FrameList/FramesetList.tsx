@@ -6,7 +6,7 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   Tool,
-  UtilityFrameset
+  UtilityFrameset,
 } from '../../../../types';
 import { FrameEnum } from '../../../../types/enums';
 import Frame, { NewConstraint } from './Frame';
@@ -23,7 +23,7 @@ interface FramesetListProps {
   manageRules: (val: Tool) => void;
   frameConfig: GeneratorConfig;
   handleAddNewConstraint: (val: NewConstraint) => void;
-  handleRemoveConstraint: (val: FramesetDpoint) => void;
+  handleRemoveConstraint: (val: FramesetDpoint, frame: FrameEnum) => void;
   handleRemoveDPoint: (val: FramesetDpoint) => void;
   isSelectMode: boolean;
   selectModeDPoints: FramesetDpoint[];
@@ -65,7 +65,9 @@ export default function FramesetList({
                 manageRules={manageRules}
                 frame={activeFramesetFSL.framesets[framekey as FSLFrameType]}
                 handleAddNewConstraint={handleAddNewConstraint}
-                handleRemoveConstraint={handleRemoveconstraint}
+                handleRemoveConstraint={(val) =>
+                  handleRemoveconstraint(val, framekey as FrameEnum)
+                }
                 handleRemoveDPoint={handleRemoveDPoint}
               />
             </Scrollbars>
@@ -80,7 +82,9 @@ export default function FramesetList({
           manageRules={manageRules}
           frame={utility}
           handleAddNewConstraint={handleAddNewConstraint}
-          handleRemoveConstraint={handleRemoveconstraint}
+          handleRemoveConstraint={(val) =>
+            handleRemoveconstraint(val, FrameEnum.UTIL)
+          }
           handleRemoveDPoint={handleRemoveDPoint}
         />
       )}

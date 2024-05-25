@@ -204,26 +204,41 @@ export class FramrService {
     }
   }
 
-  removeDPointsConstraints(fslNumber: number, dpoints: FramesetDpoint[]) {
+  removeDPointsConstraints(
+    fslNumber: number,
+    dpoints: FramesetDpoint[],
+    frame: FrameEnum
+  ) {
     if (!this.generatorConfig) {
       throw new FramrServiceError('Service was not initialized');
     }
     const activeFsl = this.getCurrentFSL(fslNumber);
 
-    for (const frame in activeFsl.framesets) {
-      activeFsl.framesets[frame as FSLFrameType].dpoints = activeFsl.framesets[
-        frame as FSLFrameType
-      ].dpoints.filter(({ dpointId, isBaseInstance }) =>
-        dpoints.some(
+    if (frame === FrameEnum.UTIL) {
+      this.generatorConfig.framesets.utility.dpoints =
+        this.generatorConfig.framesets.utility.dpoints.filter(
+          ({ dpointId, isBaseInstance }) =>
+            dpoints.some(
+              (dpoint) =>
+                (dpoint.dpointId === dpointId && isBaseInstance) ||
+                dpointId !== dpoint.dpointId
+            )
+        );
+    } else {
+      activeFsl.framesets[frame].dpoints = activeFsl.framesets[
+        frame
+      ].dpoints.filter(({ dpointId, isBaseInstance }) => {
+        return dpoints.some(
           (dpoint) =>
             (dpoint.dpointId === dpointId && isBaseInstance) ||
             dpointId !== dpoint.dpointId
-        )
+        );
+      });
+
+      this.generatorConfig.framesets.fsl.map((fslInstance) =>
+        activeFsl.number === fslNumber ? activeFsl : fslInstance
       );
     }
-    this.generatorConfig.framesets.fsl.map((fslInstance) =>
-      activeFsl.number === fslNumber ? activeFsl : fslInstance
-    );
 
     [...this.generatorConfig.tools, ...[this.generatorConfig.MWDTool]].forEach(
       (tool) => {
@@ -232,6 +247,7 @@ export class FramrService {
             !dpoints.some(
               (dpoint) =>
                 rule.concernedDpoint.id === dpoint.dpointId &&
+                rule.framesets.includes(frame) &&
                 [
                   WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
                   WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,

@@ -71,7 +71,8 @@ export default function Frame({
         frameConfig.tools.find((t) => t.id === tool.id)?.rules || [];
 
     return concernedRules.filter(
-      (r) => r.concernedDpoint.id === dpoint.dpointId
+      (r) =>
+        r.concernedDpoint.id === dpoint.dpointId && r.framesets.includes(frame)
     );
   }
 

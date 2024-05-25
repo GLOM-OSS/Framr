@@ -18,7 +18,7 @@ import {
   GeneratorConfigRule,
   LWDGeneratorConfigTool,
   MWDGeneratorConfigTool,
-  Tool,
+  Tool
 } from '../lib/types';
 import {
   ConstraintEnum,
@@ -53,9 +53,10 @@ export default function FrameGenerator() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   function removeConstraintOnSelectedDPoints(
-    selectModeDPoints: FramesetDpoint[]
+    selectModeDPoints: FramesetDpoint[],
+    frame: FrameEnum
   ) {
-    framrService.removeDPointsConstraints(activeFSL, selectModeDPoints);
+    framrService.removeDPointsConstraints(activeFSL, selectModeDPoints, frame);
     if (framrService.generatorConfig)
       setFrameConfig(framrService.generatorConfig);
 
@@ -127,8 +128,8 @@ export default function FrameGenerator() {
       setFrameConfig(framrService.generatorConfig);
   }
 
-  function handleRemoveConstraint(dpoint: FramesetDpoint) {
-    removeConstraintOnSelectedDPoints([dpoint]);
+  function handleRemoveConstraint(dpoint: FramesetDpoint, frame:FrameEnum) {
+    removeConstraintOnSelectedDPoints([dpoint], frame);
   }
 
   function handleAddNewConstraint({
@@ -181,7 +182,8 @@ export default function FrameGenerator() {
             dialogTitle={`Remove ${confirmDialogUsage}`}
             confirm={() => {
               if (confirmDialogUsage === 'constraint')
-                removeConstraintOnSelectedDPoints(selectModeDPoints);
+                // TODO: MULTIPLE SELECTION IS NOT FROM SAME FRAMESET... RESTRICT FRAMESET
+                removeConstraintOnSelectedDPoints(selectModeDPoints, FrameEnum.UTIL);
               else removeSelectModeDPoints(selectModeDPoints);
             }}
             closeOnConfirm
