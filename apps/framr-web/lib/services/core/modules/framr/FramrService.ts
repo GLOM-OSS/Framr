@@ -211,10 +211,14 @@ export class FramrService {
     const activeFsl = this.getCurrentFSL(fslNumber);
 
     for (const frame in activeFsl.framesets) {
-      activeFsl.framesets[frame as FSLFrameType].dpoints.filter(
-        ({ dpointId, isBaseInstance }) =>
-          !isBaseInstance &&
-          dpoints.some((dpoint) => dpoint.dpointId === dpointId)
+      activeFsl.framesets[frame as FSLFrameType].dpoints = activeFsl.framesets[
+        frame as FSLFrameType
+      ].dpoints.filter(({ dpointId, isBaseInstance }) =>
+        dpoints.some(
+          (dpoint) =>
+            (dpoint.dpointId === dpointId && isBaseInstance) ||
+            dpointId !== dpoint.dpointId
+        )
       );
     }
     this.generatorConfig.framesets.fsl.map((fslInstance) =>
