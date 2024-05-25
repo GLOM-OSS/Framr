@@ -316,7 +316,7 @@ export class RulesHandler {
     return newDPointSet.filter(
       (dpoint) =>
         !rules.some((rule) =>
-          this.rulePredicate(rule, dpoint.id, [
+          this.rulePredicate(rule, dpoint.dpointId, [
             StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT,
           ])
         )

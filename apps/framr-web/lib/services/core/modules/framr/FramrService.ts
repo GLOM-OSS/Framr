@@ -402,7 +402,6 @@ export class FramrService {
       );
     }
 
-
     rulesHandler.orderedDPoints = rulesHandler.orderedDPoints.filter(
       (remainingDPoint) =>
         !rules.some(
