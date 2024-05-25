@@ -62,32 +62,39 @@ export default function Frame({
   handleRemoveConstraint,
   handleRemoveDPoint,
 }: FrameProps) {
-  function getDPointRules(tool: Tool) {
-    if (tool.type === ToolEnum.MWD) return frameConfig.MWDTool.rules;
-    else {
-      return frameConfig.tools.find((t) => t.id === tool.id)?.rules;
-    }
+  function getDPointRules(dpoint: FramesetDpoint) {
+    const tool = dpoint.tool;
+    let concernedRules = [];
+    if (tool.type === ToolEnum.MWD) concernedRules = frameConfig.MWDTool.rules;
+    else
+      concernedRules =
+        frameConfig.tools.find((t) => t.id === tool.id)?.rules || [];
+
+    return concernedRules.filter(
+      (r) => r.concernedDpoint.id === dpoint.dpointId
+    );
   }
 
-  function getDPointConstraint(tool: Tool): IDPointConstraint | undefined {
-    const rules = getDPointRules(tool);
+  function getDPointConstraint(
+    dpoint: FramesetDpoint
+  ): IDPointConstraint | undefined {
+    const rules = getDPointRules(dpoint);
     const constraint: { interval: number; type: ConstraintEnum } | undefined =
       undefined;
-    if (!rules) return constraint;
+    if (!rules.length) return constraint;
 
-    const rulesDescriptions = rules.map(({ description }) => description);
-    if (
-      rulesDescriptions.includes(
-        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
-      ) ||
-      rulesDescriptions.includes(
-        WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
-      )
-    ) {
+    const rulesDescriptions = rules.filter(
+      ({ description }) =>
+        description ===
+          WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT ||
+        description ===
+          WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT
+    );
+    if (rulesDescriptions.length) {
       return {
-        interval: (rules[0] as RuleWithConstraint).interval,
+        interval: (rulesDescriptions[0] as RuleWithConstraint).interval,
         type:
-          (rules[0] as RuleWithConstraint).description ===
+          (rulesDescriptions[0] as RuleWithConstraint).description ===
           WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
             ? ConstraintEnum.DISTANCE
             : ConstraintEnum.TIME,
@@ -194,18 +201,18 @@ export default function Frame({
             <IconButton
               onClick={(e) => {
                 setActiveDPoint(dpoint);
-                setActiveDPointRules(getDPointConstraint(dpoint.tool));
+                setActiveDPointRules(getDPointConstraint(dpoint));
                 setAnchorEl(e.currentTarget);
               }}
             >
               <Icon
-                icon={getDPointConstraint(dpoint.tool) ? constraintIcon : more}
+                icon={getDPointConstraint(dpoint) ? constraintIcon : more}
                 fontSize={20}
                 color={
                   dpoint.error
                     ? '#BF0000'
                     : dpoint.tool.type === ToolEnum.MWD ||
-                      getDPointConstraint(dpoint.tool)
+                      getDPointConstraint(dpoint)
                     ? '#5CB360'
                     : '#6B7280'
                 }
