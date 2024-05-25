@@ -330,18 +330,10 @@ export class FramrService {
 
     // Add first data points to the ordered list, handling conflicts
     rulesHandler.handleFirstDPoints(firstDPoints, rules);
-    const nonForbiddenDPoints = dpointRest.filter(
-      (remainingDPoint) =>
-        !rules.some(
-          (rule) =>
-            rule.concernedDpoint.id === remainingDPoint.dpointId &&
-            rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
-        )
-    );
 
     // partition dpoints with or without constraints
     const [constraintDPoints, dpointsWithoutConstraints] = partition(
-      nonForbiddenDPoints,
+      dpointRest,
       (dpoint) =>
         rules.some(
           (rule) =>
@@ -362,7 +354,7 @@ export class FramrService {
     );
 
     console.log({
-      nonForbiddenDPoints,
+      nonForbiddenDPoints: dpointRest,
       dpointsWithConstraints,
       dpointsWithoutConstraints,
       rules: generatorConfig.tools.map((_) => _.rules),
@@ -423,8 +415,18 @@ export class FramrService {
       });
     }
 
+    rulesHandler.orderedDPoints = rulesHandler.orderedDPoints.filter(
+      (remainingDPoint) =>
+        !rules.some(
+          (rule) =>
+            rule.concernedDpoint.id === remainingDPoint.dpointId &&
+            rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
+        )
+    );
+
     // Handle frameset overloading dpoints
     const { maxBits, maxDPoints } = generatorConfig.MWDTool;
+
     rulesHandler.handleOverloadingDPoints(maxBits, maxDPoints);
 
     return rulesHandler.orderedDPoints;
