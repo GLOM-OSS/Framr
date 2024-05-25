@@ -388,6 +388,15 @@ export class FramrService {
       );
     }
 
+    rulesHandler.orderedDPoints = rulesHandler.orderedDPoints.filter(
+      (remainingDPoint) =>
+        !rules.some(
+          (rule) =>
+            rule.concernedDpoint.id === remainingDPoint.dpointId &&
+            rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
+        )
+    );
+
     if (mwdSeparator) {
       const orderedDPointsClone = structuredClone(rulesHandler.orderedDPoints);
 
@@ -418,15 +427,6 @@ export class FramrService {
         }
       });
     }
-
-    rulesHandler.orderedDPoints = rulesHandler.orderedDPoints.filter(
-      (remainingDPoint) =>
-        !rules.some(
-          (rule) =>
-            rule.concernedDpoint.id === remainingDPoint.dpointId &&
-            rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
-        )
-    );
 
     // Handle frameset overloading dpoints
     const { maxBits, maxDPoints } = generatorConfig.MWDTool;
