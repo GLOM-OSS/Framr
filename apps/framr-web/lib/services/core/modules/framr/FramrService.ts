@@ -225,20 +225,22 @@ export class FramrService {
       activeFsl.number === fslNumber ? activeFsl : fslInstance
     );
 
-    this.generatorConfig.tools.forEach((tool) => {
-      const rules = tool.rules.filter(
-        (rule) =>
-          !dpoints.some(
-            (dpoint) =>
-              rule.concernedDpoint.id === dpoint.dpointId &&
-              [
-                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
-              ].includes(rule.description as WithConstraintRuleEnum)
-          )
-      );
-      this.updateToolRules(tool.id, rules);
-    });
+    [...this.generatorConfig.tools, ...[this.generatorConfig.MWDTool]].forEach(
+      (tool) => {
+        const rules = tool.rules.filter(
+          (rule) =>
+            !dpoints.some(
+              (dpoint) =>
+                rule.concernedDpoint.id === dpoint.dpointId &&
+                [
+                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+                  WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+                ].includes(rule.description as WithConstraintRuleEnum)
+            )
+        );
+        this.updateToolRules(tool.id, rules);
+      }
+    );
   }
 
   exportGeneratorConfig() {
@@ -399,6 +401,7 @@ export class FramrService {
         rules
       );
     }
+
 
     rulesHandler.orderedDPoints = rulesHandler.orderedDPoints.filter(
       (remainingDPoint) =>
