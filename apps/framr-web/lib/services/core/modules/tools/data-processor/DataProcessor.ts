@@ -181,6 +181,113 @@ export class DataProcessor {
     });
   }
 
+  async processDPointCSV(file: File) {
+    return new Promise<FramrBulkData>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const content = e.target!.result as string;
+        const lines = content.split('\n');
+        lines.shift();
+
+        const framrBulkData: FramrBulkData = {
+          dpoints: [],
+          rules: [],
+          services: [],
+          tools: [],
+        };
+
+        for (const line of lines) {
+          const [
+            internalName,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            commercialName,
+            version,
+            serviceName,
+            dpointName,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            _,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            toolType,
+            mtf,
+            gtf,
+            rot,
+            util,
+            numberOfBits,
+          ] = line.split(',');
+
+          let tool = framrBulkData.tools.find(
+            (tool) => tool.name === internalName
+          );
+          if (!tool) {
+            tool = {
+              id: getRandomID(),
+              long: '',
+              version,
+              name: internalName,
+              type: ToolEnum.LWD,
+            };
+            framrBulkData.tools.push(tool);
+          }
+
+          const newDPoint: DPoint = {
+            id: getRandomID(),
+            bits: Number(numberOfBits),
+            name: dpointName,
+            tool,
+          };
+          framrBulkData.dpoints.push(newDPoint);
+
+          const framesets: FrameEnum[] = [];
+          if (mtf) {
+            framesets.push(FrameEnum.MTF);
+          } else if (gtf) {
+            framesets.push(FrameEnum.GTF);
+          } else if (rot) {
+            framesets.push(FrameEnum.ROT);
+          } else if (util) {
+            framesets.push(FrameEnum.UTIL);
+          }
+          const dpointRule: Rule = {
+            id: getRandomID(),
+            concernedDpoint: newDPoint,
+            description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
+            framesets,
+            tool,
+          };
+          framrBulkData.rules.push(dpointRule);
+
+          const serviceIndex = framrBulkData.services.findIndex(
+            (dpoint) => dpoint.name === serviceName
+            // && dpoint.tool.name === toolName
+          );
+          if (!serviceIndex) {
+            const newService: Service = {
+              dpoints: [newDPoint],
+              id: getRandomID(),
+              name: serviceName,
+              tool,
+            };
+            framrBulkData.services.push(newService);
+          } else {
+            const service = framrBulkData.services[serviceIndex];
+            framrBulkData.services[serviceIndex] = {
+              ...service,
+              dpoints: [...service.dpoints, newDPoint],
+            };
+          }
+        }
+      };
+
+      reader.onerror = function (e) {
+        console.error('Error reading CSV file', e);
+        reject(new FramrServiceError('Error reading CSV file'));
+      };
+
+      reader.readAsText(file);
+    });
+  }
+
   private getDpointFrames<DPoint = Omit<XmlDataPoint, 'name'>>(dpoint: DPoint) {
     const frames: FrameEnum[] = [];
 
