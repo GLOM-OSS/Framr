@@ -11,6 +11,7 @@ import {
   FrameEnum,
   StandAloneRuleEnum,
   ToolEnum,
+  WithOtherDPointRuleEnum,
 } from '../../../../../types/enums';
 import { FramrServiceError } from '../../../../libs/errors';
 import { XmlIO } from '../../../../libs/xml-io';
@@ -65,7 +66,7 @@ export class DataProcessor {
           id: getRandomID(),
           concernedDpoint: newDPoint,
           description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
-          framesets: this.getDpointFrames(rest),
+          framesets: DataProcessor.getDpointFrames(rest),
         });
         dpoints.push(newDPoint);
       }
@@ -100,7 +101,7 @@ export class DataProcessor {
               id: getRandomID(),
               concernedDpoint: dpoint ?? newDPoint,
               description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
-              framesets: this.getDpointFrames(rest),
+              framesets: DataProcessor.getDpointFrames(rest),
             });
             return newDPoint;
           }),
@@ -188,7 +189,14 @@ export class DataProcessor {
       reader.onload = function (e) {
         const content = e.target!.result as string;
         const lines = content.split('\n');
-        lines.shift();
+        const header = lines.shift();
+        if (!header?.includes('internal name')) {
+          reject(
+            new FramrServiceError(
+              'Provided csv cannot be used to import tools and dpoints'
+            )
+          );
+        }
 
         const framrBulkData: FramrBulkData = {
           dpoints: [],
@@ -259,7 +267,6 @@ export class DataProcessor {
 
           const serviceIndex = framrBulkData.services.findIndex(
             (dpoint) => dpoint.name === serviceName
-            // && dpoint.tool.name === toolName
           );
           if (!serviceIndex) {
             const newService: Service = {
@@ -277,6 +284,8 @@ export class DataProcessor {
             };
           }
         }
+
+        resolve(framrBulkData);
       };
 
       reader.onerror = function (e) {
@@ -288,7 +297,72 @@ export class DataProcessor {
     });
   }
 
-  private getDpointFrames<DPoint = Omit<XmlDataPoint, 'name'>>(dpoint: DPoint) {
+  async processRuleCSV(file: File, framrBulkData: FramrBulkData) {
+    return new Promise<FramrBulkData>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const content = e.target!.result as string;
+        const lines = content.split('\n');
+        const header = lines.shift();
+        if (!header?.includes('Rule number')) {
+          throw new FramrServiceError(
+            'Provided csv cannot be used to import rules'
+          );
+        }
+
+        for (const line of lines) {
+          const [
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            ruleNumber,
+            toolName,
+            toolVersion,
+            primaryDPointName,
+            framesets,
+            ruleDescription,
+            secondaryDPoints,
+          ] = line.split(',').map((col) => col.replace(/"/g, ''));
+          const concernedDpoint = framrBulkData.dpoints.find(
+            ({ name, tool }) =>
+              name == primaryDPointName &&
+              tool.name == toolName &&
+              tool.version == toolVersion
+          );
+          if (concernedDpoint) {
+            const otherDPoints = framrBulkData.dpoints.filter((_) =>
+              secondaryDPoints.includes(_.name)
+            );
+            const newRule: Rule = {
+              concernedDpoint,
+              description: ruleDescription as WithOtherDPointRuleEnum,
+              framesets: DataProcessor.getDpointFrames({
+                gtf: framesets.includes('gtf'),
+                mtf: framesets.includes('mtf'),
+                rot: framesets.includes('util'),
+              }),
+              id: getRandomID(),
+              tool: concernedDpoint.tool,
+              otherDpoints: otherDPoints,
+            };
+            framrBulkData.rules.push(newRule);
+          }
+        }
+
+        resolve(framrBulkData);
+      };
+
+      reader.onerror = function (e) {
+        console.error('Error reading CSV file', e);
+        reject(new FramrServiceError('Error reading CSV file'));
+      };
+
+      reader.readAsText(file);
+    });
+  }
+
+  private static getDpointFrames<DPoint = Omit<XmlDataPoint, 'name'>>(
+    dpoint: DPoint
+  ) {
     const frames: FrameEnum[] = [];
 
     for (const key in dpoint) {
