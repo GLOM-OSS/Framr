@@ -141,15 +141,15 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  createFrom(xmlFile: File, txtFile: File): void {
+  createFrom(dpointsFile: File, ruleFiles: File): void {
     const RULE_STORE = 'rules';
     const DPOINT_STORE = 'dpoints';
     const SERVICE_STORE = 'services';
     const channel = ToolsEventChannel.CREATE_FROM_TOOLS_CHANNEL;
 
-    this.dataProcessor.processXmlFile(xmlFile).then((framrBulkData) => {
+    this.dataProcessor.processDPointCSV(dpointsFile).then((framrBulkData) => {
       this.dataProcessor
-        .processTxtFile(txtFile, framrBulkData)
+        .processRuleCSV(ruleFiles, framrBulkData)
         .then(({ dpoints, rules, services, tools }) => {
           this.database
             .$transaction(

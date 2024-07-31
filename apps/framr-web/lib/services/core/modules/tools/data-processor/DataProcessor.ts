@@ -268,7 +268,7 @@ export class DataProcessor {
           const serviceIndex = framrBulkData.services.findIndex(
             (dpoint) => dpoint.name === serviceName
           );
-          if (!serviceIndex) {
+          if (serviceIndex === -1) {
             const newService: Service = {
               dpoints: [newDPoint],
               id: getRandomID(),
