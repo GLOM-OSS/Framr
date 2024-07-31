@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   DPoint,
   LWDTool,
@@ -208,14 +209,11 @@ export class DataProcessor {
         for (const line of lines) {
           const [
             internalName,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             commercialName,
             version,
             serviceName,
             dpointName,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            _,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            isMwdDPoint,
             toolType,
             mtf,
             gtf,
@@ -246,24 +244,24 @@ export class DataProcessor {
           };
           framrBulkData.dpoints.push(newDPoint);
 
-          const framesets: FrameEnum[] = [];
-          if (mtf) {
-            framesets.push(FrameEnum.MTF);
-          } else if (gtf) {
-            framesets.push(FrameEnum.GTF);
-          } else if (rot) {
-            framesets.push(FrameEnum.ROT);
-          } else if (util) {
-            framesets.push(FrameEnum.UTIL);
-          }
-          const dpointRule: Rule = {
-            id: getRandomID(),
-            concernedDpoint: newDPoint,
-            description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
-            framesets,
-            tool,
-          };
-          framrBulkData.rules.push(dpointRule);
+          // const framesets: FrameEnum[] = [];
+          // if (mtf) {
+          //   framesets.push(FrameEnum.MTF);
+          // } else if (gtf) {
+          //   framesets.push(FrameEnum.GTF);
+          // } else if (rot) {
+          //   framesets.push(FrameEnum.ROT);
+          // } else if (util) {
+          //   framesets.push(FrameEnum.UTIL);
+          // }
+          // const dpointRule: Rule = {
+          //   id: getRandomID(),
+          //   concernedDpoint: newDPoint,
+          //   description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
+          //   framesets,
+          //   tool,
+          // };
+          // framrBulkData.rules.push(dpointRule);
 
           const serviceIndex = framrBulkData.services.findIndex(
             (dpoint) => dpoint.name === serviceName
