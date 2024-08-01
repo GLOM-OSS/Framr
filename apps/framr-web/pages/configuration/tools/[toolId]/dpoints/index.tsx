@@ -250,7 +250,7 @@ export default function ToolManagement() {
         <DataGrid
           rows={dPoints}
           columns={dPointColumns}
-          hideFooter
+          // hideFooter
           autoPageSize
           disableColumnMenu
           hideFooterSelectedRowCount

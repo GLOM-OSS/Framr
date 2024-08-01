@@ -272,8 +272,8 @@ export default function ToolManagement() {
           <DataGrid
             rows={services}
             columns={serviceColumns}
-            hideFooter
-            // autoPageSize
+            // hideFooter
+            autoPageSize
             disableColumnMenu
             hideFooterSelectedRowCount
             sx={{
