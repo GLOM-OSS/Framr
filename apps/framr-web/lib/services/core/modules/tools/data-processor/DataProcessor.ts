@@ -244,24 +244,24 @@ export class DataProcessor {
           };
           framrBulkData.dpoints.push(newDPoint);
 
-          // const framesets: FrameEnum[] = [];
-          // if (mtf) {
-          //   framesets.push(FrameEnum.MTF);
-          // } else if (gtf) {
-          //   framesets.push(FrameEnum.GTF);
-          // } else if (rot) {
-          //   framesets.push(FrameEnum.ROT);
-          // } else if (util) {
-          //   framesets.push(FrameEnum.UTIL);
-          // }
-          // const dpointRule: Rule = {
-          //   id: getRandomID(),
-          //   concernedDpoint: newDPoint,
-          //   description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
-          //   framesets,
-          //   tool,
-          // };
-          // framrBulkData.rules.push(dpointRule);
+          const framesets: FrameEnum[] = [];
+          if (mtf) {
+            framesets.push(FrameEnum.MTF);
+          } else if (gtf) {
+            framesets.push(FrameEnum.GTF);
+          } else if (rot) {
+            framesets.push(FrameEnum.ROT);
+          } else if (util) {
+            framesets.push(FrameEnum.UTIL);
+          }
+          const dpointRule: Rule = {
+            id: getRandomID(),
+            concernedDpoint: newDPoint,
+            description: StandAloneRuleEnum.SHOULD_BE_PRESENT,
+            framesets,
+            tool,
+          };
+          framrBulkData.rules.push(dpointRule);
 
           const serviceIndex = framrBulkData.services.findIndex(
             (dpoint) => dpoint.name === serviceName
@@ -330,19 +330,27 @@ export class DataProcessor {
             const otherDPoints = framrBulkData.dpoints.filter((_) =>
               secondaryDPoints.includes(_.name)
             );
-            const newRule: Rule = {
-              concernedDpoint,
-              description: ruleDescription as WithOtherDPointRuleEnum,
-              framesets: DataProcessor.getDpointFrames({
-                gtf: framesets.includes('gtf'),
-                mtf: framesets.includes('mtf'),
-                rot: framesets.includes('util'),
-              }),
-              id: getRandomID(),
-              tool: concernedDpoint.tool,
-              otherDpoints: otherDPoints,
-            };
-            framrBulkData.rules.push(newRule);
+
+            const rule = framrBulkData.rules.find(
+              (rule) =>
+                rule.description === ruleDescription &&
+                rule.concernedDpoint.id === concernedDpoint.id
+            );
+            if (!rule) {
+              const newRule: Rule = {
+                concernedDpoint,
+                description: ruleDescription as WithOtherDPointRuleEnum,
+                framesets: DataProcessor.getDpointFrames({
+                  gtf: framesets.includes('gtf'),
+                  mtf: framesets.includes('mtf'),
+                  rot: framesets.includes('util'),
+                }),
+                id: getRandomID(),
+                tool: concernedDpoint.tool,
+                otherDpoints: otherDPoints,
+              };
+              framrBulkData.rules.push(newRule);
+            }
           }
         }
 
