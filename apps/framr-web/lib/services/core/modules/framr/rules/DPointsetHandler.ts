@@ -9,8 +9,8 @@ import {
   StandAloneRuleEnum,
   WithOtherDPointRuleEnum,
 } from '../../../../../types/enums';
-import { getFramesetDPoint, partition, rulePredicate } from '../RulesHandler';
 import { getRandomID } from '../../common/common';
+import { getFramesetDPoint, rulePredicate } from '../RulesHandler';
 
 export class DPointsetHandler {
   constructor(private readonly frame: FrameEnum) {}
@@ -138,89 +138,45 @@ export class DPointsetHandler {
       }
 
       if (shouldBeSetOnly) {
-        const {
-          setOnlyRuleOtherDPoints,
-          shouldInsertAfter,
-          shouldInsertBefore,
-        } = this.handleSetOnlyRule(
-          shouldBeSetOnly,
-          precededByRule,
-          followedByRule
-        );
-        const otherDPoints = setOnlyRuleOtherDPoints.map<FramesetDpoint>(
-          (dpoint) => getFramesetDPoint(dpoint)
-        );
-        if (shouldInsertAfter || shouldInsertBefore) {
-          if (shouldInsertAfter) {
-            dpointSet.push(...otherDPoints);
-          } else {
-            dpointSet.unshift(...otherDPoints);
-          }
-          newDPointSet = dpointSet.map((dpoint) => ({
-            ...dpoint,
-            dpointsetId,
-          }));
-        } else {
-          newDPointSet = [
-            {
-              ...dpoint,
-              dpointsetId,
-              error:
-                'DPoints following or preceding DPoint are conflicting with DPoint set',
-            },
-          ];
-        }
+        const otherDPoints = shouldBeSetOnly.otherDpoints
+          .filter(
+            (otherDPoint) =>
+              !(
+                precededByRule?.otherDpoints.some(
+                  (_) => _.id === otherDPoint.id
+                ) ||
+                followedByRule?.otherDpoints.some(
+                  (_) => _.id === otherDPoint.id
+                )
+              )
+          )
+          .map<FramesetDpoint>((dpoint) => getFramesetDPoint(dpoint));
+
+        newDPointSet = [...dpointSet, ...otherDPoints].map((dpoint) => ({
+          ...dpoint,
+          dpointsetId,
+        }));
       } else
         newDPointSet = dpointSet.map((dpoint) => ({
           ...dpoint,
           dpointsetId,
         }));
+
+      if (!newDPointSet.find((dp) => dp.id === dpoint.id)) {
+        newDPointSet.push({ ...dpoint, dpointsetId });
+      }
     }
 
-    return newDPointSet.filter((dpoint) =>
-      rules.some((rule) => {
-        return (
-          rule.concernedDpoint.id !== dpoint.dpointId ||
-          rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
-        );
-      })
+    return newDPointSet.filter(
+      (dpoint) =>
+        !rules.some((rule) => {
+          return rulePredicate(
+            this.frame,
+            rule,
+            [StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT],
+            dpoint.dpointId
+          );
+        })
     );
-  }
-
-  /**
-   *  Handles rules where a data point should be present in a set only under certain conditions.
-   * @param dpointPosition The position where to insert the dpoint
-   * @param dpoint data point
-   * @param setOnlyRule
-   * @param rules generator config rule
-   * @param precededByRule
-   * @param followedByRule
-   * @returns 0 if the dpoint has an error and 1 if everything went well
-   */
-  private handleSetOnlyRule(
-    setOnlyRule: RuleWithOtherDPoint,
-    precededByRule?: RuleWithOtherDPoint,
-    followedByRule?: RuleWithOtherDPoint
-  ) {
-    const [precededByRuleCommonDPoints, uncommonOtherDPoints1] = partition(
-      setOnlyRule.otherDpoints,
-      (otherDPoint) =>
-        !!precededByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
-    );
-    const [followedByRuleCommonDPoints, setOnlyRuleOtherDPoints] = partition(
-      uncommonOtherDPoints1,
-      (otherDPoint) =>
-        !!followedByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
-    );
-    const shouldInsertAfter =
-      followedByRuleCommonDPoints.length === 0 ||
-      followedByRuleCommonDPoints.length ===
-        followedByRule?.otherDpoints.length;
-    const shouldInsertBefore =
-      precededByRuleCommonDPoints.length === 0 ||
-      precededByRuleCommonDPoints.length ===
-        precededByRule?.otherDpoints.length;
-
-    return { setOnlyRuleOtherDPoints, shouldInsertAfter, shouldInsertBefore };
   }
 }
