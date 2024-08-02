@@ -1,7 +1,17 @@
 import { DPoint, DPointsetDPoint } from '../../../../../types';
 import { ToolEnum } from '../../../../../types/enums';
 import { getRandomID } from '../../common/common';
-import { getFramesetDPoint, SeparatorOptions } from '../RulesHandler';
+import { getFramesetDPoint } from '../RulesHandler';
+/**
+ * Represents the number of bits, last index, and data point index for spreading cursors.
+ */
+export type SeparatorOptions = {
+  bitsCount: number;
+  lastIndex: number;
+  separator: DPoint;
+  nextSet: DPointsetDPoint[];
+  currentSet: DPointsetDPoint[];
+};
 
 export class EightyBitsRuleHandler {
   /**
@@ -12,23 +22,18 @@ export class EightyBitsRuleHandler {
    * @returns Object containing updated cursors and MWD data points.
    */
   handle(
-    cursors: SeparatorOptions & { separator: DPoint },
-    [currentDPointset, nextDPointset]: [
-      currentSet: DPointsetDPoint[],
-      nextSet: DPointsetDPoint[]
-    ],
+    { nextSet, currentSet, ...cursors }: SeparatorOptions,
     orderedDPoints: DPointsetDPoint[]
   ) {
     const BITS_LIMIT = 80;
 
-    const currentDPointsetBitCount = currentDPointset.reduce(
+    const currentDPointsetBitCount = currentSet.reduce(
       (count, dpoint) => count + dpoint.bits,
       0
     );
-    const currentDPointsetLastDPointIndex = currentDPointset.length - 1;
+    const currentDPointsetLastDPointIndex = currentSet.length - 1;
     const dpointsetLastDPointIndex = orderedDPoints.findIndex(
-      (dpoint) =>
-        dpoint.id === currentDPointset[currentDPointsetLastDPointIndex]?.id
+      (dpoint) => dpoint.id === currentSet[currentDPointsetLastDPointIndex]?.id
     );
     // checks that there's no mwd dpoint in the current 80 bit block
     const orderedMWDDPointIndex = orderedDPoints.findIndex(
@@ -39,7 +44,7 @@ export class EightyBitsRuleHandler {
     );
     if (orderedMWDDPointIndex === -1) {
       // get next dpoint set bit count
-      const nextDPointsetBitCount = nextDPointset.reduce(
+      const nextDPointsetBitCount = nextSet.reduce(
         (count, dpoint) => dpoint.bits + count,
         0
       );
@@ -47,7 +52,7 @@ export class EightyBitsRuleHandler {
         // get bit count to next mwd dpoint
         let bitCountToNextMWDPoint = 0;
         let nextDPointsetHasMWDDPoint = false;
-        for (const dpoint of nextDPointset) {
+        for (const dpoint of nextSet) {
           bitCountToNextMWDPoint += dpoint.bits;
           if (dpoint.tool.type === ToolEnum.MWD) {
             nextDPointsetHasMWDDPoint = true;
@@ -60,7 +65,7 @@ export class EightyBitsRuleHandler {
           cursors.bitsCount + bitCountToNextMWDPoint > BITS_LIMIT
         ) {
           const nextDPointsetFirstDPointPosition = orderedDPoints.findIndex(
-            (dpoint) => nextDPointset[0]?.id === dpoint.id
+            (dpoint) => nextSet[0]?.id === dpoint.id
           );
           orderedDPoints.splice(nextDPointsetFirstDPointPosition - 1, 0, {
             ...getFramesetDPoint(cursors.separator),
@@ -83,7 +88,7 @@ export class EightyBitsRuleHandler {
           dpoint: undefined,
           count: cursors.bitsCount,
         };
-        for (const dpoint of currentDPointset) {
+        for (const dpoint of currentSet) {
           const ttt = currentsetLastValidDPointData.count + dpoint.bits;
           if (ttt > BITS_LIMIT) {
             break;
