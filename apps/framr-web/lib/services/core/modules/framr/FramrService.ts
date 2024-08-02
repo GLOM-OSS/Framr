@@ -5,7 +5,7 @@ import {
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  GeneratorConfigTool
+  GeneratorConfigTool,
 } from '../../../../types';
 import {
   FrameEnum,
@@ -16,14 +16,11 @@ import {
 import { FramrServiceError } from '../../../libs/errors';
 import { XmlIO } from '../../../libs/xml-io';
 import { getRandomID } from '../common/common';
-import {
-  RulesHandler,
-  getFramesetDPoint
-} from './RulesHandler';
+import { SeparatorOptions } from './rules/EightyBitsRuleHandler';
+import { RulesHandler, getFramesetDPoint } from './RulesHandler';
 
 export class FramrService {
   private readonly xmlIO: XmlIO;
-  // private rulesHandler: RulesHandler;
 
   private _generatorConfig: GeneratorConfig | null = null;
   public get generatorConfig(): GeneratorConfig | null {
@@ -336,20 +333,11 @@ export class FramrService {
     generatorConfig: GeneratorConfig
   ) {
     const rules = this.getRules();
-
-    // Partition the data points based on whether they should be at the beginning
-    // const [firstDPoints, dpointRest] = partition(dpoints, (dpoint) =>
-    //   rules.some(
-    //     (rule) =>
-    //       rule.concernedDpoint.id === dpoint.dpointId &&
-    //       rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
-    //   )
-    // );
-
     const rulesHandler = new RulesHandler(frame);
 
-    // Add first data points to the ordered list, handling conflicts
-    // rulesHandler.handleFirstDPoints(firstDPoints, rules);
+    if (!dpoints.length) {
+      return [];
+    }
 
     // partition dpoints with or without constraints
     // const [constraintDPoints, dpointsWithoutConstraints] = partition(
@@ -390,16 +378,16 @@ export class FramrService {
     //   rules: generatorConfig.tools.map((_) => _.rules),
     // });
     // Get available MWD Tool DPoints
-    // const mwdDPoints = generatorConfig.MWDTool.rules
-    //   .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
-    //   .map((_) => _.concernedDpoint)
-    //   .sort((a, b) => a.bits - b.bits);
-    // const mwdSeparator = mwdDPoints[0];
+    const mwdDPoints = generatorConfig.MWDTool.rules
+      .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
+      .map((_) => _.concernedDpoint)
+      .sort((a, b) => a.bits - b.bits);
+    const mwdSeparator = mwdDPoints[0];
 
-    // Process non constraint remaining data points and apply rules
+    // Group dpoint by dpoint set
     for (const dpoint of dpoints) {
       // Handle all other rules
-      rulesHandler.handleDPointRules(dpoint, rules);
+      rulesHandler.handleDPointset(dpoint, rules);
 
       // const bitsCount = rulesHandler.orderedDPoints.reduce(
       //   (bitsCount, _) => bitsCount + _.bits,
@@ -414,49 +402,35 @@ export class FramrService {
       // );
     }
 
-    rulesHandler.orderedDPoints = rulesHandler.orderedDPoints.filter(
-      (remainingDPoint) =>
-        !rules.some(
-          (rule) =>
-            rule.concernedDpoint.id === remainingDPoint.dpointId &&
-            rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
-        )
-    );
+    // get a cloned version reference of ordered dpoints group by sets
+    const orderedDPointsets = rulesHandler.getOrderedDPointsGroupBySets();
 
-    // if (mwdSeparator) {
-    //   const orderedDPointsClone = structuredClone(rulesHandler.orderedDPoints);
+    //order dpoints group in sets
+    rulesHandler.orderDPointsetDPoints(rules, orderedDPointsets);
 
-    //   const orderedDPointsetsPerDPointsetId: Record<string, DPointsetDPoint[]> =
-    //     {};
-    //   for (const dpoint of orderedDPointsClone) {
-    //     if (orderedDPointsetsPerDPointsetId[dpoint.dpointsetId]) {
-    //       orderedDPointsetsPerDPointsetId[dpoint.dpointsetId].push(dpoint);
-    //     } else orderedDPointsetsPerDPointsetId[dpoint.dpointsetId] = [dpoint];
-    //   }
+    // handle first data points to the ordered list
+    rulesHandler.handleFirstDPoints(rules);
 
-    //   const orderedDPointsets = Object.values(orderedDPointsetsPerDPointsetId);
-
-    //   const separatorOptions: SeparatorOptions = {
-    //     bitsCount: 0,
-    //     lastIndex: -1,
-    //     separator: mwdSeparator,
-    //   };
-    //   orderedDPointsets.forEach((currentDPointset, index) => {
-    //     const nextDPointset = orderedDPointsets[index + 1];
-    //     if (nextDPointset) {
-    //       rulesHandler.handle80BitsRule(
-    //         separatorOptions,
-    //         currentDPointset,
-    //         nextDPointset
-    //       );
-    //     }
-    //   });
-    // }
+    if (mwdSeparator) {
+      orderedDPointsets.forEach((currentSet, index) => {
+        const nextSet = orderedDPointsets[index + 1];
+        const separatorOptions: SeparatorOptions = {
+          bitsCount: 0,
+          lastIndex: -1,
+          nextSet,
+          currentSet,
+          separator: mwdSeparator,
+        };
+        if (nextSet) {
+          rulesHandler.handle80BitsRule(separatorOptions);
+        }
+      });
+    }
 
     // // Handle frameset overloading dpoints
-    // const { maxBits, maxDPoints } = generatorConfig.MWDTool;
+    const { maxBits, maxDPoints } = generatorConfig.MWDTool;
 
-    // rulesHandler.handleOverloadingDPoints(maxBits, maxDPoints);
+    rulesHandler.handleOverloadingDPoints(maxBits, maxDPoints);
 
     return rulesHandler.orderedDPoints;
   }
