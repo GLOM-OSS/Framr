@@ -60,20 +60,20 @@ export class DPointsetHandler {
     ) as RuleWithOtherDPoint | undefined;
 
     if (!followedByRule && !precededByRule && !shouldBeSetOnly) {
-      const shouldBePartOfSet = rules.some(
+      const isPartOfDPointSet = rules.some(
         (rule) =>
-          [
+          rulePredicate(this.frame, rule, [
             WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY,
             WithOtherDPointRuleEnum.SHOULD_BE_PRECEDED_BY_OTHER,
             WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
             WithOtherDPointRuleEnum.SHOULD_BE_FOLLOWED_BY_OTHER,
             WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_FOLLOWED_BY_OTHER,
-          ].includes(rule.description as WithOtherDPointRuleEnum) &&
+          ]) &&
           (rule as RuleWithOtherDPoint).otherDpoints.some(
             (_) => _.id === dpoint.dpointId
           )
       );
-      newDPointSet = shouldBePartOfSet
+      newDPointSet = isPartOfDPointSet
         ? []
         : [{ ...dpoint, dpointsetId: getRandomID() }];
     } else if (precededByRule && followedByRule) {
@@ -119,18 +119,19 @@ export class DPointsetHandler {
       if (precededByRule) {
         dpointSet.push(
           ...precededByRule.otherDpoints
-            .filter((dpoint) =>
-              rules.some((rule) =>
-                rulePredicate(
-                  this.frame,
-                  rule,
-                  [
-                    WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
-                    WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
-                  ],
-                  dpoint.id
+            .filter(
+              (dpoint) =>
+                !rules.some((rule) =>
+                  rulePredicate(
+                    this.frame,
+                    rule,
+                    [
+                      WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
+                      WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
+                    ],
+                    dpoint.id
+                  )
                 )
-              )
             )
             .map((dpoint) => getFramesetDPoint(dpoint)),
           dpoint

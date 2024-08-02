@@ -16,7 +16,10 @@ import {
 import { getRandomID } from '../common/common';
 import { DPointConstrainstHandler } from './rules/DPointConstraintsHandler';
 import { DPointsetHandler } from './rules/DPointsetHandler';
-import { EightyBitsRuleHandler, SeparatorOptions } from './rules/EightyBitsRuleHandler';
+import {
+  EightyBitsRuleHandler,
+  SeparatorOptions,
+} from './rules/EightyBitsRuleHandler';
 import { FirstDPointHandler } from './rules/FirstDPointHandler';
 
 export type DPointWithConstraint = {
@@ -197,15 +200,24 @@ export class RulesHandler {
     });
   }
 
+  /**
+   * Order dpoints. Clones the list of dpoints and checks for compatibilities between sets.
+   * Swaps sets if necessary.
+   * @param rules
+   * @param orderedDPoints Optional, default to `ruleHandler.orderedDPoints`
+   */
   orderDPointsetDPoints(
     rules: GeneratorConfigRule[],
-    dpointsets: DPointsetDPoint[][]
+    orderedDPoints?: DPointsetDPoint[]
   ) {
-    for (let i = dpointsets.length - 1; i > 0; i--) {
-      const currentDPointset = dpointsets[i];
+    // get a cloned version reference of ordered dpoints group by sets
+    const orderedDPointsets = this.getOrderedDPointsGroupBySets(orderedDPoints);
+
+    for (let i = orderedDPointsets.length - 1; i > 0; i--) {
+      const currentDPointset = orderedDPointsets[i];
 
       for (let j = i - 1; j > 0; j--) {
-        const previousDPointset = dpointsets[j];
+        const previousDPointset = orderedDPointsets[j];
 
         if (
           this.shouldDPointsetsBeSwapped(
@@ -316,8 +328,9 @@ export class RulesHandler {
    * @param dpoints
    * @returns array of dpoint sets
    */
-  getOrderedDPointsGroupBySets() {
-    const orderedDPointsClone = structuredClone(this.orderedDPoints);
+  getOrderedDPointsGroupBySets(orderedDPoints?: DPointsetDPoint[]) {
+    const orderedDPointsClone =
+      orderedDPoints ?? structuredClone(this.orderedDPoints);
 
     const orderedDPointsetsPerDPointsetId: Record<string, DPointsetDPoint[]> =
       {};

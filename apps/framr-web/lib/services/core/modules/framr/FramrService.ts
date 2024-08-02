@@ -332,51 +332,13 @@ export class FramrService {
     dpoints: FramesetDpoint[],
     generatorConfig: GeneratorConfig
   ) {
+    if (dpoints.length < 2) {
+      return dpoints;
+    }
+
     const rules = this.getRules();
     const rulesHandler = new RulesHandler(frame);
 
-    if (!dpoints.length) {
-      return [];
-    }
-
-    // partition dpoints with or without constraints
-    // const [constraintDPoints, dpointsWithoutConstraints] = partition(
-    //   dpoints,
-    //   (dpoint) =>
-    //     rules.some(
-    //       (rule) =>
-    //         rule.concernedDpoint.id === dpoint.dpointId &&
-    //         rule.framesets.includes(frame) &&
-    //         [
-    //           WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-    //           WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
-    //         ].includes(rule.description as WithConstraintRuleEnum)
-    //     )
-    // );
-
-    // const firstDPointIds = firstDPoints.map((_) => _.id);
-    // rulesHandler.orderedDPoints.push(
-    //   ...constraintDPoints
-    //     .filter((_) => !firstDPointIds.includes(_.id))
-    //     .map((dpoint) =>
-    //       rulesHandler.handleDPointSequencingRules(dpoint, rules)
-    //     )
-    //     .flat()
-    // );
-
-    // converting dpoints with update rate and density rate interval to dpoints with bit interval
-    // const dpointsWithConstraints = rulesHandler.resolveDPointConstraints(
-    //   constraintDPoints,
-    //   rules,
-    //   generatorConfig
-    // );
-
-    // console.log({
-    //   nonForbiddenDPoints: dpointRest,
-    //   dpointsWithConstraints,
-    //   dpointsWithoutConstraints,
-    //   rules: generatorConfig.tools.map((_) => _.rules),
-    // });
     // Get available MWD Tool DPoints
     const mwdDPoints = generatorConfig.MWDTool.rules
       .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
@@ -384,34 +346,21 @@ export class FramrService {
       .sort((a, b) => a.bits - b.bits);
     const mwdSeparator = mwdDPoints[0];
 
-    // Group dpoint by dpoint set
     for (const dpoint of dpoints) {
-      // Handle all other rules
+      // Add dpoint eligible otherDPoints to orderedDPoints with set IDs
       rulesHandler.handleDPointset(dpoint, rules);
-
-      // const bitsCount = rulesHandler.orderedDPoints.reduce(
-      //   (bitsCount, _) => bitsCount + _.bits,
-      //   0
-      // );
-
-      // Handle dpoints with constraints having intervals now mesured in bit
-      // rulesHandler.handleDPointsWithContraint(
-      //   dpointsWithConstraints,
-      //   bitsCount,
-      //   rules
-      // );
     }
 
-    // get a cloned version reference of ordered dpoints group by sets
-    const orderedDPointsets = rulesHandler.getOrderedDPointsGroupBySets();
+    // order dpoints grouped by sets
+    rulesHandler.orderDPointsetDPoints(rules);
 
-    //order dpoints group in sets
-    rulesHandler.orderDPointsetDPoints(rules, orderedDPointsets);
-
-    // handle first data points to the ordered list
+    // handle first data points of ordered list
     rulesHandler.handleFirstDPoints(rules);
 
     if (mwdSeparator) {
+      // get a cloned version of ordered dpoints grouped by sets
+      const orderedDPointsets = rulesHandler.getOrderedDPointsGroupBySets();
+
       orderedDPointsets.forEach((currentSet, index) => {
         const nextSet = orderedDPointsets[index + 1];
         const separatorOptions: SeparatorOptions = {
@@ -421,6 +370,7 @@ export class FramrService {
           currentSet,
           separator: mwdSeparator,
         };
+
         if (nextSet) {
           rulesHandler.handle80BitsRule(separatorOptions);
         }
