@@ -76,27 +76,12 @@ export class DPointsetHandler {
       newDPointSet = isPartOfDPointSet
         ? []
         : [{ ...dpoint, dpointsetId: getRandomID() }];
-    } else if (precededByRule && followedByRule) {
-      const dpointsetId = getRandomID();
-      newDPointSet = [
-        ...precededByRule.otherDpoints.map((dpoint) =>
-          getFramesetDPoint(dpoint)
-        ),
-        dpoint,
-        ...followedByRule.otherDpoints.map((dpoint) =>
-          getFramesetDPoint(dpoint)
-        ),
-      ].map((dpoint) => ({
-        ...dpoint,
-        dpointsetId,
-      }));
     } else {
-      const dpointSet: FramesetDpoint[] = [];
+      const dpointSet: FramesetDpoint[] = [dpoint];
       const dpointsetId = getRandomID();
 
       if (followedByRule) {
         dpointSet.push(
-          dpoint,
           ...followedByRule.otherDpoints
             .filter(
               (dpoint) =>
@@ -117,7 +102,7 @@ export class DPointsetHandler {
       }
 
       if (precededByRule) {
-        dpointSet.push(
+        dpointSet.unshift(
           ...precededByRule.otherDpoints
             .filter(
               (dpoint) =>
@@ -133,39 +118,32 @@ export class DPointsetHandler {
                   )
                 )
             )
-            .map((dpoint) => getFramesetDPoint(dpoint)),
-          dpoint
+            .map((dpoint) => getFramesetDPoint(dpoint))
         );
       }
 
       if (shouldBeSetOnly) {
-        const otherDPoints = shouldBeSetOnly.otherDpoints
-          .filter(
-            (otherDPoint) =>
-              !(
-                precededByRule?.otherDpoints.some(
-                  (_) => _.id === otherDPoint.id
-                ) ||
-                followedByRule?.otherDpoints.some(
-                  (_) => _.id === otherDPoint.id
+        dpointSet.push(
+          ...shouldBeSetOnly.otherDpoints
+            .filter(
+              (otherDPoint) =>
+                !(
+                  precededByRule?.otherDpoints.some(
+                    (_) => _.id === otherDPoint.id
+                  ) ||
+                  followedByRule?.otherDpoints.some(
+                    (_) => _.id === otherDPoint.id
+                  )
                 )
-              )
-          )
-          .map<FramesetDpoint>((dpoint) => getFramesetDPoint(dpoint));
-
-        newDPointSet = [...dpointSet, ...otherDPoints].map((dpoint) => ({
-          ...dpoint,
-          dpointsetId,
-        }));
-      } else
-        newDPointSet = dpointSet.map((dpoint) => ({
-          ...dpoint,
-          dpointsetId,
-        }));
-
-      if (!newDPointSet.find((dp) => dp.id === dpoint.id)) {
-        newDPointSet.push({ ...dpoint, dpointsetId });
+            )
+            .map<FramesetDpoint>((dpoint) => getFramesetDPoint(dpoint))
+        );
       }
+
+      newDPointSet = dpointSet.map((dpoint) => ({
+        ...dpoint,
+        dpointsetId,
+      }));
     }
 
     return newDPointSet.filter(
