@@ -82,43 +82,17 @@ export class DPointsetHandler {
 
       if (followedByRule) {
         dpointSet.push(
-          ...followedByRule.otherDpoints
-            .filter(
-              (dpoint) =>
-                !rules.some((rule) =>
-                  rulePredicate(
-                    this.frame,
-                    rule,
-                    [
-                      WithOtherDPointRuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER,
-                      WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER,
-                    ],
-                    dpoint.id
-                  )
-                )
-            )
-            .map((dpoint) => getFramesetDPoint(dpoint))
+          ...followedByRule.otherDpoints.map((dpoint) =>
+            getFramesetDPoint(dpoint)
+          )
         );
       }
 
       if (precededByRule) {
         dpointSet.unshift(
-          ...precededByRule.otherDpoints
-            .filter(
-              (dpoint) =>
-                !rules.some((rule) =>
-                  rulePredicate(
-                    this.frame,
-                    rule,
-                    [
-                      WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
-                      WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
-                    ],
-                    dpoint.id
-                  )
-                )
-            )
-            .map((dpoint) => getFramesetDPoint(dpoint))
+          ...precededByRule.otherDpoints.map((dpoint) =>
+            getFramesetDPoint(dpoint)
+          )
         );
       }
 
