@@ -111,19 +111,24 @@ export class RulesHandler {
    * @param rules Generator config rules.
    */
   handleFirstDPoints(rules: GeneratorConfigRule[]) {
+    // get a cloned version reference of ordered dpoints group by sets
+    const orderedDPointsets = this.getOrderedDPointsGroupBySets();
+
     // Partition the data points based on whether they should be at the beginning
-    const [firstDPoints, dpointRest] = partition(
-      this.orderedDPoints,
-      (dpoint) =>
+    const [firstDPointsets, dpointsetRest] = partition(
+      orderedDPointsets,
+      (dpoints) =>
         rules.some(
           (rule) =>
-            rule.concernedDpoint.id === dpoint.dpointId &&
-            rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
+            dpoints.some(
+              (dpoint) => rule.concernedDpoint.id === dpoint.dpointId
+            ) && rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
         )
     );
+    console.log(firstDPointsets);
 
     const orderedFirstDPoints = this.firstDPointHandler.handle(
-      firstDPoints.length > 0 ? firstDPoints : dpointRest,
+      firstDPointsets.length > 0 ? firstDPointsets : dpointsetRest,
       rules
     );
     const orderedDPointRest = this.orderedDPoints.filter(

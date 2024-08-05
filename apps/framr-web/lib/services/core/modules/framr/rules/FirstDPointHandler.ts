@@ -7,14 +7,14 @@ export class FirstDPointHandler {
 
   /**
    * Handles the ordering of data points intended to be first, considering conflicts and applying rules.
-   * @param firstDPoints Array of data points intended to be first.
+   * @param firstDPointsets Array of data point sets intended to be first dpoint set.
    * @param rules Generator config rules.
    */
   handle(
-    firstDPoints: DPointsetDPoint[],
+    firstDPointsets: DPointsetDPoint[][],
     rules: GeneratorConfigRule[]
   ): DPointsetDPoint[] {
-    const [firstDPoint] = firstDPoints;
+    const [firstDPointset] = firstDPointsets;
     let orderedFirstDPoints: DPointsetDPoint[] = [];
 
     const conflictingRule = rules.find((rule) =>
@@ -22,48 +22,57 @@ export class FirstDPointHandler {
         this.frame,
         rule,
         [StandAloneRuleEnum.SHOULD_NOT_BE_THE_FIRST],
-        firstDPoint?.dpointId
+        firstDPointset[0]?.dpointId
       )
     );
-    const shouldBeFirst = rules.find((rule) =>
-      rulePredicate(
-        this.frame,
-        rule,
-        [StandAloneRuleEnum.SHOULD_BE_THE_FIRST],
-        firstDPoint?.dpointId
+    const isShouldBeFirstSet = rules.find((rule) =>
+      firstDPointset.some((dpoint) =>
+        rulePredicate(
+          this.frame,
+          rule,
+          [StandAloneRuleEnum.SHOULD_BE_THE_FIRST],
+          dpoint.dpointId
+        )
       )
     );
 
     if (conflictingRule) {
-      const alternativeDPoint = firstDPoints.find(
+      const alternativeSet = firstDPointsets.find(
         (dp) =>
           !rules.some((rule) =>
             rulePredicate(
               this.frame,
               rule,
               [StandAloneRuleEnum.SHOULD_NOT_BE_THE_FIRST],
-              dp.dpointId
+              dp[0].dpointId
             )
           )
       );
-      if (alternativeDPoint) {
+      if (alternativeSet) {
         orderedFirstDPoints.push(
-          alternativeDPoint,
-          ...firstDPoints.filter((dpoint) => dpoint.id !== alternativeDPoint.id)
+          ...alternativeSet,
+          ...firstDPointsets
+            .filter(
+              (dpoint) =>
+                !dpoint.some((dp) =>
+                  alternativeSet.some((altDP) => (dp.id = altDP.id))
+                )
+            )
+            .flat()
         );
       } else {
-        orderedFirstDPoints = firstDPoints.map((dpoint) => ({
+        orderedFirstDPoints = firstDPointsets.flat().map((dpoint) => ({
           ...dpoint,
-          error: shouldBeFirst
+          error: isShouldBeFirstSet
             ? `No eligible data point found for the first position`
             : dpoint.error,
         }));
       }
     } else {
-      orderedFirstDPoints = firstDPoints.map((dpoint) => ({
+      orderedFirstDPoints = firstDPointsets.flat().map((dpoint) => ({
         ...dpoint,
         error:
-          shouldBeFirst && firstDPoints.length > 1
+          isShouldBeFirstSet && firstDPointsets.length > 1
             ? `There should not be more than one first DPoint`
             : dpoint.error,
       }));
