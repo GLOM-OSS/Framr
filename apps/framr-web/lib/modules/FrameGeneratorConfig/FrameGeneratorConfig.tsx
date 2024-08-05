@@ -103,9 +103,9 @@ export default function FrameGeneratorConfig({
   }, []);
 
   const initialValues: ICreateGeneratorConfig = {
-    bitRate: data?.bitRate || 0,
+    bitRate: data?.bitRate || 1,
     penetrationRate:
-      (data?.penetrationRate ? data.penetrationRate * 3600 : undefined) || 0,
+      (data?.penetrationRate ? data.penetrationRate * 3600 : undefined) || 3600,
     wellName: data?.wellName || '',
     jobName: data?.jobName || '',
     MWDTool: data?.MWDTool.id || '',
@@ -240,6 +240,20 @@ export default function FrameGeneratorConfig({
       }
       return selectedTool;
     });
+
+    if (!framrService.generatorConfig) {
+      const { jobName, wellName, bitRate, penetrationRate } = formik.values;
+      const submitData: CreateGeneratorConfig = {
+        jobName,
+        wellName,
+        bitRate,
+        penetrationRate: penetrationRate / 3600,
+        MWDTool: selectedMWDTool as MWDGeneratorConfigTool,
+        tools: selectedLWDTools,
+      };
+      framrService.initialize(submitData);
+    }
+
     framrService.updateToolRules(tool.id, rules);
     setSelectedLWDTools(newSelectedTools);
     setActiveTool(undefined);
@@ -400,6 +414,7 @@ export default function FrameGeneratorConfig({
               >
                 <FormLabel>Bitrate</FormLabel>
                 <TextField
+                  disabled
                   type="number"
                   size="small"
                   placeholder="Enter Bitrate"
@@ -426,6 +441,7 @@ export default function FrameGeneratorConfig({
               >
                 <FormLabel>Rate of Penetration</FormLabel>
                 <TextField
+                  disabled
                   type="number"
                   size="small"
                   placeholder="Enter ROP"
