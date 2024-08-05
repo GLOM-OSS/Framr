@@ -1,4 +1,3 @@
-import add from '@iconify/icons-fluent/add-24-regular';
 import frameIcon from '@iconify/icons-fluent/table-stack-left-20-regular';
 import selectIcon from '@iconify/icons-fluent/task-list-ltr-20-regular';
 import { Icon } from '@iconify/react';
@@ -31,6 +30,7 @@ interface FramesetHeaderProps {
     framesets: FrameEnum[];
     dPoints: DPoint[];
   }) => void;
+  handleOrderDPoints: () => void;
 }
 export default function FramesetHeader({
   activeFSL,
@@ -46,6 +46,7 @@ export default function FramesetHeader({
   selectModeDPoints,
   closeSelectMode,
   submitMultipleConstraints,
+  handleOrderDPoints,
 }: FramesetHeaderProps) {
   const [frameMenuAnchorEl, setFrameMenuAnchorEl] =
     useState<HTMLElement | null>(null);
@@ -154,10 +155,10 @@ export default function FramesetHeader({
           <Button
             variant="contained"
             color="primary"
-            startIcon={<Icon icon={add} />}
-            onClick={(e) => setNewDPointAnchorEl(e.currentTarget)}
+            // startIcon={<Icon icon={add} />}
+            onClick={handleOrderDPoints}
           >
-            Add DPoint
+            Order DPoints
           </Button>
         </Box>
       )}

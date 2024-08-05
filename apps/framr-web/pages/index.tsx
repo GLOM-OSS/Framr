@@ -18,7 +18,7 @@ import {
   GeneratorConfigRule,
   LWDGeneratorConfigTool,
   MWDGeneratorConfigTool,
-  Tool
+  Tool,
 } from '../lib/types';
 import {
   ConstraintEnum,
@@ -104,7 +104,7 @@ export default function FrameGenerator() {
       // if (tool.rules.length > rules.length)
       if (framrService.generatorConfig) {
         framrService.updateToolRules(tool.id, rules);
-        framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
+        framrService.dispatchDPoints(activeFSL, selectedDPoints);
         setFrameConfig(framrService.generatorConfig);
       }
     });
@@ -128,7 +128,7 @@ export default function FrameGenerator() {
       setFrameConfig(framrService.generatorConfig);
   }
 
-  function handleRemoveConstraint(dpoint: FramesetDpoint, frame:FrameEnum) {
+  function handleRemoveConstraint(dpoint: FramesetDpoint, frame: FrameEnum) {
     removeConstraintOnSelectedDPoints([dpoint], frame);
   }
 
@@ -147,8 +147,7 @@ export default function FrameGenerator() {
 
   useEffect(() => {
     if (framrService.generatorConfig && selectedDPoints.length > 0) {
-      console.log(selectedDPoints);
-      framrService.dispatchAndOrderDPoints(activeFSL, selectedDPoints);
+      framrService.dispatchDPoints(activeFSL, selectedDPoints);
       setFrameConfig(framrService.generatorConfig);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,7 +182,10 @@ export default function FrameGenerator() {
             confirm={() => {
               if (confirmDialogUsage === 'constraint')
                 // TODO: MULTIPLE SELECTION IS NOT FROM SAME FRAMESET... RESTRICT FRAMESET
-                removeConstraintOnSelectedDPoints(selectModeDPoints, FrameEnum.UTIL);
+                removeConstraintOnSelectedDPoints(
+                  selectModeDPoints,
+                  FrameEnum.UTIL
+                );
               else removeSelectModeDPoints(selectModeDPoints);
             }}
             closeOnConfirm
@@ -251,6 +253,12 @@ export default function FrameGenerator() {
                 }}
                 selectedDPoints={selectedDPoints}
                 submitMultipleConstraints={addConstraitToMultipleDPoints}
+                handleOrderDPoints={() => {
+                  if (framrService.generatorConfig) {
+                    framrService.orderFramesets(activeFSL);
+                    setFrameConfig(framrService.generatorConfig);
+                  }
+                }}
               />
               <FramesetList
                 handleRemoveDPoint={handleRemoveDPoint}

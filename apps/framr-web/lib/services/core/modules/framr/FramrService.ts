@@ -10,7 +10,7 @@ import {
 import {
   FrameEnum,
   ToolEnum,
-  WithConstraintRuleEnum
+  WithConstraintRuleEnum,
 } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { XmlIO } from '../../../libs/xml-io';
@@ -63,11 +63,7 @@ export class FramrService {
     return this.generatorConfig;
   }
 
-  dispatchAndOrderDPoints(
-    fslNumber: number,
-    dpoints: DPoint[],
-    toolId?: string
-  ) {
+  dispatchDPoints(fslNumber: number, dpoints: DPoint[], toolId?: string) {
     const rules = this.getRules(toolId);
     const currentFSL = this.getCurrentFSL(fslNumber);
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
@@ -108,8 +104,6 @@ export class FramrService {
         ),
       },
     };
-
-    this.orderFramesets(fslNumber);
   }
 
   removeDPoints(fslNumber: number, dpointIds: string[]) {
@@ -154,7 +148,7 @@ export class FramrService {
     } = this.getCurrentFSL(fslNumber);
     // order DPoints and populate the orderedDPoints array
     const orderedDPoints = this.orderDPoints(frame, dpoints, generatorConfig);
-
+    console.log(orderedDPoints);
     this.generatorConfig = {
       ...generatorConfig,
       framesets: {
@@ -177,7 +171,7 @@ export class FramrService {
   orderFramesets(fslNumber: number) {
     const { framesets: fslFramesets } = this.getCurrentFSL(fslNumber);
     for (const frameset in fslFramesets) {
-      console.log('New frameset ', frameset);
+      console.log('frameset...', frameset);
       this.orderFramesetDPoints(fslNumber, frameset as FSLFrameType);
     }
   }
