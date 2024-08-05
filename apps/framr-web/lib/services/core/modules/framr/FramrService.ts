@@ -148,7 +148,6 @@ export class FramrService {
     } = this.getCurrentFSL(fslNumber);
     // order DPoints and populate the orderedDPoints array
     const orderedDPoints = this.orderDPoints(frame, dpoints, generatorConfig);
-    console.log(orderedDPoints);
     this.generatorConfig = {
       ...generatorConfig,
       framesets: {
@@ -173,6 +172,20 @@ export class FramrService {
     for (const frameset in fslFramesets) {
       console.log('frameset...', frameset);
       this.orderFramesetDPoints(fslNumber, frameset as FSLFrameType);
+    }
+
+    // order utility dpoints
+    if (this.generatorConfig) {
+      const { dpoints, frame } = this.generatorConfig.framesets.utility;
+      const orderedDPoints = this.orderDPoints(
+        frame,
+        dpoints,
+        this.generatorConfig
+      );
+      this.generatorConfig.framesets.utility = {
+        frame,
+        dpoints: orderedDPoints,
+      };
     }
   }
 
@@ -320,7 +333,7 @@ export class FramrService {
   }
 
   private orderDPoints(
-    frame: FSLFrameType,
+    frame: FrameEnum,
     dpoints: FramesetDpoint[],
     generatorConfig: GeneratorConfig
   ) {
