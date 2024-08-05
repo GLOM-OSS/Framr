@@ -185,7 +185,7 @@ export class RulesHandler {
 
           this.orderedDPoints.push(...nextInsertion);
           separatorOptions = { ...separatorOptions, ...nextCursors };
-        }
+        } else this.orderedDPoints.push(...currentSet);
       }
     }
   }
