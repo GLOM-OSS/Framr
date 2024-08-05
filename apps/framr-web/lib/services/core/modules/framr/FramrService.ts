@@ -9,14 +9,12 @@ import {
 } from '../../../../types';
 import {
   FrameEnum,
-  StandAloneRuleEnum,
   ToolEnum,
-  WithConstraintRuleEnum,
+  WithConstraintRuleEnum
 } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
 import { XmlIO } from '../../../libs/xml-io';
 import { getRandomID } from '../common/common';
-import { SeparatorOptions } from './rules/EightyBitsRuleHandler';
 import { RulesHandler, getFramesetDPoint } from './RulesHandler';
 
 export class FramrService {
@@ -339,13 +337,6 @@ export class FramrService {
     const rules = this.getRules();
     const rulesHandler = new RulesHandler(frame);
 
-    // Get available MWD Tool DPoints
-    const mwdDPoints = generatorConfig.MWDTool.rules
-      .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
-      .map((_) => _.concernedDpoint)
-      .sort((a, b) => a.bits - b.bits);
-    const mwdSeparator = mwdDPoints[0];
-
     for (const dpoint of dpoints) {
       // Add dpoint eligible otherDPoints to orderedDPoints with set IDs
       rulesHandler.handleDPointset(dpoint, rules);
@@ -357,27 +348,10 @@ export class FramrService {
     // handle first data points of ordered list
     rulesHandler.handleFirstDPoints(rules);
 
-    if (mwdSeparator) {
-      // get a cloned version of ordered dpoints grouped by sets
-      const orderedDPointsets = rulesHandler.getOrderedDPointsGroupBySets();
+    // Handle 80 bits rule
+    rulesHandler.handle80BitsRule(generatorConfig.MWDTool.rules);
 
-      orderedDPointsets.forEach((currentSet, index) => {
-        const nextSet = orderedDPointsets[index + 1];
-        const separatorOptions: SeparatorOptions = {
-          bitsCount: 0,
-          lastIndex: -1,
-          nextSet,
-          currentSet,
-          separator: mwdSeparator,
-        };
-
-        if (nextSet) {
-          rulesHandler.handle80BitsRule(separatorOptions);
-        }
-      });
-    }
-
-    // // Handle frameset overloading dpoints
+    // Handle frameset overloading dpoints
     const { maxBits, maxDPoints } = generatorConfig.MWDTool;
 
     rulesHandler.handleOverloadingDPoints(maxBits, maxDPoints);

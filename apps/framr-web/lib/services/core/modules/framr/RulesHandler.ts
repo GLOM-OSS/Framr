@@ -149,8 +149,45 @@ export class RulesHandler {
    * @param generatorConfig Generator configuration.
    * @returns Object containing updated cursors and MWD data points.
    */
-  handle80BitsRule(separatorOptions: SeparatorOptions) {
-    this.eightyBitsRuleHandler.handle(separatorOptions, this.orderedDPoints);
+  handle80BitsRule(mwdRules: GeneratorConfigRule[]) {
+    // Get available MWD Tool DPoints sorted by dpoint bit (asc)
+    const mwdDPoints = mwdRules
+      .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
+      .map((_) => _.concernedDpoint)
+      .sort((a, b) => a.bits - b.bits);
+
+    // get the dpoint with smaller number of bit
+    const mwdSeparator = mwdDPoints[0];
+
+    if (mwdSeparator) {
+      // get a cloned version of ordered dpoints grouped by sets
+      const orderedDPointsets = this.getOrderedDPointsGroupBySets();
+
+      this.orderedDPoints = [];
+      let separatorOptions: SeparatorOptions = {
+        bitsCount: 0,
+        lastIndex: -1,
+        nextSet: [],
+        currentSet: [],
+        separator: mwdSeparator,
+      };
+      for (let index = 0; index < orderedDPointsets.length; index++) {
+        const currentSet = orderedDPointsets[index];
+        const nextSet = orderedDPointsets[index + 1];
+
+        if (nextSet) {
+          const [nextCursors, nextInsertion] =
+            this.eightyBitsRuleHandler.handle({
+              ...separatorOptions,
+              currentSet,
+              nextSet,
+            });
+
+          this.orderedDPoints.push(...nextInsertion);
+          separatorOptions = { ...separatorOptions, ...nextCursors };
+        }
+      }
+    }
   }
 
   /**

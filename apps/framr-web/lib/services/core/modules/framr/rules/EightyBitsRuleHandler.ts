@@ -21,90 +21,142 @@ export class EightyBitsRuleHandler {
    * @param generatorConfig Generator configuration.
    * @returns Object containing updated cursors and MWD data points.
    */
-  handle(
-    { nextSet, currentSet, ...cursors }: SeparatorOptions,
-    orderedDPoints: DPointsetDPoint[]
-  ) {
+  handle({
+    nextSet,
+    currentSet,
+    separator: dpointSeparator,
+    ...cursors
+  }: SeparatorOptions): [typeof cursors, DPointsetDPoint[]] {
     const BITS_LIMIT = 80;
 
-    const currentDPointsetBitCount = currentSet.reduce(
-      (count, dpoint) => count + dpoint.bits,
-      0
-    );
-    const currentDPointsetLastDPointIndex = currentSet.length - 1;
-    const dpointsetLastDPointIndex = orderedDPoints.findIndex(
-      (dpoint) => dpoint.id === currentSet[currentDPointsetLastDPointIndex]?.id
-    );
-    // checks that there's no mwd dpoint in the current 80 bit block
-    const orderedMWDDPointIndex = orderedDPoints.findIndex(
-      (_, index) =>
-        _.tool.id === cursors.separator.tool.id &&
-        index > cursors.lastIndex &&
-        index <= dpointsetLastDPointIndex
-    );
-    if (orderedMWDDPointIndex === -1) {
-      // get next dpoint set bit count
-      const nextDPointsetBitCount = nextSet.reduce(
-        (count, dpoint) => dpoint.bits + count,
-        0
-      );
-      if (cursors.bitsCount + nextDPointsetBitCount >= BITS_LIMIT) {
-        // get bit count to next mwd dpoint
-        let bitCountToNextMWDPoint = 0;
-        let nextDPointsetHasMWDDPoint = false;
-        for (const dpoint of nextSet) {
-          bitCountToNextMWDPoint += dpoint.bits;
-          if (dpoint.tool.type === ToolEnum.MWD) {
-            nextDPointsetHasMWDDPoint = true;
-            break;
-          }
-        }
+    // get bit count to the first mwd dpoint of the current set
+    let currentSetMWDDPointIndex = -1;
+    let bitCountToCurrentSetMWDDPoint = 0;
+    for (let i = 0; i < currentSet.length; i++) {
+      const dpoint = currentSet[i];
+      bitCountToCurrentSetMWDDPoint += dpoint.bits;
 
-        if (
-          !nextDPointsetHasMWDDPoint ||
-          cursors.bitsCount + bitCountToNextMWDPoint > BITS_LIMIT
-        ) {
-          const nextDPointsetFirstDPointPosition = orderedDPoints.findIndex(
-            (dpoint) => nextSet[0]?.id === dpoint.id
-          );
-          orderedDPoints.splice(nextDPointsetFirstDPointPosition - 1, 0, {
-            ...getFramesetDPoint(cursors.separator),
-            dpointsetId: getRandomID(),
-          });
-          cursors.bitsCount = 0;
-          cursors.lastIndex = nextDPointsetFirstDPointPosition - 1;
-        }
+      if (dpoint.tool.type === ToolEnum.MWD) {
+        currentSetMWDDPointIndex = i;
+        break;
       }
     }
-    const newBitsCount = cursors.bitsCount + currentDPointsetBitCount;
-    if (newBitsCount >= BITS_LIMIT) {
-      if (newBitsCount === BITS_LIMIT) {
-        cursors.lastIndex = dpointsetLastDPointIndex;
-      } else {
-        let currentsetLastValidDPointData: {
-          dpoint: DPointsetDPoint | undefined;
-          count: number;
-        } = {
-          dpoint: undefined,
-          count: cursors.bitsCount,
-        };
-        for (const dpoint of currentSet) {
-          const ttt = currentsetLastValidDPointData.count + dpoint.bits;
-          if (ttt > BITS_LIMIT) {
-            break;
-          } else if (ttt === BITS_LIMIT) {
-            currentsetLastValidDPointData = { dpoint, count: ttt };
-            break;
-          } else {
-            currentsetLastValidDPointData = { dpoint, count: ttt };
-          }
-        }
 
-        cursors.lastIndex = orderedDPoints.findIndex(
-          (dpoint) => dpoint.id === currentsetLastValidDPointData.dpoint?.id
-        );
+    // get bit count to the first mwd dpoint of the next set
+    let bitCountToNextSetMWDDPoint = 0;
+    for (let i = 0; i < nextSet.length; i++) {
+      const dpoint = nextSet[i];
+      bitCountToNextSetMWDDPoint += dpoint.bits;
+
+      if (dpoint.tool.type === ToolEnum.MWD) {
+        break;
       }
-      cursors.bitsCount = 0;
-    } else cursors.bitsCount = newBitsCount;
+    }
+
+    if (currentSetMWDDPointIndex === -1) {
+      // If current set has not mwd dpoint,
+      // we check that the next set bit count is not be greater than the BIT_LIMIT
+      const bitCount =
+        cursors.bitsCount +
+        bitCountToCurrentSetMWDDPoint +
+        bitCountToNextSetMWDDPoint;
+      if (bitCount >= BITS_LIMIT) {
+        // Insert separator after the current set if bit count
+        // added to the next set bit count is greater or equal to bit limit
+        return [
+          {
+            bitsCount: 0,
+            lastIndex: currentSet.length,
+          },
+          [
+            ...currentSet,
+            {
+              dpointsetId: getRandomID(),
+              ...getFramesetDPoint(dpointSeparator),
+            },
+          ],
+        ];
+      }
+      return [
+        {
+          bitsCount: cursors.bitsCount + bitCountToCurrentSetMWDDPoint,
+          lastIndex: cursors.lastIndex,
+        },
+        currentSet,
+      ];
+    } else {
+      // If the current set has an mwd dpoint, we update the lastIndex and reset the bit count
+      return [
+        {
+          bitsCount: 0,
+          lastIndex:
+            cursors.lastIndex === -1
+              ? currentSetMWDDPointIndex
+              : cursors.lastIndex + currentSetMWDDPointIndex,
+        },
+        currentSet,
+      ];
+    }
+    //   if (
+    //     cursors.bitsCount + currentSetBitCount + nextSetBitCount >=
+    //     BITS_LIMIT
+    //   ) {
+    //     // get bit count to next mwd dpoint
+    //     let bitCountToNextMWDDPoint = 0;
+    //     let nextSetHasMWDDPoint = false;
+    //     for (const dpoint of nextSet) {
+    //       bitCountToNextMWDDPoint += dpoint.bits;
+    //       if (dpoint.tool.type === ToolEnum.MWD) {
+    //         nextSetHasMWDDPoint = true;
+    //         break;
+    //       }
+    //     }
+
+    //     if (
+    //       !nextSetHasMWDDPoint ||
+    //       cursors.bitsCount + bitCountToNextMWDDPoint > BITS_LIMIT
+    //     ) {
+    //       const nextDPointsetFirstDPointPosition = orderedDPoints.findIndex(
+    //         (dpoint) => nextSet[0]?.id === dpoint.id
+    //       );
+    //       orderedDPoints.splice(nextDPointsetFirstDPointPosition - 1, 0, {
+    //         ...getFramesetDPoint(dpointSeparator),
+    //         dpointsetId: getRandomID(),
+    //       });
+    //       cursors.bitsCount = 0;
+    //       cursors.lastIndex = nextDPointsetFirstDPointPosition - 1;
+    //     }
+    //   }
+    // }
+    // const newBitsCount = cursors.bitsCount + currentSetBitCount;
+    // if (newBitsCount >= BITS_LIMIT) {
+    //   if (newBitsCount === BITS_LIMIT) {
+    //     cursors.lastIndex = currentSetLastDPointIndex;
+    //   } else {
+    //     let currentsetLastValidDPointData: {
+    //       dpoint: DPointsetDPoint | undefined;
+    //       count: number;
+    //     } = {
+    //       dpoint: undefined,
+    //       count: cursors.bitsCount,
+    //     };
+    //     for (const dpoint of currentSet) {
+    //       const ttt = currentsetLastValidDPointData.count + dpoint.bits;
+    //       if (ttt > BITS_LIMIT) {
+    //         break;
+    //       } else if (ttt === BITS_LIMIT) {
+    //         currentsetLastValidDPointData = { dpoint, count: ttt };
+    //         break;
+    //       } else {
+    //         currentsetLastValidDPointData = { dpoint, count: ttt };
+    //       }
+    //     }
+
+    //     cursors.lastIndex = orderedDPoints.findIndex(
+    //       (dpoint) => dpoint.id === currentsetLastValidDPointData.dpoint?.id
+    //     );
+    //   }
+    //   cursors.bitsCount = 0;
+    // } else cursors.bitsCount = newBitsCount;
   }
 }
