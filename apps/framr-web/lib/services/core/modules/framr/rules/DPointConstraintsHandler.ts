@@ -46,8 +46,8 @@ export class DPointConstrainstHandler {
 
       if (densityConstraintRule) {
         bitInterval =
-          (densityConstraintRule.interval * generatorConfig.bitRate) /
-          generatorConfig.penetrationRate;
+          (densityConstraintRule.interval / generatorConfig.penetrationRate) *
+          generatorConfig.bitRate;
       }
 
       const updateRateConstraintRule = rules.find((rule) =>
@@ -75,7 +75,7 @@ export class DPointConstrainstHandler {
             bitInterval === 0
               ? 'Invalid interval constraint'
               : densityConstraintRule && updateRateConstraintRule
-              ? 'Update rate and density rate should not complementary'
+              ? 'Update rate and density rate are mutually exclusive contrainsts'
               : undefined,
         },
       };
