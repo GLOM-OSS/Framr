@@ -23,7 +23,6 @@ import {
 import { FirstDPointHandler } from './rules/FirstDPointHandler';
 
 export type DPointWithConstraint = {
-  lastCount: number;
   bitInterval: number;
   dpoint: FramesetDpoint;
 };
@@ -196,7 +195,7 @@ export class RulesHandler {
   }
 
   /**
-   * Resolved density and update rate constraints a single type of constraint depending on bits interval.
+   * Resolved density and update rate constraints to a single type of constraint all depending on bits interval.
    * @param dpoints Array of data points.
    * @param rules Generator config rules.
    * @param generatorConfig Generator configuration.
@@ -214,16 +213,25 @@ export class RulesHandler {
     );
   }
 
-  handleDPointsWithContraint(
-    dpoints: DPointWithConstraint[],
-    bitsCount: number,
+  /**
+   * Handle resolved dpoint constrainsts
+   * @param withConstrainstDPoints
+   * @param rules
+   */
+  handleResolvedDPointConstrainsts(
+    withConstrainstDPoints: DPointWithConstraint[],
     rules: GeneratorConfigRule[]
   ) {
-    this.dpointConstraintsHandler.handle(
-      { dpoints, bitsCount },
-      this.orderedDPoints,
-      rules
-    );
+    for (const withConstrainstDPoint of withConstrainstDPoints) {
+      // get a cloned version of ordered dpoints grouped by sets
+      const orderedDPointsets = this.getOrderedDPointsGroupBySets();
+
+      this.orderedDPoints = this.dpointConstraintsHandler.handle(
+        withConstrainstDPoint,
+        orderedDPointsets,
+        rules
+      );
+    }
   }
 
   handleOverloadingDPoints(maxBits: number, maxDPoints: number) {
