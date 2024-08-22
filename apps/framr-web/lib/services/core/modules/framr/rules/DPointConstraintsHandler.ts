@@ -14,6 +14,8 @@ export interface ConstrainstHandlerPayload {
   bitsCount: number;
 }
 
+export type RateParams = Pick<GeneratorConfig, 'penetrationRate' | 'bitRate'>;
+
 export class DPointConstrainstHandler {
   constructor(
     private readonly frame: FrameEnum,
@@ -24,13 +26,13 @@ export class DPointConstrainstHandler {
    * Resolved density and update rate constraints a single type of constraint depending on bits interval.
    * @param dpoints Array of data points.
    * @param rules Generator config rules.
-   * @param generatorConfig Generator configuration.
+   * @param rateConfig Generator configuration.
    * @returns Object containing non-constraint data points and bit constraint data points.
    */
   resolve(
     constraintDPoints: FramesetDpoint[],
     rules: GeneratorConfigRule[],
-    generatorConfig: GeneratorConfig
+    rateConfig: RateParams
   ): DPointWithConstraint[] {
     return constraintDPoints.map<DPointWithConstraint>((cdp) => {
       let bitInterval = 0;
@@ -45,8 +47,8 @@ export class DPointConstrainstHandler {
 
       if (densityConstraintRule) {
         bitInterval =
-          (densityConstraintRule.interval / generatorConfig.penetrationRate) *
-          generatorConfig.bitRate;
+          (densityConstraintRule.interval / rateConfig.penetrationRate) *
+          rateConfig.bitRate;
       }
 
       const updateRateConstraintRule = rules.find((rule) =>
@@ -61,8 +63,7 @@ export class DPointConstrainstHandler {
       ) as RuleWithConstraint | undefined;
 
       if (updateRateConstraintRule) {
-        bitInterval =
-          updateRateConstraintRule.interval * generatorConfig.bitRate;
+        bitInterval = updateRateConstraintRule.interval * rateConfig.bitRate;
       }
 
       return {

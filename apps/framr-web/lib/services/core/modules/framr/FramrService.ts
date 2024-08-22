@@ -355,6 +355,9 @@ export class FramrService {
     // handle first data points of ordered list
     rulesHandler.handleFirstDPoints(rules);
 
+    // Handle update constrainst dpoints
+    rulesHandler.handleDPointConstraints(rules, generatorConfig);
+
     // Handle 80 bits rule
     rulesHandler.handle80BitsRule(generatorConfig.MWDTool.rules);
 
