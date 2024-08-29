@@ -98,6 +98,7 @@ export default function SideBar() {
         <Image
           onClick={() => push('/')}
           src="/assets/logo.png"
+          priority
           alt="Framr"
           width={72}
           height={34.63}

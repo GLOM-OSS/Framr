@@ -20,5 +20,5 @@ export interface ToolInterface {
   findAll(filter: ToolFilterOptions): void;
   update(index: string, createTool: CreateTool): void;
   delete(index: string): void;
-  createFrom(file: File): void;
+  createFrom(xmlFile: File, txtFile: File): void;
 }

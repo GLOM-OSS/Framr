@@ -102,9 +102,9 @@
       </SERVICE>
       <SERVICE NAME="Tool Speed Variation" INTERACT="">
         <DPOINT NAME="DRPM_a" MTF="" GTF="" ROT="x" UTIL="" />
+        <DPOINT NAME="ADIA_a" MTF="x" GTF="x" ROT="x" UTIL="" />
       </SERVICE>
       <SERVICE NAME="Ultrasonic Caliper - Average" INTERACT="ADIA_ADN_RT">
-        <DPOINT NAME="ADIA_a" MTF="x" GTF="x" ROT="x" UTIL="" />
       </SERVICE>
       <SERVICE NAME="Ultrasonic Caliper - Axial" INTERACT="CL15_ADN_RT CL37_ADN_RT">
         <DPOINT NAME="CL15_a" MTF="" GTF="" ROT="x" UTIL="" />

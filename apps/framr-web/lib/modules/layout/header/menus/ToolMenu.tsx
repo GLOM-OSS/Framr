@@ -7,8 +7,13 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { Tool } from '../../../../../lib/types';
-import { ToolEnum } from '../../../../../lib/types/enums';
+import { ToolsEventChannel, ToolsService } from '../../../../services';
+import {
+  EventBus,
+  EventBusChannelStatus,
+} from '../../../../services/libs/event-bus';
 
 export default function ToolMenu({
   anchorEl,
@@ -18,30 +23,32 @@ export default function ToolMenu({
   setAnchorEl: (anchor: HTMLAnchorElement | null) => void;
 }) {
   const { push, pathname } = useRouter();
-  //TODO: call api here to fetch all tools
-  const tools: Tool[] = [
-    {
-      id: 'wds',
-      type: ToolEnum.LWD,
-      name: 'WDS',
-      version: '1.0',
-      long: 'Wired Drill String',
-    },
-    {
-      id: 'mwd',
-      type: ToolEnum.MWD,
-      name: 'MWD',
-      version: '1.0',
-      long: 'Measurement While Drilling',
-      max_bits: 1,
-      max_dpoints: 2,
-    },
-  ];
+
+  const eventBus = new EventBus();
+  const toolsService = new ToolsService();
+  const [tools, setTools] = useState<Tool[]>([]);
+
+  function fetchTools() {
+    eventBus.once<Tool[]>(
+      ToolsEventChannel.FIND_ALL_TOOLS_CHANNEL,
+      ({ data, status }) => {
+        if (status === EventBusChannelStatus.SUCCESS) {
+          setTools(data);
+        }
+      }
+    );
+    toolsService.findAll();
+  }
+
+  useEffect(() => {
+    fetchTools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changeTool = (toolId: string) => {
     const paths = pathname.split('/');
-    paths[2] = toolId;
-    push(`/${paths.join('/')}`);
+    paths[3] = toolId;
+    push(`${paths.join('/')}`);
     setAnchorEl(null);
   };
 

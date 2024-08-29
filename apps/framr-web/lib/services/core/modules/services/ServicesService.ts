@@ -4,6 +4,7 @@ import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, ServiceRecord } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import { ServiceInterface, ServicesEventChannel } from './ServiceInterface';
 
 export class ServicesService implements ServiceInterface {
@@ -20,8 +21,8 @@ export class ServicesService implements ServiceInterface {
     const channel = ServicesEventChannel.CREATE_SERVICES_CHANNEL;
     const newRule: ServiceRecord = {
       value: {
-        id: crypto.randomUUID(),
         ...createService,
+        id: getRandomID(),
       },
     };
 

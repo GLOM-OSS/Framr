@@ -145,7 +145,6 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
           fontSize: '36px',
           lineHeight: '44px',
           letterSpacing: '-0.72px',
-          paddingBottom: '10px',
           fontWeight: 700,
           color: 'var(--titleActive)',
         },
@@ -154,31 +153,27 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
           fontSize: '30px',
           lineHeight: '36px',
           letterSpacing: '-2%',
-          paddingBottom: '10px',
         },
         h3: {
           fontWeight: 600,
           fontSize: '24px',
           lineHeight: '32px',
           letterSpacing: '-0.42px',
-          paddingBottom: '10px',
         },
         h4: {
           fontWeight: 500,
           fontSize: '20px',
           lineHeight: '24px',
           letterSpacing: '-1.5%',
-          paddingBottom: '10px',
         },
         h5: {
           fontWeight: 600,
           fontSize: '18px',
           lineHeight: '20px',
           letterSpacing: '-1.5%',
-          paddingBottom: '10px',
         },
         body1: {
-          fontSize: '1rem',
+          fontSize: '14px',
           fontWeight: 400,
         },
         body2: {
@@ -217,24 +212,17 @@ export function generateTheme(newTheme?: ThemeOptions): Theme {
       },
       MuiButton: {
         defaultProps: {
-          size: 'small',
+          size: 'medium',
+          disableElevation: true,
         },
         styleOverrides: {
           root: ({ theme }) => ({
             borderRadius: '8px',
             textTransform: 'none',
             fontWeight: 'var(--semiBold)',
-            lineHeight: '14px',
-            '&.MuiButton-sizeSmall': {
-              fontSize: '12px',
-              lineHeight: '12px',
-              padding: '12px',
-            },
-            '&.MuiButton-sizeMedium': { padding: '12px 16px' },
-            '&.MuiButton-sizeLarge': { padding: '12px 20px' },
             '&.MuiButton-colorInherit.MuiButton-outlined ': {
               border: `1px solid ${theme.common.line}`,
-              color: theme.common.body,
+              fontWeight: '600',
             },
           }),
         },

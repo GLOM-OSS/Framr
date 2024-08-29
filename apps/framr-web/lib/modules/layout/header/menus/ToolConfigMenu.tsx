@@ -1,9 +1,10 @@
-import { Icon, IconifyIcon } from '@iconify/react';
-import { Box, Menu, MenuItem } from '@mui/material';
+import rulesIcon from '@iconify/icons-fluent/clipboard-text-edit-24-regular';
 import dpointIcon from '@iconify/icons-fluent/organization-24-regular';
 import servicesIcon from '@iconify/icons-fluent/settings-cog-multiple-24-regular';
-import rulesIcon from '@iconify/icons-fluent/clipboard-text-edit-24-regular';
+import { Icon, IconifyIcon } from '@iconify/react';
+import { Box, Menu, MenuItem } from '@mui/material';
 import { useRouter } from 'next/router';
+import { useEffect, useMemo } from 'react';
 
 export default function ToolConfigMenu({
   anchorEl,
@@ -14,23 +15,39 @@ export default function ToolConfigMenu({
   setAnchorEl: (anchor: HTMLAnchorElement | null) => void;
   setActiveToolConfig: (tool: string) => void;
 }) {
-  const { push } = useRouter();
-  const menuItems: { title: string; icon: IconifyIcon; route: string }[] = [
-    { title: 'Services', icon: servicesIcon, route: '/services' },
-    {
-      title: 'DPoint',
-      icon: dpointIcon,
-      route: '/dpoint',
-    },
-    {
-      title: 'Rules',
-      icon: rulesIcon,
-      route: '/rules',
-    },
-  ];
+  const {
+    push,
+    pathname,
+    query: { toolId },
+  } = useRouter();
+  const menuItems: { title: string; icon: IconifyIcon; route: string }[] =
+    useMemo(
+      () => [
+        { title: 'Services', icon: servicesIcon, route: 'services' },
+        {
+          title: 'DPoints',
+          icon: dpointIcon,
+          route: 'dpoints',
+        },
+        {
+          title: 'Rules',
+          icon: rulesIcon,
+          route: 'rules',
+        },
+      ],
+      []
+    );
+
+  useEffect(() => {
+    const paths = pathname.split('/');
+    const activeConfig = paths[4];
+    const tt = menuItems.find((item) => item.route === activeConfig);
+    setActiveToolConfig(tt?.title || 'Unknown Config');
+  }, [menuItems, pathname, setActiveToolConfig]);
 
   function openConfig(route: string, title: string) {
-    push(route);
+    const newRoute = pathname.split('[toolId]')[0] + toolId + '/' + route;
+    push(newRoute);
     setAnchorEl(null);
     setActiveToolConfig(title);
   }

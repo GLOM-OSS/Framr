@@ -1,9 +1,11 @@
+import { StandAloneRuleEnum } from '../../../../types/enums';
 import { CreateDPoint, DPoint } from '../../../../types';
 import { FramrServiceError } from '../../../libs/errors';
 import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { DPointRecord, FramrDBSchema } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import { FilterOptions } from '../common/common.types';
 import { DPointInterface, DPointsEventChannel } from './DPointInterface';
 
@@ -21,8 +23,9 @@ export class DPointsService implements DPointInterface {
     const channel = DPointsEventChannel.CREATE_DPOINT_CHANNEL;
     const newDpoint: DPointRecord = {
       value: {
-        id: crypto.randomUUID(),
         ...createDpoint,
+        id: getRandomID(),
+        bits: Number(createDpoint.bits),
       },
     };
 
@@ -78,6 +81,16 @@ export class DPointsService implements DPointInterface {
 
         if (filter?.toolId) {
           dpoints = dpoints.filter((_) => _.tool.id === filter?.toolId);
+          if (filter?.mandatory) {
+            const rules = await this.database.findAll('rules');
+            dpoints = dpoints.filter(({ id }) =>
+              rules.some(
+                ({ value: rule }) =>
+                  rule.concernedDpoint.id === id &&
+                  rule.description === StandAloneRuleEnum.SHOULD_BE_PRESENT
+              )
+            );
+          }
         }
 
         this.eventBus.emit(channel, {
