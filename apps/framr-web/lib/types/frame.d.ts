@@ -2,8 +2,13 @@ import { DPoint } from './dpoint';
 import { FrameEnum } from './enums';
 
 export interface FramesetDpoint extends DPoint {
+  dpointId: string;
   isBaseInstance: boolean;
   error?: string;
+}
+
+export interface DPointsetDPoint extends FramesetDpoint {
+  dpointsetId: string;
 }
 
 interface Frameset {

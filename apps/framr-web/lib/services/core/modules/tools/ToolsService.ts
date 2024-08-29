@@ -1,13 +1,11 @@
-import { CreateTool, MWDTool } from '../../../../types';
+import { CreateTool } from '../../../../types';
 import { ToolEnum } from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
-import {
-  EventBus,
-  EventBusChannelStatus
-} from '../../../libs/event-bus';
+import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, ToolRecord } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import {
   ToolFilterOptions,
   ToolInterface,
@@ -32,10 +30,14 @@ export class ToolsService implements ToolInterface {
     const channel = ToolsEventChannel.CREATE_TOOLS_CHANNEL;
     const newTool: ToolRecord = {
       value: {
-        id: crypto.randomUUID(),
         ...(createTool.type === ToolEnum.MWD
-          ? { ...(createTool as MWDTool), type: ToolEnum.MWD }
+          ? {
+              ...createTool,
+              maxBits: Number(createTool.maxBits),
+              maxDPoints: Number(createTool.maxDPoints),
+            }
           : { ...createTool, type: ToolEnum.LWD }),
+        id: getRandomID(),
       },
     };
 
@@ -139,62 +141,68 @@ export class ToolsService implements ToolInterface {
       });
   }
 
-  createFrom(file: File): void {
+  createFrom(dpointsFile: File, ruleFiles: File): void {
     const RULE_STORE = 'rules';
     const DPOINT_STORE = 'dpoints';
     const SERVICE_STORE = 'services';
     const channel = ToolsEventChannel.CREATE_FROM_TOOLS_CHANNEL;
 
-    this.dataProcessor
-      .processXMLData(file)
-      .then(({ dpoints, rules, services, tools }) => {
-        this.database
-          .$transaction(
-            [DPOINT_STORE, RULE_STORE, SERVICE_STORE, this.STORE_NAME],
-            'readwrite',
-            [
-              // Insert tools
-              (tx) =>
-                Promise.all(
-                  tools.map((tool) =>
-                    this.database.insert(this.STORE_NAME, { value: tool }, tx)
-                  )
-                ),
-              // Insert services
-              (tx) =>
-                Promise.all(
-                  services.map((service) =>
-                    this.database.insert(SERVICE_STORE, { value: service }, tx)
-                  )
-                ),
-              // Insert data points
-              (tx) =>
-                Promise.all(
-                  dpoints.map((dpoint) =>
-                    this.database.insert(DPOINT_STORE, { value: dpoint }, tx)
-                  )
-                ),
-              // Insert rules
-              (tx) =>
-                Promise.all(
-                  rules.map((rule) =>
-                    this.database.insert(RULE_STORE, { value: rule }, tx)
-                  )
-                ),
-            ]
-          )
-          .then(() => {
-            this.eventBus.emit(channel, {
-              data: undefined,
-              status: EventBusChannelStatus.SUCCESS,
+    this.dataProcessor.processDPointCSV(dpointsFile).then((framrBulkData) => {
+      this.dataProcessor
+        .processRuleCSV(ruleFiles, framrBulkData)
+        .then(({ dpoints, rules, services, tools }) => {
+          this.database
+            .$transaction(
+              [DPOINT_STORE, RULE_STORE, SERVICE_STORE, this.STORE_NAME],
+              'readwrite',
+              [
+                // Insert tools
+                (tx) =>
+                  Promise.all(
+                    tools.map((tool) =>
+                      this.database.insert(this.STORE_NAME, { value: tool }, tx)
+                    )
+                  ),
+                // Insert services
+                (tx) =>
+                  Promise.all(
+                    services.map((service) =>
+                      this.database.insert(
+                        SERVICE_STORE,
+                        { value: service },
+                        tx
+                      )
+                    )
+                  ),
+                // Insert data points
+                (tx) =>
+                  Promise.all(
+                    dpoints.map((dpoint) =>
+                      this.database.insert(DPOINT_STORE, { value: dpoint }, tx)
+                    )
+                  ),
+                // Insert rules
+                (tx) =>
+                  Promise.all(
+                    rules.map((rule) =>
+                      this.database.insert(RULE_STORE, { value: rule }, tx)
+                    )
+                  ),
+              ]
+            )
+            .then(() => {
+              this.eventBus.emit(channel, {
+                data: undefined,
+                status: EventBusChannelStatus.SUCCESS,
+              });
+            })
+            .catch((error) => {
+              this.eventBus.emit(channel, {
+                data: new FramrServiceError(error.message),
+                status: EventBusChannelStatus.ERROR,
+              });
             });
-          })
-          .catch((error) => {
-            this.eventBus.emit(channel, {
-              data: new FramrServiceError(error.message),
-              status: EventBusChannelStatus.ERROR,
-            });
-          });
-      });
+        });
+    });
   }
 }

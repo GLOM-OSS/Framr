@@ -4,6 +4,7 @@ import { EventBus, EventBusChannelStatus } from '../../../libs/event-bus';
 import { IDBFactory } from '../../../libs/idb';
 import { IDBConnection } from '../../db/IDBConnection';
 import { FramrDBSchema, RuleRecord } from '../../db/schema';
+import { getRandomID } from '../common/common';
 import { FilterOptions } from '../common/common.types';
 import { RuleInterface, RulesEventChannel } from './RuleInterface';
 
@@ -21,8 +22,8 @@ export class RulesService implements RuleInterface {
     const channel = RulesEventChannel.CREATE_RULES_CHANNEL;
     const newRule: RuleRecord = {
       value: {
-        id: crypto.randomUUID(),
         ...createRule,
+        id: getRandomID(),
       },
     };
 

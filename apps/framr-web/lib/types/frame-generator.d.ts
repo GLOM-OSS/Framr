@@ -11,7 +11,7 @@ type GeneratorConfigRule = Rule & {
   isActive: boolean;
 };
 
-interface GeneratorConfigTool extends LWDTool {
+interface LWDGeneratorConfigTool extends LWDTool {
   rules: GeneratorConfigRule[];
 }
 
@@ -23,12 +23,16 @@ export interface CreateGeneratorConfig {
   bitRate: number;
   /** in meter per seconds */
   penetrationRate: number;
-  tools: GeneratorConfigTool[];
+  tools: LWDGeneratorConfigTool[];
 }
 
-interface MWDGeneratorConfigTool extends MWDTool {
+export interface MWDGeneratorConfigTool extends MWDTool {
   rules: GeneratorConfigRule[];
 }
+
+export type GeneratorConfigTool =
+  | MWDGeneratorConfigTool
+  | LWDGeneratorConfigTool;
 
 export interface GeneratorConfig extends CreateGeneratorConfig {
   framesets: {

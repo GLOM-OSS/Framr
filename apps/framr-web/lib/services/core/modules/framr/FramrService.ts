@@ -2,26 +2,23 @@ import {
   CreateGeneratorConfig,
   DPoint,
   FSLFrameType,
-  FSLFrameset,
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
-  RuleWithOtherDPoint,
+  GeneratorConfigTool,
 } from '../../../../types';
-import { FrameEnum, StandAloneRuleEnum } from '../../../../types/enums';
+import {
+  FrameEnum,
+  ToolEnum,
+  WithConstraintRuleEnum,
+} from '../../../../types/enums';
 import { FramrServiceError } from '../../../libs/errors';
-import { EventBus } from '../../../libs/event-bus';
-import { IDBFactory } from '../../../libs/idb';
 import { XmlIO } from '../../../libs/xml-io';
-import { IDBConnection } from '../../db/IDBConnection';
-import { FramrDBSchema } from '../../db/schema';
-import { RulesHandler, SpreadingCursors, partition } from './RulesHandler';
-import { randomUUID } from 'crypto';
+import { getRandomID } from '../common/common';
+import { RulesHandler, getFramesetDPoint } from './RulesHandler';
+
 export class FramrService {
   private readonly xmlIO: XmlIO;
-  private readonly eventBus: EventBus;
-  private readonly database: IDBFactory<FramrDBSchema>;
-  private rulesHandler: RulesHandler;
 
   private _generatorConfig: GeneratorConfig | null = null;
   public get generatorConfig(): GeneratorConfig | null {
@@ -31,41 +28,18 @@ export class FramrService {
     this._generatorConfig = value;
   }
 
-  public get orderedDPoints(): FramesetDpoint[] {
-    return this.rulesHandler.orderedDPoints;
-  }
-  public set orderedDPoints(value: FramesetDpoint[]) {
-    this.rulesHandler.orderedDPoints = value;
-  }
-
-  constructor() {
+  constructor(config?: GeneratorConfig) {
     this.xmlIO = new XmlIO();
-    this.eventBus = new EventBus();
-    this.database = IDBConnection.getDatabase();
-    this.rulesHandler = new RulesHandler();
-  }
-
-  initialize(config: CreateGeneratorConfig) {
-    if (this.generatorConfig) {
-      throw new FramrServiceError('Service was already initialized');
+    // this.rulesHandler = new RulesHandler();
+    if (config) {
+      this.generatorConfig = config;
     }
-
+  }
+  initialize(config: CreateGeneratorConfig) {
     const initializeFramesets = (frameType: FSLFrameType | FrameEnum.UTIL) => {
       return {
         frame: frameType,
-        dpoints: config.MWDTool.rules
-          .filter(
-            (rule) =>
-              rule.description === StandAloneRuleEnum.SHOULD_BE_PRESENT &&
-              rule.framesets.includes(frameType)
-          )
-          .reduce<FramesetDpoint[]>((dps, rule) => {
-            const dpointsToAdd = [
-              rule.concernedDpoint,
-              ...((rule as RuleWithOtherDPoint).otherDpoints ?? []),
-            ].map((dpoint) => ({ isBaseInstance: true, ...dpoint }));
-            return [...dps, ...dpointsToAdd];
-          }, []),
+        dpoints: [],
       };
     };
 
@@ -83,42 +57,41 @@ export class FramrService {
 
     this.generatorConfig = {
       ...config,
-      id: randomUUID(),
+      id: getRandomID(),
       framesets: mwdFramesets,
     };
+    return this.generatorConfig;
   }
 
-  addAndDispatchDPoints(fslNumber: number, toolId: string, dpoints: DPoint[]) {
+  dispatchDPoints(fslNumber: number, dpoints: DPoint[], toolId?: string) {
     const rules = this.getRules(toolId);
     const currentFSL = this.getCurrentFSL(fslNumber);
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
 
-    for (const dpoint of dpoints) {
-      const dpointRule = rules.find((_) => _.concernedDpoint.id === dpoint.id);
-      if (dpointRule) {
-        for (const frame of dpointRule.framesets) {
-          if (
-            frame === FrameEnum.MTF ||
-            frame === FrameEnum.ROT ||
-            frame === FrameEnum.GTF
-          ) {
-            const currentFrameset = currentFSL.framesets[frame];
-            if (!currentFrameset.dpoints.some((_) => _.id === dpoint.id)) {
-              currentFSL.framesets[frame] = {
-                frame: currentFrameset.frame,
-                dpoints: [
-                  ...currentFrameset.dpoints,
-                  { ...dpoint, isBaseInstance: true },
-                ],
-              };
-            }
-          } else if (frame === FrameEnum.UTIL) {
-            generatorConfig.framesets.utility.dpoints.push({
-              ...dpoint,
-              isBaseInstance: true,
-            });
-          }
-        }
+    for (const frame of [
+      FrameEnum.GTF,
+      FrameEnum.MTF,
+      FrameEnum.ROT,
+      FrameEnum.UTIL,
+    ]) {
+      const framesetDPoints = dpoints
+        .filter((dpoint) =>
+          rules.some(
+            (_) =>
+              _.concernedDpoint.id === dpoint.id && _.framesets.includes(frame)
+          )
+        )
+        .map((dpoint) => getFramesetDPoint(dpoint));
+      if (frame === FrameEnum.UTIL) {
+        generatorConfig.framesets.utility = {
+          frame,
+          dpoints: framesetDPoints,
+        };
+      } else {
+        currentFSL.framesets[frame] = {
+          frame,
+          dpoints: framesetDPoints,
+        };
       }
     }
 
@@ -137,14 +110,15 @@ export class FramrService {
     const generatorConfig = this.retrieveGeneratorConfig(fslNumber);
     const currentFSL = this.getCurrentFSL(fslNumber);
 
-    const updatedFramesets = Object.fromEntries(
-      Object.entries(currentFSL.framesets).map(([key, { dpoints, frame }]) => [
-        key as FSLFrameType,
-        {
-          dpoints: dpoints.filter((dpoint) => dpointIds.includes(dpoint.id)),
+    const updatedFramesets = Object.values(currentFSL.framesets).reduce(
+      (fslFrame, { dpoints, frame }) => ({
+        ...fslFrame,
+        [frame]: {
+          dpoints: dpoints.filter((dpoint) => !dpointIds.includes(dpoint.id)),
           frame,
         },
-      ])
+      }),
+      currentFSL.framesets
     );
 
     this.generatorConfig = {
@@ -155,10 +129,7 @@ export class FramrService {
           fsl.number === fslNumber
             ? {
                 ...fsl,
-                framesets: updatedFramesets as Record<
-                  FSLFrameType,
-                  FSLFrameset
-                >,
+                framesets: updatedFramesets,
               }
             : fsl
         ),
@@ -175,10 +146,8 @@ export class FramrService {
       },
       framesets: fslFramesets,
     } = this.getCurrentFSL(fslNumber);
-
     // order DPoints and populate the orderedDPoints array
-    this.orderDPoints(frame, dpoints, generatorConfig);
-
+    const orderedDPoints = this.orderDPoints(frame, dpoints, generatorConfig);
     this.generatorConfig = {
       ...generatorConfig,
       framesets: {
@@ -187,7 +156,10 @@ export class FramrService {
           fslInstance.number === fslNumber
             ? {
                 number: fslNumber,
-                framesets: { ...fslFramesets, [frame]: this.orderedDPoints },
+                framesets: {
+                  ...fslFramesets,
+                  [frame]: { frame, dpoints: orderedDPoints },
+                },
               }
             : fslInstance
         ),
@@ -195,17 +167,96 @@ export class FramrService {
     };
   }
 
+  orderFramesets(fslNumber: number) {
+    const { framesets: fslFramesets } = this.getCurrentFSL(fslNumber);
+    for (const frameset in fslFramesets) {
+      console.log('frameset...', frameset);
+      this.orderFramesetDPoints(fslNumber, frameset as FSLFrameType);
+    }
+
+    // order utility dpoints
+    if (this.generatorConfig) {
+      const { dpoints, frame } = this.generatorConfig.framesets.utility;
+      const orderedDPoints = this.orderDPoints(
+        frame,
+        dpoints,
+        this.generatorConfig
+      );
+      this.generatorConfig.framesets.utility = {
+        frame,
+        dpoints: orderedDPoints,
+      };
+    }
+  }
+
   updateToolRules(toolId: string, rules: GeneratorConfigRule[]) {
     if (!this.generatorConfig) {
       throw new FramrServiceError('Service was not initialized');
     }
 
-    this.generatorConfig = {
-      ...this.generatorConfig,
-      tools: this.generatorConfig.tools.map((tool) =>
+    if (toolId === this.generatorConfig.MWDTool.id) {
+      this.generatorConfig.MWDTool.rules = rules;
+    } else {
+      this.generatorConfig.tools = this.generatorConfig.tools.map((tool) =>
         tool.id === toolId ? { ...tool, rules } : tool
-      ),
-    };
+      );
+    }
+  }
+
+  removeDPointsConstraints(
+    fslNumber: number,
+    dpoints: FramesetDpoint[],
+    frame: FrameEnum
+  ) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+    const activeFsl = this.getCurrentFSL(fslNumber);
+
+    if (frame === FrameEnum.UTIL) {
+      this.generatorConfig.framesets.utility.dpoints =
+        this.generatorConfig.framesets.utility.dpoints.filter(
+          ({ dpointId, isBaseInstance }) =>
+            dpoints.some(
+              (dpoint) =>
+                (dpoint.dpointId === dpointId && isBaseInstance) ||
+                dpointId !== dpoint.dpointId
+            )
+        );
+    } else {
+      activeFsl.framesets[frame].dpoints = activeFsl.framesets[
+        frame
+      ].dpoints.filter(({ dpointId, isBaseInstance }) => {
+        return dpoints.some(
+          (dpoint) =>
+            (dpoint.dpointId === dpointId && isBaseInstance) ||
+            dpointId !== dpoint.dpointId
+        );
+      });
+
+      this.generatorConfig.framesets.fsl.map((fslInstance) =>
+        activeFsl.number === fslNumber ? activeFsl : fslInstance
+      );
+    }
+
+    [...this.generatorConfig.tools, this.generatorConfig.MWDTool].forEach(
+      (tool) => {
+        const rules = tool.rules.map((rule) =>
+          dpoints.some(
+            (dpoint) =>
+              rule.concernedDpoint.id === dpoint.dpointId &&
+              rule.framesets.includes(frame) &&
+              [
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+                WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+              ].includes(rule.description as WithConstraintRuleEnum)
+          )
+            ? { ...rule, isActive: false }
+            : rule
+        );
+        this.updateToolRules(tool.id, rules);
+      }
+    );
   }
 
   exportGeneratorConfig() {
@@ -213,128 +264,122 @@ export class FramrService {
       throw new FramrServiceError('Service was not initialized');
     }
 
-    let dataString =
+    let fslDataString =
       `LIBTYPE:${this.generatorConfig.MWDTool.long}` +
       `\nFRMTYPE:REPEATING` +
       `\nUSER FRAME LIBRARY` +
       `\nFrameBuilderWizard Version : TnAShared2022_1_001 built on ${new Date().toISOString()}` +
       `\nLast modified: ${new Date().toISOString()}`;
 
+    const {
+      jobName,
+      wellName,
+      MWDTool: { name: mwdName, version: nwdVersion },
+      framesets: {
+        fsl: [fslFramesets],
+        utility: utilityFrameset,
+      },
+    } = this.generatorConfig;
+    const utilityDataString =
+      fslDataString.replace('REPEATING', 'UTILITY') +
+      `\nSTARTOFFRAME` +
+      `\nFRM_TYPE:UTIL` +
+      `\nMTF_FRM#${0}` +
+      `\nGTF_FRM#${0}` +
+      `\nROT_FRM#${0}` +
+      `\n${jobName} ${wellName} ${FrameEnum.UTIL}` +
+      `\nFRAME#6000\n` +
+      getDPointList(utilityFrameset.dpoints);
+
     let frameNumber = 2000;
-    const { jobName, wellName, framesets, MWDTool } = this.generatorConfig;
-    framesets.fsl.forEach(({ framesets, number: fslNumber }) => {
+    [fslFramesets].forEach(({ framesets, number: fslNumber }) => {
       [FrameEnum.MTF, FrameEnum.GTF, FrameEnum.ROT].forEach((frame, i) => {
-        dataString +=
+        const { dpoints } = framesets[frame as FSLFrameType];
+
+        const object = Object.entries(FrameEnum).find(
+          ([_, value]) => value === frame
+        ) as [key: string, string];
+
+        fslDataString +=
           `\nSTARTOFFRAME` +
-          `\nFRM_TYPE:${frame}` +
+          `\nFRM_TYPE:${object[0]}` +
           `\nMTF_FRM#${frameNumber}` +
           `\nGTF_FRM#${frameNumber + 1}` +
           `\nROT_FRM#${frameNumber + 2}` +
-          `\nFSL ${fslNumber} ${wellName}` +
-          `\nFRAME#${frameNumber + i}`;
-        const { dpoints } = framesets[frame as FSLFrameType];
-        dpoints.forEach((dpoint) => {
-          dataString += `\n${dpoint.name}`;
-        });
-
-        dataString += `\nNULL` + `\n37321` + `ENDOFFRAME\n`;
+          `\n${jobName} FSL ${fslNumber} ${frame}` +
+          `\nFRAME#${frameNumber + i}\n`;
+        // if (dpoints.length > 0) {
+        fslDataString += getDPointList(dpoints);
+        // }
       });
       frameNumber++;
     });
+    const repeatingFileName = `${jobName}_${mwdName}${nwdVersion}_Repeating`
+      // reaplce special characters including space
+      .replace(/[^a-zA-Z0-9_.]/g, '-');
+    const utilityFileName = repeatingFileName.replace('Repeating', 'Utility');
 
-    this.xmlIO.downloadFile(
-      dataString,
-      `${new Date().toISOString()}_${jobName}_${wellName}_${MWDTool.name}.udl`
-    );
-  }
+    this.xmlIO.downloadFile(fslDataString, `${repeatingFileName}.udl`);
+    this.xmlIO.downloadFile(utilityDataString, `${utilityFileName}.udl`);
 
-  private orderDPoints(
-    frame: FSLFrameType,
-    dpoints: FramesetDpoint[],
-    generatorConfig: GeneratorConfig
-  ) {
-    const rules = this.getRules();
+    function getDPointList(dpoints: FramesetDpoint[]) {
+      let dpointsString = '';
+      dpoints.forEach((dpoint) => {
+        dpointsString += `\n${dpoint.name}`;
+      });
 
-    // Partition the data points based on whether they should be at the beginning
-    const [firstDPoints, remainingDPoints] = partition(dpoints, (dpoint) =>
-      rules.some(
-        (rule) =>
-          rule.concernedDpoint.id === dpoint.id &&
-          rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
-      )
-    );
-
-    this.rulesHandler = new RulesHandler(frame);
-
-    // Add first data points to the ordered list, handling conflicts
-    this.rulesHandler.handleFirstDPoints(firstDPoints, rules);
-
-    const remainingValidDPoints = remainingDPoints.filter(
-      (remainingDPoint) =>
-        !rules.some(
-          (rule) =>
-            rule.concernedDpoint.id === remainingDPoint.id &&
-            rule.description === StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT
-        )
-    );
-
-    const { bitConstraintDPoints, nonConstraintDPoints } =
-      this.rulesHandler.filterAndBuildBitConstraintData(
-        remainingValidDPoints,
-        rules,
-        generatorConfig
-      );
-
-    // Get available MWD Tool DPoints
-    let mwdDPoints = generatorConfig.MWDTool.rules
-      .filter(
-        (_) =>
-          _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT &&
-          _.framesets.includes(frame)
-      )
-      .map((_) => _.concernedDpoint)
-      .sort((a, b) => b.bits - a.bits);
-
-    let cursors: SpreadingCursors = {
-      bitsCount: 0,
-      lastIndex: -1,
-      dpointIndex: 0,
-    };
-
-    // Process non constraint remaining data points and apply rules
-    for (const dpoint of nonConstraintDPoints) {
-      const bitsCount = this.orderedDPoints.reduce(
-        (bitsCount, _) => bitsCount + _.bits,
-        0
-      );
-      if (bitsCount > 0) {
-        ({ cursors, mwdDPoints } = this.rulesHandler.handle80BitsRule(
-          mwdDPoints,
-          { ...cursors, bitsCount },
-          generatorConfig
-        ));
-      }
-
-      // Handle rule with bit constraints
-      this.rulesHandler.handleBitContraintRule(
-        bitConstraintDPoints,
-        bitsCount,
-        rules
-      );
-
-      // Handle all other rules
-      this.rulesHandler.handleDPointRules(dpoint, rules);
-
-      // Handle frameset overloading dpoints
-      this.rulesHandler.handleOverloadingDPoints(generatorConfig);
+      return (dpointsString += `\nNULL` + `\n37321` + `\nENDOFFRAME\n`);
     }
   }
 
-  // private getRules(toolId?: string) {
+  private orderDPoints(
+    frame: FrameEnum,
+    dpoints: FramesetDpoint[],
+    generatorConfig: GeneratorConfig
+  ) {
+    if (dpoints.length < 2) {
+      return dpoints;
+    }
+
+    const rules = this.getRules();
+    const rulesHandler = new RulesHandler(frame);
+
+    for (const dpoint of dpoints) {
+      // Add dpoint eligible otherDPoints to orderedDPoints with set IDs
+      rulesHandler.handleDPointset(dpoint, rules);
+    }
+
+    // order dpoints grouped by sets
+    rulesHandler.orderDPointsetDPoints(rules);
+
+    // handle first data points of ordered list
+    rulesHandler.handleFirstDPoints(rules);
+
+    // Handle 80 bits rule
+    rulesHandler.handle80BitsRule(generatorConfig.MWDTool.rules);
+
+    // Handle frameset overloading dpoints
+    const { maxBits, maxDPoints } = generatorConfig.MWDTool;
+
+    rulesHandler.handleOverloadingDPoints(maxBits, maxDPoints);
+
+    return rulesHandler.orderedDPoints;
+  }
+
   getRules(toolId?: string) {
+    if (!this.generatorConfig) {
+      throw new FramrServiceError('Service was not initialized');
+    }
+
     const rules: GeneratorConfigRule[] = [];
+    const mainTool: GeneratorConfigTool = {
+      ...this.generatorConfig.MWDTool,
+      type: ToolEnum.LWD,
+    };
+
+    const tools = this.generatorConfig.tools.concat(mainTool);
     if (toolId) {
-      const toolRules = this.generatorConfig?.tools
+      const toolRules = tools
         .find((_) => _.id === toolId)
         ?.rules.filter((_) => _.isActive);
       if (!toolRules) {
@@ -342,7 +387,7 @@ export class FramrService {
       }
       rules.push(...toolRules);
     } else {
-      for (const tool of this.generatorConfig?.tools ?? []) {
+      for (const tool of tools) {
         rules.push(...tool.rules.filter((_) => _.isActive));
       }
     }

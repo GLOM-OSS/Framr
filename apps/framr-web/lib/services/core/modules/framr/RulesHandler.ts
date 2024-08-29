@@ -1,33 +1,31 @@
 import {
   DPoint,
+  DPointsetDPoint,
   FramesetDpoint,
   GeneratorConfig,
   GeneratorConfigRule,
   Rule,
-  RuleWithConstraint,
   RuleWithOtherDPoint,
 } from '../../../../types';
 import {
   FrameEnum,
   RuleEnumType,
   StandAloneRuleEnum,
-  WithConstraintRuleEnum,
   WithOtherDPointRuleEnum,
 } from '../../../../types/enums';
+import { getRandomID } from '../common/common';
+import { DPointConstrainstHandler } from './rules/DPointConstraintsHandler';
+import { DPointsetHandler } from './rules/DPointsetHandler';
+import {
+  EightyBitsRuleHandler,
+  SeparatorOptions,
+} from './rules/EightyBitsRuleHandler';
+import { FirstDPointHandler } from './rules/FirstDPointHandler';
 
-type BitConstraintDPoint = {
+export type DPointWithConstraint = {
   lastCount: number;
   bitInterval: number;
   dpoint: FramesetDpoint;
-};
-
-/**
- * Represents the number of bits, last index, and data point index for spreading cursors.
- */
-export type SpreadingCursors = {
-  bitsCount: number;
-  lastIndex: number;
-  dpointIndex: number;
 };
 
 /**
@@ -53,282 +51,185 @@ export function partition<T>(
   return [trueArray, falseArray];
 }
 
+export function getFramesetDPoint(dpoint: DPoint): FramesetDpoint {
+  return {
+    ...dpoint,
+    isBaseInstance: true,
+    id: getRandomID(),
+    dpointId: dpoint.id,
+  };
+}
+
+export function rulePredicate(
+  frame: FrameEnum,
+  rule: Rule,
+  ruleDescriptions: RuleEnumType[],
+  dpointId?: string
+) {
+  return (
+    (dpointId ? rule.concernedDpoint.id === dpointId : true) &&
+    (frame ? rule.framesets.includes(frame) : true) &&
+    ruleDescriptions.includes(rule.description)
+  );
+}
+
 export class RulesHandler {
-  private _orderedDPoints: FramesetDpoint[] = [];
+  private _orderedDPoints: DPointsetDPoint[] = [];
 
   /**
    * Gets the ordered data points.
    */
-  public get orderedDPoints(): FramesetDpoint[] {
+  public get orderedDPoints(): DPointsetDPoint[] {
     return this._orderedDPoints;
   }
 
   /**
    * Sets the ordered data points.
    */
-  public set orderedDPoints(value: FramesetDpoint[]) {
+  public set orderedDPoints(value: DPointsetDPoint[]) {
     this._orderedDPoints = value;
   }
 
-  constructor(private readonly frame?: FrameEnum) {}
+  private readonly dpointsetHandler: DPointsetHandler;
+  private readonly firstDPointHandler: FirstDPointHandler;
+  private readonly eightyBitsRuleHandler: EightyBitsRuleHandler;
+  private readonly dpointConstraintsHandler: DPointConstrainstHandler;
+
+  constructor(private readonly frame: FrameEnum) {
+    this.dpointsetHandler = new DPointsetHandler(this.frame);
+    this.eightyBitsRuleHandler = new EightyBitsRuleHandler();
+    this.firstDPointHandler = new FirstDPointHandler(this.frame);
+    this.dpointConstraintsHandler = new DPointConstrainstHandler(
+      this.frame,
+      this.dpointsetHandler
+    );
+  }
 
   /**
    * Handles the ordering of data points intended to be first, considering conflicts and applying rules.
    * @param firstDPoints Array of data points intended to be first.
    * @param rules Generator config rules.
    */
-  handleFirstDPoints(
-    firstDPoints: FramesetDpoint[],
-    rules: GeneratorConfigRule[]
-  ) {
-    const orderedFirstDPoints: FramesetDpoint[] = [];
+  handleFirstDPoints(rules: GeneratorConfigRule[]) {
+    // get a cloned version reference of ordered dpoints group by sets
+    const orderedDPointsets = this.getOrderedDPointsGroupBySets();
 
-    firstDPoints.forEach((dpoint) => {
-      const conflictingRule = rules.find((rule) =>
-        this.rulePredicate(rule, dpoint.id, [
-          StandAloneRuleEnum.SHOULD_NOT_BE_THE_FIRST,
-        ])
-      );
-      if (conflictingRule) {
-        const alternativeDPoint = firstDPoints.find(
-          (dp) =>
-            !rules.some((rule) =>
-              this.rulePredicate(rule, dp.id, [
-                StandAloneRuleEnum.SHOULD_NOT_BE_THE_FIRST,
-              ])
-            )
-        );
-        if (alternativeDPoint) {
-          orderedFirstDPoints.push(alternativeDPoint);
-        } else {
-          orderedFirstDPoints.push({
-            ...dpoint,
-            error: `No eligible data point found for the first position`,
-          });
-        }
-      }
-      orderedFirstDPoints.push({
-        ...dpoint,
-        error:
-          firstDPoints.length > 1
-            ? `There should not be more than one first DPoint`
-            : undefined,
-      });
-    });
+    // Partition the data points based on whether they should be at the beginning
+    const [firstDPointsets, dpointsetRest] = partition(
+      orderedDPointsets,
+      (dpoints) =>
+        rules.some(
+          (rule) =>
+            dpoints.some(
+              (dpoint) => rule.concernedDpoint.id === dpoint.dpointId
+            ) && rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
+        )
+    );
+    console.log(firstDPointsets);
 
-    this.orderedDPoints = [...orderedFirstDPoints];
+    const orderedFirstDPoints = this.firstDPointHandler.handle(
+      firstDPointsets.length > 0 ? firstDPointsets : dpointsetRest,
+      rules
+    );
+    const orderedDPointRest = this.orderedDPoints.filter(
+      (dpoint) => !orderedFirstDPoints.some((dp) => dp.id === dpoint.id)
+    );
+    this.orderedDPoints = [...orderedFirstDPoints, ...orderedDPointRest];
   }
 
   /**
-   * Handles rules related to an individual data point, including constraints and sequencing.
+   * Adds dpoint set to ordered dpoints.
    * @param dpoint The data point to handle.
    * @param rules Generator config rules.
-   * @returns 0 if conflicting rules apply, 1 otherwise.
    */
-  handleDPointRules(dpoint: FramesetDpoint, rules: GeneratorConfigRule[]) {
-    const precededByRule = rules.find((rule) =>
-      this.rulePredicate(rule, dpoint.id, [
-        WithOtherDPointRuleEnum.SHOULD_BE_PRECEDED_BY_OTHER,
-        WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
-      ])
-    ) as RuleWithOtherDPoint | undefined;
-    const followedByRule = rules.find((rule) =>
-      this.rulePredicate(rule, dpoint.id, [
-        WithOtherDPointRuleEnum.SHOULD_BE_FOLLOWED_BY_OTHER,
-        WithOtherDPointRuleEnum.SHOULD_BE_IMMEDIATELY_FOLLOWED_BY_OTHER,
-      ])
-    ) as RuleWithOtherDPoint | undefined;
-
-    if (
-      precededByRule &&
-      followedByRule &&
-      precededByRule.otherDpoints.some((otherDPoint) =>
-        followedByRule.otherDpoints.some((_) => _.id === otherDPoint.id)
-      )
-    ) {
-      // If both preceded by and followed by rules exist, mark the data point with an error
-      this.orderedDPoints.push({
-        ...dpoint,
-        error: `Dpoint cannot be both preceded by and followed by the same other DPoint`,
-      });
-      return 0;
-    } else {
-      // Add the data point to the ordered list if no conflicting rule applies
-      if (!this.orderedDPoints.some((dp) => dp.id === dpoint.id)) {
-        this.orderedDPoints.push(dpoint);
-      }
-      const dpointPosition = this.orderedDPoints.findIndex(
-        (dp) => dp.id === dpoint.id
-      );
-      const result = this.handleProhibitiveRules(dpointPosition, dpoint, rules);
-      if (result === 0) return 0;
-
-      if (followedByRule) {
-        this.handleSequentialRule(dpointPosition + 1, followedByRule, rules);
-      }
-
-      if (precededByRule) {
-        this.handleSequentialRule(dpointPosition, precededByRule, rules);
-      }
-
-      const shouldBeSetOnly = rules.find((rule) =>
-        this.rulePredicate(rule, dpoint.id, [
-          WithOtherDPointRuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY,
-        ])
-      ) as RuleWithOtherDPoint | undefined;
-
-      if (shouldBeSetOnly) {
-        return this.handleSetOnlyRule(
-          dpointPosition,
-          dpoint,
-          shouldBeSetOnly,
-          rules,
-          precededByRule,
-          followedByRule
-        );
-      }
-      return 1;
-    }
+  handleDPointset(dpoint: FramesetDpoint, rules: GeneratorConfigRule[]) {
+    const dpointSet = this.dpointsetHandler.handle(dpoint, rules);
+    this.orderedDPoints.push(...dpointSet);
   }
 
   /**
    * Handles rules related to 80 bit constraints for MWD data points.
-   * @param mwdDPoints Array of MWD data points.
-   * @param cursors Spreading cursors containing bit count, last index, and data point index.
+   * @param mwdSeparator Array of MWD data points.
+   * @param separatorOptions Spreading cursors containing bit count, last index, and data point index.
    * @param generatorConfig Generator configuration.
    * @returns Object containing updated cursors and MWD data points.
    */
-  handle80BitsRule(
-    mwdDPoints: DPoint[],
-    cursors: SpreadingCursors,
-    generatorConfig: GeneratorConfig
-  ) {
-    const BITS_LIMIT = 80;
+  handle80BitsRule(mwdRules: GeneratorConfigRule[]) {
+    // Get available MWD Tool DPoints sorted by dpoint bit (asc)
+    const mwdDPoints = mwdRules
+      .filter((_) => _.description !== StandAloneRuleEnum.SHOULD_NOT_BE_PRESENT)
+      .map((_) => _.concernedDpoint)
+      .sort((a, b) => a.bits - b.bits);
 
-    const closestBitLimitMultiple =
-      Math.floor(cursors.bitsCount / BITS_LIMIT) * BITS_LIMIT;
-    if (closestBitLimitMultiple <= cursors.bitsCount) {
-      const index = this.orderedDPoints.findIndex(
-        (_, index) =>
-          _.tool.id === generatorConfig.MWDTool.id && index > cursors.lastIndex
-      );
-      if (index !== -1) {
-        mwdDPoints = mwdDPoints.filter(
-          (_) => _.id !== this.orderedDPoints[index].id
-        );
-      } else {
-        const mwdDPointIndex = cursors.dpointIndex % (mwdDPoints.length - 1);
-        this.orderedDPoints.push({
-          ...mwdDPoints[mwdDPointIndex],
-          isBaseInstance:
-            Math.floor(cursors.dpointIndex / (mwdDPoints.length - 1)) <= 1,
-        });
-        cursors.lastIndex = this.orderedDPoints.length - 1;
-        cursors.dpointIndex++;
+    // get the dpoint with smaller number of bit
+    const mwdSeparator = mwdDPoints[0];
+
+    if (mwdSeparator) {
+      // get a cloned version of ordered dpoints grouped by sets
+      const orderedDPointsets = this.getOrderedDPointsGroupBySets();
+
+      this.orderedDPoints = [];
+      let separatorOptions: SeparatorOptions = {
+        bitsCount: 0,
+        lastIndex: -1,
+        nextSet: [],
+        currentSet: [],
+        separator: mwdSeparator,
+      };
+      for (let index = 0; index < orderedDPointsets.length; index++) {
+        const currentSet = orderedDPointsets[index];
+        const nextSet = orderedDPointsets[index + 1];
+
+        if (nextSet) {
+          const [nextCursors, nextInsertion] =
+            this.eightyBitsRuleHandler.handle({
+              ...separatorOptions,
+              currentSet,
+              nextSet,
+            });
+
+          this.orderedDPoints.push(...nextInsertion);
+          separatorOptions = { ...separatorOptions, ...nextCursors };
+        } else this.orderedDPoints.push(...currentSet);
       }
     }
-    return { cursors, mwdDPoints };
   }
 
   /**
-   * Handles rules with density or update rate constraints for data points.
+   * Resolved density and update rate constraints a single type of constraint depending on bits interval.
    * @param dpoints Array of data points.
    * @param rules Generator config rules.
    * @param generatorConfig Generator configuration.
    * @returns Object containing non-constraint data points and bit constraint data points.
    */
-  filterAndBuildBitConstraintData(
-    dpoints: FramesetDpoint[],
+  resolveDPointConstraints(
+    constraintDPoints: FramesetDpoint[],
     rules: GeneratorConfigRule[],
     generatorConfig: GeneratorConfig
-  ) {
-    const [constraintDPoints, nonConstraintDPoints] = partition(
-      dpoints,
-      (dpoint) =>
-        rules.some((rule) =>
-          this.rulePredicate(rule, dpoint.id, [
-            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
-            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
-          ])
-        )
+  ): DPointWithConstraint[] {
+    return this.dpointConstraintsHandler.resolve(
+      constraintDPoints,
+      rules,
+      generatorConfig
     );
-
-    const bitConstraintDPoints = constraintDPoints.map<BitConstraintDPoint>(
-      (cdp) => {
-        let bitInterval = 0;
-        const densityConstraintRule = rules.find((rule) =>
-          this.rulePredicate(rule, cdp.id, [
-            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
-          ])
-        ) as RuleWithConstraint | undefined;
-
-        if (densityConstraintRule) {
-          bitInterval =
-            (densityConstraintRule.interval * generatorConfig.bitRate) /
-            generatorConfig.penetrationRate;
-        }
-
-        const updateRateConstraintRule = rules.find((rule) =>
-          this.rulePredicate(rule, cdp.id, [
-            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
-          ])
-        ) as RuleWithConstraint | undefined;
-
-        if (updateRateConstraintRule) {
-          bitInterval =
-            updateRateConstraintRule.interval * generatorConfig.bitRate;
-        }
-
-        return {
-          lastCount: -1,
-          bitInterval,
-          dpoint: {
-            ...cdp,
-            error:
-              bitInterval === 0
-                ? 'Invalid interval constraint'
-                : densityConstraintRule && updateRateConstraintRule
-                ? 'Update rate and density rate should not complementary'
-                : undefined,
-          },
-        };
-      }
-    );
-    return { nonConstraintDPoints, bitConstraintDPoints };
   }
 
-  handleBitContraintRule(
-    dpoints: BitConstraintDPoint[],
+  handleDPointsWithContraint(
+    dpoints: DPointWithConstraint[],
     bitsCount: number,
     rules: GeneratorConfigRule[]
   ) {
-    const otherDPoints: FramesetDpoint[] = [];
-    dpoints
-      .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
-      .forEach((cdp) => {
-        const originalIndex = dpoints.findIndex(
-          (_) => _.dpoint.id === cdp.dpoint.id
-        );
-        otherDPoints.push(cdp.dpoint);
-        dpoints[originalIndex] = {
-          ...cdp,
-          lastCount: this.orderedDPoints.reduce(
-            (bitsCount, _) => bitsCount + _.bits,
-            0
-          ),
-        };
-      });
-    if (otherDPoints.length > 0) {
-      const orderedDPoints = this.handleOtherDPointsRules(otherDPoints, rules);
-      this.orderedDPoints.push(...orderedDPoints);
-    }
+    this.dpointConstraintsHandler.handle(
+      { dpoints, bitsCount },
+      this.orderedDPoints,
+      rules
+    );
   }
 
-  handleOverloadingDPoints(generatorConfig: GeneratorConfig) {
-    const { maxBits, maxDPoints } = generatorConfig.MWDTool;
+  handleOverloadingDPoints(maxBits: number, maxDPoints: number) {
     let bitsCount = 0;
     this.orderedDPoints = this.orderedDPoints.map((dpoint, i) => {
-      bitsCount += dpoint.bits;
+      bitsCount += Number(dpoint.bits);
       return {
         ...dpoint,
         error:
@@ -342,184 +243,145 @@ export class RulesHandler {
   }
 
   /**
-   * Handles rules that prohibit certain sequences or configurations of data points.
-   * @param dpointPosition The position where dpoint should insert
-   * @param dpoint data point
-   * @param rules generator config rule
-   * @returns 0 if the dpoint has an error and 1 if everything went well
-   */
-  private handleProhibitiveRules(
-    dpointPosition: number,
-    dpoint: FramesetDpoint,
-    rules: GeneratorConfigRule[]
-  ) {
-    const shouldNotBePrecededByOther = rules.some(
-      (rule) =>
-        this.rulePredicate(rule, dpoint.id, [
-          WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
-          WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER,
-        ]) &&
-        this.orderedDPoints.some((orderedDpoint, index) =>
-          (rule as RuleWithOtherDPoint).otherDpoints.some(
-            (otherDPoint) =>
-              otherDPoint.id === orderedDpoint.id && index < dpointPosition
-          )
-        )
-    );
-
-    const shouldNotBeFollowedByOther = rules.some(
-      (rule) =>
-        this.rulePredicate(rule, null, [
-          WithOtherDPointRuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER,
-          WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER,
-        ]) &&
-        this.orderedDPoints.some((orderedDPoint, index) =>
-          (rule as RuleWithOtherDPoint).otherDpoints.some(
-            (otherDPoint) =>
-              otherDPoint.id === orderedDPoint.id && index > dpointPosition
-          )
-        )
-    );
-
-    if (shouldNotBePrecededByOther || shouldNotBeFollowedByOther) {
-      // If the data point should not be preceded by or followed by other DPoints, mark it with an error
-      this.orderedDPoints.splice(dpointPosition, 1, {
-        ...dpoint,
-        error: `Dpoint cannot be ${
-          shouldNotBePrecededByOther ? 'preceded by' : 'followed by'
-        } other specified DPoints`,
-      });
-      return 0;
-    }
-    return 1;
-  }
-
-  /**
-   * Handles rules requiring sequential placement of data points relative to each other.
-   * @param dpointPosition The position where dpoint should insert
-   * @param sequentialRule This can either be a followed by or a preceded by rule
-   * @param rules generator config rule
-   */
-  private handleSequentialRule(
-    dpointPosition: number,
-    sequentialRule: RuleWithOtherDPoint,
-    rules: GeneratorConfigRule[]
-  ): void {
-    const otherDPoints = sequentialRule.otherDpoints.map<FramesetDpoint>(
-      (dp) => ({
-        ...dp,
-        isBaseInstance: true,
-      })
-    );
-    if (otherDPoints.length > 0) {
-      const concernedDpointId = sequentialRule.concernedDpoint.id;
-      const orderedOtherDPoints = this.handleOtherDPointsRules(
-        otherDPoints,
-        rules,
-        concernedDpointId
-      );
-      this.orderedDPoints.splice(dpointPosition, 0, ...orderedOtherDPoints);
-    }
-  }
-
-  /**
-   *  Handles rules where a data point should be present in a set only under certain conditions.
-   * @param dpointPosition The position where to insert the dpoint
-   * @param dpoint data point
-   * @param setOnlyRule
-   * @param rules generator config rule
-   * @param precededByRule
-   * @param followedByRule
-   * @returns 0 if the dpoint has an error and 1 if everything went well
-   */
-  private handleSetOnlyRule(
-    dpointPosition: number,
-    dpoint: FramesetDpoint,
-    setOnlyRule: RuleWithOtherDPoint,
-    rules: GeneratorConfigRule[],
-    precededByRule?: RuleWithOtherDPoint,
-    followedByRule?: RuleWithOtherDPoint
-  ) {
-    const [precededByRuleCommonDPoints, uncommonOtherDPoints1] = partition(
-      setOnlyRule.otherDpoints,
-      (otherDPoint) =>
-        !!precededByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
-    );
-    const [followedByRuleCommonDPoints, setOnlyRuleOtherDPoints] = partition(
-      uncommonOtherDPoints1,
-      (otherDPoint) =>
-        !!followedByRule?.otherDpoints.some((_) => _.id === otherDPoint.id)
-    );
-    const shouldInsertAfter =
-      followedByRuleCommonDPoints.length === 0 ||
-      followedByRuleCommonDPoints.length ===
-        followedByRule?.otherDpoints.length;
-    const shouldInsertBefore =
-      precededByRuleCommonDPoints.length === 0 ||
-      precededByRuleCommonDPoints.length ===
-        precededByRule?.otherDpoints.length;
-
-    if (shouldInsertAfter || shouldInsertBefore) {
-      const otherDPoints = setOnlyRuleOtherDPoints.map<FramesetDpoint>(
-        (dpoint) => ({
-          ...dpoint,
-          isBaseInstance: true,
-        })
-      );
-      if (otherDPoints.length > 0) {
-        const orderedOtherDPoints = this.handleOtherDPointsRules(
-          otherDPoints,
-          rules,
-          dpoint.id
-        );
-        this.orderedDPoints.splice(
-          dpointPosition +
-            (shouldInsertAfter
-              ? followedByRuleCommonDPoints.length + 1
-              : -precededByRuleCommonDPoints.length),
-          0,
-          ...orderedOtherDPoints
-        );
-      }
-    } else {
-      this.orderedDPoints.splice(dpointPosition, 1, {
-        ...dpoint,
-        error:
-          'DPoints following or preceding DPoint are conflicting with DPoint set',
-      });
-      return 0;
-    }
-    return 1;
-  }
-
-  /**
-   * Handles rules associated with other data points (nested within another rule),
-   * recursively applying rules.
-   * @param otherDPoints
+   * Order dpoints. Clones the list of dpoints and checks for compatibilities between sets.
+   * Swaps sets if necessary.
    * @param rules
-   * @returns an ordered list of dpoints
+   * @param orderedDPoints Optional, default to `ruleHandler.orderedDPoints`
    */
-  private handleOtherDPointsRules(
-    otherDPoints: FramesetDpoint[],
+  orderDPointsetDPoints(
     rules: GeneratorConfigRule[],
-    concernedDpointId?: string
+    orderedDPoints?: DPointsetDPoint[]
   ) {
-    const nestedRuleHandler = new RulesHandler(this.frame);
-    otherDPoints
-      .filter((_) => _.id !== concernedDpointId)
-      .forEach((dpoint) => nestedRuleHandler.handleDPointRules(dpoint, rules));
-    return nestedRuleHandler.orderedDPoints;
+    // get a cloned version reference of ordered dpoints group by sets
+    const orderedDPointsets = this.getOrderedDPointsGroupBySets(orderedDPoints);
+
+    for (let i = orderedDPointsets.length - 1; i > 0; i--) {
+      const currentDPointset = orderedDPointsets[i];
+
+      for (let j = i - 1; j > 0; j--) {
+        const previousDPointset = orderedDPointsets[j];
+
+        if (
+          this.shouldDPointsetsBeSwapped(
+            rules,
+            previousDPointset,
+            currentDPointset
+          )
+        ) {
+          const previousDPointsetFirstDPointPosition =
+            this.orderedDPoints.findIndex(
+              (dpoint) => dpoint.id === previousDPointset[0].id
+            );
+
+          this.orderedDPoints = this.orderedDPoints.filter(
+            (dp) =>
+              !currentDPointset.some((_) => _.dpointsetId === dp.dpointsetId)
+          );
+
+          this.orderedDPoints.splice(
+            previousDPointsetFirstDPointPosition,
+            0,
+            ...currentDPointset
+          );
+        }
+      }
+    }
   }
 
-  private rulePredicate(
-    rule: Rule,
-    dpointId: string | null,
-    ruleDescriptions: RuleEnumType[]
+  private shouldDPointsetsBeSwapped(
+    rules: GeneratorConfigRule[],
+    previousDPointset: DPointsetDPoint[],
+    currentDPointset: DPointsetDPoint[]
+  ) {
+    const previousDPointsetLastDPoint =
+      previousDPointset[previousDPointset.length - 1];
+    const [currentDPointsetFirstDPoint] = currentDPointset;
+
+    // Required conditions for dpoint sets to be swapped
+    return rules.some(
+      (rule) =>
+        // The last dpoint from previous dpoint set has a rule that stipulates that
+        // the first dpoint of the current dpoint set should not immediately follow it
+        this.isDPointRestricted(
+          rule,
+          previousDPointsetLastDPoint,
+          currentDPointsetFirstDPoint,
+          [WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER]
+        ) ||
+        // The first dpoints from current dpoint set must has a rule that stipulates that
+        // the last dpoint of the previous dpoint set should not immediately preceed it
+        this.isDPointRestricted(
+          rule,
+          currentDPointsetFirstDPoint,
+          previousDPointsetLastDPoint,
+          [WithOtherDPointRuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER]
+        ) ||
+        // One dpoint from previous dpoint set has a rule that stipulates that
+        // a dpoint of the current dpoint set should not follow it
+        this.isDPointsetRestricted(rule, previousDPointset, currentDPointset, [
+          WithOtherDPointRuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER,
+        ]) ||
+        // One dpoints from current dpoint set must has a rule that stipulates that
+        // a dpoint of the previous dpoint set should not preceed it
+        this.isDPointsetRestricted(rule, currentDPointset, previousDPointset, [
+          WithOtherDPointRuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER,
+        ])
+    );
+  }
+
+  private isDPointRestricted(
+    rule: GeneratorConfigRule,
+    concernedDPoint: DPointsetDPoint,
+    targettedDPoint: DPointsetDPoint,
+    restrictions: WithOtherDPointRuleEnum[]
   ) {
     return (
-      (dpointId ? rule.concernedDpoint.id === dpointId : true) &&
-      (this.frame ? rule.framesets.includes(this.frame) : true) &&
-      ruleDescriptions.includes(rule.description)
+      rulePredicate(this.frame, rule, restrictions, concernedDPoint.dpointId) &&
+      (rule as RuleWithOtherDPoint).otherDpoints.some(
+        (_) => _.id === targettedDPoint.dpointId
+      )
     );
+  }
+
+  private isDPointsetRestricted(
+    rule: GeneratorConfigRule,
+    concernedDPointset: DPointsetDPoint[],
+    targettedDPointset: DPointsetDPoint[],
+    restrictions: WithOtherDPointRuleEnum[]
+  ) {
+    return concernedDPointset.some(
+      (concernedDPoint) =>
+        rulePredicate(
+          this.frame,
+          rule,
+          restrictions,
+          concernedDPoint.dpointId
+        ) &&
+        (rule as RuleWithOtherDPoint).otherDpoints.some((_) =>
+          targettedDPointset.some(
+            (targettedDPoint) => _.id === targettedDPoint.dpointId
+          )
+        )
+    );
+  }
+
+  /**
+   * Group ordered dpoints by sets
+   * @param dpoints
+   * @returns array of dpoint sets
+   */
+  getOrderedDPointsGroupBySets(orderedDPoints?: DPointsetDPoint[]) {
+    const orderedDPointsClone =
+      orderedDPoints ?? structuredClone(this.orderedDPoints);
+
+    const orderedDPointsetsPerDPointsetId: Record<string, DPointsetDPoint[]> =
+      {};
+    for (const dpoint of orderedDPointsClone) {
+      if (orderedDPointsetsPerDPointsetId[dpoint.dpointsetId]) {
+        orderedDPointsetsPerDPointsetId[dpoint.dpointsetId].push(dpoint);
+      } else orderedDPointsetsPerDPointsetId[dpoint.dpointsetId] = [dpoint];
+    }
+
+    return Object.values(orderedDPointsetsPerDPointsetId);
   }
 }

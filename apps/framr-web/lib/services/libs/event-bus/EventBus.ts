@@ -1,5 +1,4 @@
 import { EventEmitter } from 'eventemitter3';
-import { EventBusChannelStatus } from './EventBusEnum';
 import { EventBusHandler, EventBusPayload } from './EventBus.types';
 /**
  * EventBus class represents a singleton event bus instance using EventEmitter3.
@@ -10,7 +9,7 @@ import { EventBusHandler, EventBusPayload } from './EventBus.types';
 
     eventBus.emit(EventBusChannelEnum.CREATE_TOOL, {
         data: {
-            id: crypto.randomUUID(),
+            id: getRandonID(),
             long: 'tool long name',
             max_bits: 1,
             name: 'my first tools',
@@ -45,24 +44,15 @@ export class EventBus {
     }
   }
 
-  emit<Status extends EventBusChannelStatus>(
-    channel: string,
-    payload: EventBusPayload<Status>
-  ) {
+  emit<T>(channel: string, payload: EventBusPayload<T>) {
     EventBus.instance.emit(channel, payload);
   }
 
-  on<Status extends EventBusChannelStatus>(
-    channel: string,
-    evenHandler: EventBusHandler<Status>
-  ) {
+  on<T>(channel: string, evenHandler: EventBusHandler<T>) {
     EventBus.instance.on(channel, evenHandler);
   }
 
-  once<Status extends EventBusChannelStatus>(
-    channel: string,
-    evenHandler: EventBusHandler<Status>
-  ) {
+  once<T>(channel: string, evenHandler: EventBusHandler<T>) {
     EventBus.instance.once(channel, evenHandler);
   }
 }
