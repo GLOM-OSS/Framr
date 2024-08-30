@@ -95,31 +95,33 @@ export class DPointConstrainstHandler {
     rules: GeneratorConfigRule[]
   ): DPointsetDPoint[] {
     let lastCount = 0;
+    let isBaseInstance = true;
     const orderedDPoints: DPointsetDPoint[] = [];
     for (let i = 0; i < orderedDPointsets.length; i++) {
       const dpointset = orderedDPointsets[i];
-      let j = 0;
-      let bitCount = lastCount;
-      for (j; j < dpointset.length; j++) {
+      const nextDPointset = orderedDPointsets[i + 1];
+      for (let j = 0; j < dpointset.length; j++) {
         const dpoint = dpointset[j];
-        bitCount += dpoint.bits;
+        lastCount += dpoint.bits;
         if (dpoint.dpointId === constrainst.dpoint.dpointId) {
-          break;
+          isBaseInstance = false;
+          lastCount = 0;
         }
       }
 
-      if (j < dpointset.length) {
-        lastCount = 0;
-        orderedDPoints.push(...dpointset);
-      } else if (bitCount < constrainst.bitInterval) {
-        lastCount = bitCount;
+      if (
+        lastCount < constrainst.bitInterval ||
+        (nextDPointset &&
+          nextDPointset[0].dpointId === constrainst.dpoint.dpointId)
+      ) {
         orderedDPoints.push(...dpointset);
       } else {
         const constrainstDPointset = this.dpointsetHandler.handle(
-          constrainst.dpoint,
+          { ...constrainst.dpoint, isBaseInstance },
           rules
         );
         lastCount = 0;
+        isBaseInstance = false;
         orderedDPoints.push(...dpointset, ...constrainstDPointset);
       }
     }

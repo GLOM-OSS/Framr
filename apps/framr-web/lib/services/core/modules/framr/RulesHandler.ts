@@ -127,7 +127,6 @@ export class RulesHandler {
             ) && rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
         )
     );
-    console.log(firstDPointsets);
 
     const orderedFirstDPoints = this.firstDPointHandler.handle(
       firstDPointsets.length > 0 ? firstDPointsets : dpointsetRest,
