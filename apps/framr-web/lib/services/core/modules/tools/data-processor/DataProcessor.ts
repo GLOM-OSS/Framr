@@ -9,9 +9,12 @@ import {
   XmlDataPoint,
 } from '../../../../../types';
 import {
+  ConstraintEnum,
   FrameEnum,
+  RuleEnumType,
   StandAloneRuleEnum,
   ToolEnum,
+  WithConstraintRuleEnum,
   WithOtherDPointRuleEnum,
 } from '../../../../../types/enums';
 import { FramrServiceError } from '../../../../libs/errors';
@@ -220,7 +223,7 @@ export class DataProcessor {
             rot,
             util,
             numberOfBits,
-          ] = line.split(',');
+          ] = line.split(',').map((val) => val.trim().toLowerCase());
 
           let tool = framrBulkData.tools.find(
             (tool) => tool.name === internalName
@@ -228,7 +231,7 @@ export class DataProcessor {
           if (!tool) {
             tool = {
               id: getRandomID(),
-              long: '',
+              long: commercialName,
               version,
               name: internalName,
               type: ToolEnum.LWD,
@@ -245,15 +248,18 @@ export class DataProcessor {
           framrBulkData.dpoints.push(newDPoint);
 
           const framesets: FrameEnum[] = [];
-          if (mtf) {
-            framesets.push(FrameEnum.MTF);
-          } else if (gtf) {
-            framesets.push(FrameEnum.GTF);
-          } else if (rot) {
-            framesets.push(FrameEnum.ROT);
-          } else if (util) {
-            framesets.push(FrameEnum.UTIL);
-          }
+          framesets.push(
+            ...(mtf
+              ? [FrameEnum.MTF]
+              : gtf
+              ? [FrameEnum.GTF]
+              : rot
+              ? [FrameEnum.ROT]
+              : util
+              ? [FrameEnum.UTIL]
+              : [])
+          );
+
           const dpointRule: Rule = {
             id: getRandomID(),
             concernedDpoint: newDPoint,
@@ -311,7 +317,6 @@ export class DataProcessor {
 
         for (const line of lines) {
           const [
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             ruleNumber,
             toolName,
             toolVersion,
@@ -319,7 +324,11 @@ export class DataProcessor {
             framesets,
             ruleDescription,
             secondaryDPoints,
-          ] = line.split(',').map((col) => col.replace(/"/g, ''));
+            constrainst,
+            constrainstMesureUnit,
+          ] = line
+            .split(',')
+            .map((col) => col.trim().toLowerCase().replace(/"/g, ''));
           const concernedDpoint = framrBulkData.dpoints.find(
             ({ name, tool }) =>
               name == primaryDPointName &&
@@ -337,9 +346,26 @@ export class DataProcessor {
                 rule.concernedDpoint.id === concernedDpoint.id
             );
             if (!rule) {
+              const isConstrainstInSeconds = constrainstMesureUnit === 's';
               const newRule: Rule = {
                 concernedDpoint,
-                description: ruleDescription as WithOtherDPointRuleEnum,
+                ...(Object.values(WithConstraintRuleEnum).find(
+                  (rule) => rule === ruleDescription
+                )
+                  ? {
+                      description:
+                        ruleDescription.trim() as WithConstraintRuleEnum,
+                      type: isConstrainstInSeconds
+                        ? ConstraintEnum.TIME
+                        : ConstraintEnum.DISTANCE,
+                      interval: isConstrainstInSeconds
+                        ? Number(constrainst)
+                        : Number(constrainst) * 0.3048, // 1 feet = 0.3048 meters
+                    }
+                  : {
+                      description: ruleDescription as WithOtherDPointRuleEnum,
+                      otherDpoints: otherDPoints,
+                    }),
                 framesets: DataProcessor.getDpointFrames({
                   gtf: framesets.includes('gtf'),
                   mtf: framesets.includes('mtf'),
@@ -347,7 +373,6 @@ export class DataProcessor {
                 }),
                 id: getRandomID(),
                 tool: concernedDpoint.tool,
-                otherDpoints: otherDPoints,
               };
               framrBulkData.rules.push(newRule);
             }

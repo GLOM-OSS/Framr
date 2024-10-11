@@ -23,16 +23,6 @@ export interface StandAloneRule extends CreateStandAloneRule {
 export interface CreateRuleWithOtherDPoint extends CreateStandAloneRule {
   description: WithOtherDPointRuleEnum;
   otherDpoints: DPoint[];
-  description:
-    | RuleEnum.SHOULD_BE_FOLLOWED_BY_OTHER
-    | RuleEnum.SHOULD_BE_IMMEDIATELY_FOLLOWED_BY_OTHER
-    | RuleEnum.SHOULD_BE_IMMEDIATELY_PRECEDED_BY_OTHER
-    | RuleEnum.SHOULD_BE_PRECEDED_BY_OTHER
-    | RuleEnum.SHOULD_BE_PRESENT_AS_SET_ONLY
-    | RuleEnum.SHOULD_NOT_BE_FOLLOWED_BY_OTHER
-    | RuleEnum.SHOULD_NOT_BE_IMMEDIATELY_FOLLOWED_BY_OTHER
-    | RuleEnum.SHOULD_NOT_BE_IMMEDIATELY_PRECEDED_BY_OTHER
-    | RuleEnum.SHOULD_NOT_BE_PRECEDED_BY_OTHER;
 }
 
 export interface RuleWithOtherDPoint extends CreateRuleWithOtherDPoint {
