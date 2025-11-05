@@ -414,7 +414,6 @@ export default function FrameGeneratorConfig({
               >
                 <FormLabel>Bitrate</FormLabel>
                 <TextField
-                  disabled
                   type="number"
                   size="small"
                   placeholder="Enter Bitrate"
@@ -441,7 +440,6 @@ export default function FrameGeneratorConfig({
               >
                 <FormLabel>Rate of Penetration</FormLabel>
                 <TextField
-                  disabled
                   type="number"
                   size="small"
                   placeholder="Enter ROP"

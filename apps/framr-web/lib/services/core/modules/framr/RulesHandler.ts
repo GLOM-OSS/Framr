@@ -2,7 +2,6 @@ import {
   DPoint,
   DPointsetDPoint,
   FramesetDpoint,
-  GeneratorConfig,
   GeneratorConfigRule,
   Rule,
   RuleWithOtherDPoint,
@@ -11,10 +10,14 @@ import {
   FrameEnum,
   RuleEnumType,
   StandAloneRuleEnum,
+  WithConstraintRuleEnum,
   WithOtherDPointRuleEnum,
 } from '../../../../types/enums';
 import { getRandomID } from '../common/common';
-import { DPointConstrainstHandler } from './rules/DPointConstraintsHandler';
+import {
+  DPointConstrainstHandler,
+  RateParams,
+} from './rules/DPointConstraintsHandler';
 import { DPointsetHandler } from './rules/DPointsetHandler';
 import {
   EightyBitsRuleHandler,
@@ -23,7 +26,6 @@ import {
 import { FirstDPointHandler } from './rules/FirstDPointHandler';
 
 export type DPointWithConstraint = {
-  lastCount: number;
   bitInterval: number;
   dpoint: FramesetDpoint;
 };
@@ -125,7 +127,6 @@ export class RulesHandler {
             ) && rule.description === StandAloneRuleEnum.SHOULD_BE_THE_FIRST
         )
     );
-    console.log(firstDPointsets);
 
     const orderedFirstDPoints = this.firstDPointHandler.handle(
       firstDPointsets.length > 0 ? firstDPointsets : dpointsetRest,
@@ -196,34 +197,46 @@ export class RulesHandler {
   }
 
   /**
-   * Resolved density and update rate constraints a single type of constraint depending on bits interval.
-   * @param dpoints Array of data points.
-   * @param rules Generator config rules.
-   * @param generatorConfig Generator configuration.
-   * @returns Object containing non-constraint data points and bit constraint data points.
+   * Handle dpoint constrainsts
+   * @param withConstrainstDPoints
+   * @param rules
    */
-  resolveDPointConstraints(
-    constraintDPoints: FramesetDpoint[],
+  handleDPointConstraints(
     rules: GeneratorConfigRule[],
-    generatorConfig: GeneratorConfig
-  ): DPointWithConstraint[] {
-    return this.dpointConstraintsHandler.resolve(
+    rateOptions: RateParams
+  ) {
+    // Filter dpoints with constraints
+    const constraintDPoints = this.orderedDPoints.filter((dpoint) =>
+      rules.some((rule) =>
+        rulePredicate(
+          this.frame,
+          rule,
+          [
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT,
+            WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+          ],
+          dpoint.dpointId
+        )
+      )
+    );
+
+    // Convert density and update rate constraints to bits interval constrainst.
+    const withConstrainstDPoints = this.dpointConstraintsHandler.resolve(
       constraintDPoints,
       rules,
-      generatorConfig
+      rateOptions
     );
-  }
 
-  handleDPointsWithContraint(
-    dpoints: DPointWithConstraint[],
-    bitsCount: number,
-    rules: GeneratorConfigRule[]
-  ) {
-    this.dpointConstraintsHandler.handle(
-      { dpoints, bitsCount },
-      this.orderedDPoints,
-      rules
-    );
+    for (const withConstrainstDPoint of withConstrainstDPoints) {
+      // get a cloned version of ordered dpoints grouped by sets
+      const orderedDPointsets = this.getOrderedDPointsGroupBySets();
+
+      this.orderedDPoints = this.dpointConstraintsHandler.handle(
+        withConstrainstDPoint,
+        orderedDPointsets,
+        rules
+      );
+    }
   }
 
   handleOverloadingDPoints(maxBits: number, maxDPoints: number) {

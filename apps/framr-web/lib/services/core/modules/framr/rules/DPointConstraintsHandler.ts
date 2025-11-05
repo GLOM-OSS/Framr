@@ -6,14 +6,15 @@ import {
   RuleWithConstraint,
 } from '../../../../../types';
 import { FrameEnum, WithConstraintRuleEnum } from '../../../../../types/enums';
-import { getRandomID } from '../../common/common';
 import { DPointWithConstraint, rulePredicate } from '../RulesHandler';
 import { DPointsetHandler } from './DPointsetHandler';
 
-export interface DPointsetHandlerPayload {
+export interface ConstrainstHandlerPayload {
   dpoints: DPointWithConstraint[];
   bitsCount: number;
 }
+
+export type RateParams = Pick<GeneratorConfig, 'penetrationRate' | 'bitRate'>;
 
 export class DPointConstrainstHandler {
   constructor(
@@ -25,13 +26,13 @@ export class DPointConstrainstHandler {
    * Resolved density and update rate constraints a single type of constraint depending on bits interval.
    * @param dpoints Array of data points.
    * @param rules Generator config rules.
-   * @param generatorConfig Generator configuration.
+   * @param rateConfig Generator configuration.
    * @returns Object containing non-constraint data points and bit constraint data points.
    */
   resolve(
     constraintDPoints: FramesetDpoint[],
     rules: GeneratorConfigRule[],
-    generatorConfig: GeneratorConfig
+    rateConfig: RateParams
   ): DPointWithConstraint[] {
     return constraintDPoints.map<DPointWithConstraint>((cdp) => {
       let bitInterval = 0;
@@ -46,8 +47,8 @@ export class DPointConstrainstHandler {
 
       if (densityConstraintRule) {
         bitInterval =
-          (densityConstraintRule.interval * generatorConfig.bitRate) /
-          generatorConfig.penetrationRate;
+          (densityConstraintRule.interval / rateConfig.penetrationRate) *
+          rateConfig.bitRate;
       }
 
       const updateRateConstraintRule = rules.find((rule) =>
@@ -62,8 +63,7 @@ export class DPointConstrainstHandler {
       ) as RuleWithConstraint | undefined;
 
       if (updateRateConstraintRule) {
-        bitInterval =
-          updateRateConstraintRule.interval * generatorConfig.bitRate;
+        bitInterval = updateRateConstraintRule.interval * rateConfig.bitRate;
       }
 
       return {
@@ -75,46 +75,57 @@ export class DPointConstrainstHandler {
             bitInterval === 0
               ? 'Invalid interval constraint'
               : densityConstraintRule && updateRateConstraintRule
-              ? 'Update rate and density rate should not complementary'
+              ? 'Update rate and density rate are mutually exclusive contrainsts'
               : undefined,
         },
       };
     });
   }
 
+  /**
+   * Add the constrainst dpoint set to ordered dpoint sets as required by the given constrainst
+   * @param constrainst Constrainst to be handled
+   * @param orderedDPointsets Array of dpoint elements group by sets
+   * @param rules
+   * @returns  a flaterned array of dpointset dpoint
+   */
   handle(
-    { bitsCount, dpoints }: DPointsetHandlerPayload,
-    orderedDPoints: DPointsetDPoint[],
+    constrainst: DPointWithConstraint,
+    orderedDPointsets: DPointsetDPoint[][],
     rules: GeneratorConfigRule[]
-  ) {
-    const clonedDpoints = structuredClone(dpoints);
-    clonedDpoints
-      .filter((bitCdp) => bitsCount >= bitCdp.lastCount + bitCdp.bitInterval)
-      .forEach((cdp) => {
-        const originalIndex = dpoints.findIndex(
-          (_) => _.dpoint.id === cdp.dpoint.id
-        );
-        const dpointSet = this.dpointsetHandler.handle(
-          { ...cdp.dpoint, id: getRandomID() },
+  ): DPointsetDPoint[] {
+    let lastCount = 0;
+    let isBaseInstance = true;
+    const orderedDPoints: DPointsetDPoint[] = [];
+    for (let i = 0; i < orderedDPointsets.length; i++) {
+      const dpointset = orderedDPointsets[i];
+      const nextDPointset = orderedDPointsets[i + 1];
+      for (let j = 0; j < dpointset.length; j++) {
+        const dpoint = dpointset[j];
+        lastCount += dpoint.bits;
+        if (dpoint.dpointId === constrainst.dpoint.dpointId) {
+          isBaseInstance = false;
+          lastCount = 0;
+        }
+      }
+
+      if (
+        lastCount < constrainst.bitInterval ||
+        (nextDPointset &&
+          nextDPointset[0].dpointId === constrainst.dpoint.dpointId)
+      ) {
+        orderedDPoints.push(...dpointset);
+      } else {
+        const constrainstDPointset = this.dpointsetHandler.handle(
+          { ...constrainst.dpoint, isBaseInstance },
           rules
         );
-        orderedDPoints.push(
-          ...dpointSet.map((dpoint) => {
-            return {
-              ...dpoint,
-              isBaseInstance: !orderedDPoints.some(
-                (_) => _.dpointId === dpoint.dpointId && _.isBaseInstance
-              ),
-            };
-          })
-        );
-        dpoints[originalIndex] = {
-          ...cdp,
-          lastCount: orderedDPoints.reduce(
-            (bitsCount, _) => bitsCount + _.bits,
-            0
-          ),
-        };
-      });
+        lastCount = 0;
+        isBaseInstance = false;
+        orderedDPoints.push(...dpointset, ...constrainstDPointset);
+      }
+    }
+
+    return orderedDPoints;
   }
 }

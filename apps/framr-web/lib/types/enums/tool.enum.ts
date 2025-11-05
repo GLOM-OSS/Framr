@@ -1,4 +1,4 @@
 export enum ToolEnum {
-  MWD = 'MWD',
-  LWD = 'LWD',
+  MWD = 'mwd',
+  LWD = 'lwd',
 }
