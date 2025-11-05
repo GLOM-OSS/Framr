@@ -1,31 +1,294 @@
-import { Box } from "@mui/material";
-import SideBar from "../components/sideBar/SideBar";
-import Layout from "../components/layout";
-import { useState } from "react";
+import download from '@iconify/icons-fluent/arrow-download-20-regular';
+import { Icon } from '@iconify/react';
+import { Box, Button, Divider } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
+import { ConfirmDialog } from '../components/sharedComponents/confirmDialog';
+import GeneratorHeader from '../lib/modules/FrameGenerator/GeneratorHeader';
+import ToolList from '../lib/modules/FrameGenerator/ToolList';
+import { NewConstraint } from '../lib/modules/FrameGenerator/framesets/FrameList/Frame';
+import FramesetList from '../lib/modules/FrameGenerator/framesets/FrameList/FramesetList';
+import FramesetHeader from '../lib/modules/FrameGenerator/framesets/FramesetHeader';
+import FrameGeneratorConfig from '../lib/modules/FrameGeneratorConfig/FrameGeneratorConfig';
+import { FramrService } from '../lib/services';
+import { getRandomID } from '../lib/services/core/modules/common/common';
+import {
+  DPoint,
+  FramesetDpoint,
+  GeneratorConfig,
+  GeneratorConfigRule,
+  LWDGeneratorConfigTool,
+  MWDGeneratorConfigTool,
+  Tool,
+} from '../lib/types';
+import {
+  ConstraintEnum,
+  FrameEnum,
+  WithConstraintRuleEnum,
+} from '../lib/types/enums';
 
-export function Index() {
-  const [open, setOpen] = useState<boolean>(true)
-  const [drawerWidth, setDrawerWidth] = useState<number>(240)
+export default function FrameGenerator() {
+  const [isConfigOpen, setIsConfigOpen] = useState(true);
+  const [frameConfig, setFrameConfig] = useState<GeneratorConfig>();
+  const [selectedDPoints, setSelectedDPoints] = useState<DPoint[]>([]);
+  const [activeFSL, setActiveFSL] = useState<number>(1);
+  const [selectedFrames, setSelectedFrames] = useState<FrameEnum[]>([
+    FrameEnum.GTF,
+    FrameEnum.MTF,
+    FrameEnum.ROT,
+    FrameEnum.UTIL,
+  ]);
+
+  const framrService = useMemo(
+    () => new FramrService(frameConfig),
+    [frameConfig]
+  );
+  const [isSelectMode, setIsSelectMode] = useState<boolean>(false);
+  const [selectModeDPoints, setSelectModeDPoints] = useState<FramesetDpoint[]>(
+    []
+  );
+
+  const [confirmDialogUsage, setConfirmDialogUsage] = useState<
+    'constraint' | 'dpoints'
+  >();
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+  function removeConstraintOnSelectedDPoints(
+    selectModeDPoints: FramesetDpoint[],
+    frame: FrameEnum
+  ) {
+    framrService.removeDPointsConstraints(activeFSL, selectModeDPoints, frame);
+    if (framrService.generatorConfig)
+      setFrameConfig(framrService.generatorConfig);
+
+    setIsConfigOpen(false);
+  }
+
+  function removeSelectModeDPoints(selectModeDPoints: DPoint[]) {
+    setSelectedDPoints((prev) =>
+      prev.filter(
+        (dpoint) => !selectModeDPoints.some((dp) => dp.id === dpoint.id)
+      )
+    );
+    setIsConfigOpen(false);
+  }
+
+  function addConstraitToMultipleDPoints(val: {
+    interval: number;
+    type: ConstraintEnum;
+    dPoints: DPoint[];
+    framesets: FrameEnum[];
+  }) {
+    [
+      ...(frameConfig?.tools || []),
+      ...(frameConfig?.MWDTool ? [frameConfig.MWDTool] : []),
+    ].forEach((tool) => {
+      const rules = [
+        ...tool.rules,
+        ...val.dPoints
+          .filter(({ tool: { id } }) => id === tool.id)
+          .map<GeneratorConfigRule>(({ ...dpoint }) => ({
+            description:
+              val.type === ConstraintEnum.DISTANCE
+                ? WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_DENSITY_CONSTRAINT
+                : WithConstraintRuleEnum.SHOULD_BE_PRESENT_WITH_UPDATE_RATE_CONSTRAINT,
+            interval: val.interval,
+            type: val.type,
+            framesets: val.framesets,
+            concernedDpoint: { ...dpoint },
+            id: getRandomID(),
+            isActive: true,
+            isGeneric: false,
+            tool,
+          })),
+      ];
+      // if (tool.rules.length > rules.length)
+      if (framrService.generatorConfig) {
+        framrService.updateToolRules(tool.id, rules);
+        framrService.dispatchDPoints(activeFSL, selectedDPoints);
+        setFrameConfig(framrService.generatorConfig);
+      }
+    });
+  }
+
+  const [ruleTool, setRuleTool] = useState<
+    LWDGeneratorConfigTool | MWDGeneratorConfigTool
+  >();
+  function getActiveTool(tool: Tool, generatorConfig: GeneratorConfig) {
+    if (generatorConfig.MWDTool.id === tool.id)
+      setRuleTool(generatorConfig.MWDTool);
+    else {
+      const toold = generatorConfig.tools.find(({ id }) => id === tool.id);
+      setRuleTool(toold);
+    }
+  }
+
+  function handleRemoveDPoint(dpoint: FramesetDpoint) {
+    framrService.removeDPoints(activeFSL, [dpoint.id]);
+    if (framrService.generatorConfig)
+      setFrameConfig(framrService.generatorConfig);
+  }
+
+  function handleRemoveConstraint(dpoint: FramesetDpoint, frame: FrameEnum) {
+    removeConstraintOnSelectedDPoints([dpoint], frame);
+  }
+
+  function handleAddNewConstraint({
+    dpoint: { dpointId, isBaseInstance, error, ...dpoint },
+    ...val
+  }: NewConstraint) {
+    console.log('Add new constraint: ', val);
+    addConstraitToMultipleDPoints({
+      dPoints: [{ ...dpoint, id: dpointId }],
+      interval: val.interval,
+      type: val.type,
+      framesets: [val.frame],
+    });
+  }
+
+  useEffect(() => {
+    if (framrService.generatorConfig && selectedDPoints.length > 0) {
+      framrService.dispatchDPoints(activeFSL, selectedDPoints);
+      setFrameConfig(framrService.generatorConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDPoints]);
+
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
 
   return (
-    <Box sx={{
-      display: "flex",
-    }}>
-      <Layout
-        drawerWidth={drawerWidth}
-        setDrawerWidth={setDrawerWidth}
-        open={open}
-        setOpen={setOpen}
-      >
-        hello
-      </Layout>
-      <SideBar
-        drawerWidth={drawerWidth}
-        setDrawerWidth={setDrawerWidth}
-        open={open}
-        setOpen={setOpen} />
-    </Box>
+    isClient &&
+    (isConfigOpen || !frameConfig ? (
+      <FrameGeneratorConfig
+        ruleTool={ruleTool}
+        data={frameConfig}
+        framrService={framrService}
+        submitConfig={(data) => {
+          setFrameConfig(data);
+          setIsConfigOpen(false);
+        }}
+      />
+    ) : (
+      <>
+        {confirmDialogUsage && (
+          <ConfirmDialog
+            closeDialog={() => {
+              setConfirmDialogUsage(undefined);
+              setIsConfirmDialogOpen(false);
+            }}
+            isDialogOpen={isConfirmDialogOpen}
+            dialogMessage={`Are you sure you want to remove the selected ${confirmDialogUsage}?`}
+            dialogTitle={`Remove ${confirmDialogUsage}`}
+            confirm={() => {
+              if (confirmDialogUsage === 'constraint')
+                // TODO: MULTIPLE SELECTION IS NOT FROM SAME FRAMESET... RESTRICT FRAMESET
+                removeConstraintOnSelectedDPoints(
+                  selectModeDPoints,
+                  FrameEnum.UTIL
+                );
+              else removeSelectModeDPoints(selectModeDPoints);
+            }}
+            closeOnConfirm
+            danger
+            confirmButton={`Remove ${confirmDialogUsage}`}
+          />
+        )}
+        <Box
+          sx={{
+            height: '100%',
+            display: 'grid',
+            gridTemplateRows: 'auto auto 1fr',
+            rowGap: 2,
+          }}
+        >
+          <GeneratorHeader
+            data={frameConfig}
+            handleEdit={() => setIsConfigOpen(true)}
+          />
+          <Divider />
+          <Box
+            sx={{
+              display: 'grid',
+              height: '100%',
+              gridTemplateColumns: '26.6fr auto 74.4fr',
+              columnGap: 2,
+            }}
+          >
+            <ToolList
+              data={frameConfig}
+              getDPoints={(selectedDPoints) =>
+                setSelectedDPoints(selectedDPoints)
+              }
+            />
+            <Divider orientation="vertical" />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateRows: 'auto 1fr auto',
+                rowGap: 2,
+              }}
+            >
+              <FramesetHeader
+                selectModeDPoints={selectModeDPoints}
+                closeSelectMode={() => {
+                  setSelectModeDPoints([]);
+                  setIsSelectMode(false);
+                }}
+                activeFSL={activeFSL}
+                selectedFrames={selectedFrames}
+                setActiveFSL={setActiveFSL}
+                setSelectedFrames={setSelectedFrames}
+                isSelectMode={isSelectMode}
+                setIsSelectMode={setIsSelectMode}
+                submitNewDPoint={(val) =>
+                  setSelectedDPoints((prev) => [...prev, val])
+                }
+                handleRemoveConstraints={() => {
+                  setIsConfirmDialogOpen(true);
+                  setConfirmDialogUsage('constraint');
+                }}
+                handleRemoveDPoints={() => {
+                  setIsConfirmDialogOpen(true);
+                  setConfirmDialogUsage('dpoints');
+                }}
+                selectedDPoints={selectedDPoints}
+                submitMultipleConstraints={addConstraitToMultipleDPoints}
+                handleOrderDPoints={() => {
+                  if (framrService.generatorConfig) {
+                    framrService.orderFramesets(activeFSL);
+                    setFrameConfig(framrService.generatorConfig);
+                  }
+                }}
+              />
+              <FramesetList
+                handleRemoveDPoint={handleRemoveDPoint}
+                handleRemoveConstraint={handleRemoveConstraint}
+                handleAddNewConstraint={handleAddNewConstraint}
+                frameConfig={frameConfig}
+                frameset={frameConfig.framesets}
+                activeFSL={activeFSL}
+                selectedFrames={selectedFrames}
+                handleSelect={(val) => setSelectModeDPoints(val)}
+                isSelectMode={isSelectMode}
+                selectModeDPoints={selectModeDPoints}
+                manageRules={(val) => {
+                  getActiveTool(val, frameConfig);
+                  setIsConfigOpen(true);
+                }}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ justifySelf: 'end' }}
+                startIcon={<Icon icon={download} />}
+                onClick={() => framrService.exportGeneratorConfig()}
+              >
+                Export Framesets
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </>
+    ))
   );
 }
-
-export default Index;

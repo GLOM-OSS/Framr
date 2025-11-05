@@ -3,7 +3,7 @@ import { Tool } from './tool';
 export interface CreateDPoint {
   name: string;
   bits: number;
-  tool: Tool
+  tool: Tool;
 }
 
 export interface DPoint extends CreateDPoint {

@@ -1,4 +1,6 @@
+import { FSLFrameType, FSLFrameset } from './frame';
+
 export interface FSL {
   number: number;
-  frameset: FSLFrameset;
+  framesets: Record<FSLFrameType, FSLFrameset>;
 }

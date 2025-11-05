@@ -8,4 +8,6 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/framr-web',
+  setupFilesAfterEnv: ['./jest.setup.ts'],
+  testEnvironment: 'jsdom',
 };
